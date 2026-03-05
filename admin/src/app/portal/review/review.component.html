@@ -1,0 +1,146 @@
+@if(!viewReviews){
+<app-common-data-table [tableColumns]="customDataTableColumns"
+    [tableConfig]="customDataTableConfig"></app-common-data-table>
+}
+@else{
+    
+<h2>{{reviewProdutDetails.brand.brand_name}} | {{reviewProdutDetails.product_name}}</h2>
+<app-common-data-table [tableColumns]="reviewDataTableColumns" [tableConfig]="customReviewDataTableConfig"
+    (modelAction)="modelAction($event)" #custumtable></app-common-data-table>
+}
+
+
+<nz-modal [(nzVisible)]="isVisible" (nzOnCancel)="handleCancel()" (nzOnOk)="handleOk()" [nzFooter]="null"
+    [nzClosable]="false" [nzMaskClosable]="false" class="import-import-modal" [nzWidth]="600">
+    <ng-container *nzModalContent>
+        <div class="flex-box px-3 pt-3">
+            <div>
+                <h2 class="m-0">{{ editUser ? 'Update' : 'Add' }} Review
+                </h2>
+            </div>
+            <div class="border rounded-pill tej-close-icon clickable" (click)=handleCancel()>
+                <lucide-angular [img]="icons.common.close" [size]="20"></lucide-angular>
+            </div>
+        </div>
+        <div class="px-3 py-4">
+            <form [formGroup]="reviewForm">
+                <div class="feeback-container conatiner-width">
+                    <div class="right-container">
+
+                        <!-- Reviewer Name -->
+                        <div class="pb-2">
+                            <label class="label-text">
+                                Reviewer Name *
+                            </label>
+                        </div>
+
+                        <input nz-input placeholder="Enter reviewer name" nzSize="large"
+                            formControlName="reviewer_name" />
+
+                        <!-- Rating -->
+                        <div class="bg-clr py-3 rounded-xl mt-3">
+                            <h3 class="flex-area">
+                                <lucide-angular [img]="icons.product.star" class="star-header"
+                                    [size]="25"></lucide-angular>
+                                <span>Rating *</span>
+                            </h3>
+
+                            <div class="flex-box">
+                                <nz-rate formControlName="rating"></nz-rate>
+                                <h2 class="fw-bold m-0">
+                                    {{reviewForm.get('rating')?.value || 0}}/5
+                                </h2>
+                            </div>
+                        </div>
+
+                        <!-- Feedback Text -->
+                        <div class="bg-clr py-3 rounded-xl mt-3">
+                            <h3 class="flex-area">
+                                <lucide-angular [img]="icons.common.edit" [size]="25"></lucide-angular>
+                                Feedback
+                            </h3>
+
+                            <textarea nz-input rows="7" placeholder="Type here" formControlName="review_text">
+                        </textarea>
+                        </div>
+
+                        <!-- Review Images -->
+                        <div class="mt-2">
+                            <p>Review Image</p>
+                            <div class=" more-images-headers">
+                                @for(img of imagesArray.controls ;track img;let i=$index){
+                                <app-thumbnail-upload [label]="['Upload Image Size 1270x240','File Type: PNG, JPEG']"
+                                    [showLabel]="false" [allowedTypes]="['image/png','image/jpeg','image/webp']"
+                                    [fileUrl]="img.value" (thumbnailSelected)="selectedMoreImages($event,i)"
+                                    (deleteImgValue)="deleteAddedimagesValue($event,i)" [download]="true">
+                                </app-thumbnail-upload>
+                                }
+                            </div>
+
+                        </div>
+
+                        <!-- Submit -->
+                        <div class="mt-5 mb-5">
+                            <button class="tej-btn btn-primary rounded-xl py-2 border-0 w-100" (click)="submitReview()">
+
+                                <lucide-angular [img]="icons.product.star" [size]="21"></lucide-angular>
+                                <span class="ps-2 fw-bold feed-back-btn">{{editUser ? 'Update':'Submit'}} Feedback</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+
+
+        </div>
+    </ng-container>
+</nz-modal>
+
+<ng-template #imageTemplate let-row>
+    <img [src]="row?.thumbnail_image" alt="product image" class="table-pro-image">
+</ng-template>
+<!-- review images -->
+<ng-template #reviewImageTemplate let-row>
+    @if(row.images.length > 0 ){
+    @for( data of row.images; track data){
+    <img [src]="data?.image" alt="product image" class="table-pro-image">
+    }
+    }
+    @else{
+    <span>---</span>
+    }
+</ng-template>
+<ng-template #actionTemplate let-row>
+    <div class="flex-container">
+        <!-- <button class="tej-btn btn-lg border-0 rounded-lg btn-primary b2 fw-semibold w-100 add-review-btn">Add Review</button> -->
+
+        <div class="import-section-eye  h-100" (click)="view(row)">
+            <div class="eye-icon">
+                <lucide-angular [img]="icons.common.eye" class="lucide-icon" [size]="20"></lucide-angular>
+            </div>
+        </div>
+    </div>
+
+</ng-template>
+
+<ng-template #reviewActionTemplate let-row>
+    <div class="d-flex justify-content-end">
+        <button nz-button nzType="default" class="more-btn border" nz-dropdown [nzDropdownMenu]="menu">
+            <span class="text-xl fw-bold clickable">⋯</span>
+        </button>
+    </div>
+
+    <nz-dropdown-menu #menu="nzDropdownMenu">
+        <ul nz-menu>
+
+            <li nz-menu-item (click)="editReview(row)"><lucide-angular [img]="icons.common.edit"
+                    [size]="20"></lucide-angular>Edit Review</li>
+
+            <li nz-menu-item class="text-danger pe-4" (click)="deleteReview(row.id)"><lucide-angular
+                    [img]="icons.common.delete" [size]="20"></lucide-angular>Delete Review</li>
+        </ul>
+    </nz-dropdown-menu>
+</ng-template>
+
+<app-delete-model #deleteModel [headerText]="headerText" [subText]="subText"
+    (confirmDelete)="confirmDelete($event)"></app-delete-model>

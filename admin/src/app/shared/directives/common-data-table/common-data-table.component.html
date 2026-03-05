@@ -1,0 +1,135 @@
+<div #virtualTable class="common-data-table h-100">
+    <div class="toolbar">
+        <div class="left-section flex-box">
+            <!-- Search -->
+            @if(tableConfig.searchOption){
+            <nz-input-group [nzPrefix]="prefixIconSearch" nzSize="large" class="order-search">
+                <input type="text" nz-input [placeholder]="searchPlaceholder " autocapitalize="off" spellcheck="false"
+                    [(ngModel)]="searchText" (ngModelChange)="onSearchChange($event)" />
+            </nz-input-group>
+            <ng-template #prefixIconSearch>
+                <nz-icon nzType="search" />
+            </ng-template>
+            }
+            @if(tableConfig.viewZoneOption){
+            <!-- Zone Dropdown -->
+            <app-multi-select-dropdown [items]="zones" (selectedItemsChange)="zoneSelect($event)"
+                [selectedItems]="selectedZones" placeholder="Zone" labelKey="zone_name" idKey="id" [showIcon]="zoneIcon"
+                #zoneList>
+            </app-multi-select-dropdown>
+            }
+
+            <!-- status button -->
+            @if(tableConfig.status){
+            <nz-space-compact class="flex-box gap-4">
+                <a nz-dropdown nzTrigger="click" [nzDropdownMenu]="statusMenu"
+                    class="flex-box gap-4 text-black bg-secondary p-2 location">
+                    <lucide-angular [img]="icons.common.mapPin" [size]="16"></lucide-angular>{{selectedStatus}}
+                </a>
+            </nz-space-compact>
+            <nz-dropdown-menu #statusMenu="nzDropdownMenu">
+                <ul nz-menu nzSelectable>
+                    @for(status of status; track $index) {
+                    <li nz-menu-item>{{status}}</li>
+                    }
+                </ul>
+            </nz-dropdown-menu>
+            }
+            @if(tableConfig.searchOption){
+            <button nz-button nzType="text" class="reset-text border-0 clickable flex-box" (click)="resetInputs()"
+                [disabled]="(searchText?.length ==0 ||searchText == null) && selectedZones.length == 0 && selectedSort == 'Sort By'">
+                Reset
+                <lucide-angular [img]="icons.common.close" class="ms-1 d-flex" [size]="18">
+                </lucide-angular>
+            </button>
+            }
+            <!-- } -->
+        </div>
+
+        <!-- Right Side (Sort) -->
+        <div class="right-section flex-box gap-5">
+            @if(tableConfig.sortBy){
+            }
+            @if(tableConfig.showDateField){
+            <nz-range-picker [(ngModel)]="selectedRange" [nzFormat]="dateFormat" (ngModelChange)="onChange($event)">
+            </nz-range-picker>
+            }
+            @if(tableConfig.addOnBtnText){
+            <div class="sort-section">
+                <button class="tej-btn border-0 rounded-lg btn-primary b2 fw-semibold " (click)="showAddonBtnModal()">
+                    <lucide-angular [img]="tableConfig.addOnIcon" class="d-flex me-1" [size]="20"></lucide-angular>
+                    {{tableConfig.addOnBtnText}}
+                    @if(exportBtnLoader){
+                    <nz-icon class="ms-2" nzType="loading"></nz-icon>
+                    }
+                </button>
+            </div>
+            }
+            @if(tableConfig.btnText){
+            <div class="sort-section">
+                <button class="tej-btn border-0 rounded-lg btn-primary b2 fw-semibold " (click)="showModal()"
+                    [disabled]="listOfData?.length ==0 &&tableConfig.btnText =='Export' || exportBtnLoader">
+                    <lucide-angular [img]="tableConfig.btnIcon" class="d-flex me-1" [size]="20"></lucide-angular>
+                    {{tableConfig.btnText}}
+                    @if(exportBtnLoader){
+                    <nz-icon class="ms-2" nzType="loading"></nz-icon>
+                    }
+                </button>
+            </div>
+            }
+        </div>
+    </div>
+
+    <nz-table #fixedTable [nzData]="listOfData" [nzScroll]="tableScroll" [nzPageSize]="pageSize"
+        [nzLoading]="pageLoading" [nzPageIndex]="pageIndex" [nzTotal]="total" nzShowSizeChanger
+        [nzFrontPagination]="false" (nzQueryParams)="onQueryParamsChange($event)" [nzShowPagination]="false">
+        <thead>
+            <tr>
+                @for (column of tableColumns; track $index) {
+                <th nzLeft [nzSortOrder]="getSortOrder(column.sortKey)"
+                    (nzSortOrderChange)="onSortChange($event, column.sortKey)" [nzShowSort]="column.isSortable">
+                    {{ column.title }}
+                </th>
+                }
+            </tr>
+
+        </thead>
+        <tbody>
+            @for (data of fixedTable.data; track data) {
+            <tr>
+                @for (column of tableColumns; track $index) {
+                <td>
+                    @if (column.cellTemplate) {
+                    <ng-container *ngTemplateOutlet="column.cellTemplate; context: { $implicit: data }"></ng-container>
+                    } @else {
+                    @if (column.isDate) {
+                    {{ data[column.property] ? (data[column.property] | date:'MMM d yyyy, h:mm a') : '---' }}
+                    } @else {
+                    {{ data | NormalColumn: column.property }}
+                    }
+                    }
+                </td>
+                }
+
+
+                @if(tableActions.length > 0) {
+                <td>
+                    @for(action of tableActions; track $index) {
+                    <button nz-button nzType="link">{{action.title}}</button>
+                    }
+                </td>
+                }
+            </tr>
+            }
+        </tbody>
+    </nz-table>
+    <div class="pt-4 flex-box">
+        <div>{{ ((pageIndex - 1) * pageSize) + 1 }} -
+            {{ Math.min(pageIndex * pageSize, total) || 0}}
+            of {{ total }} row(s) selected.</div>
+
+        <nz-pagination [nzPageIndex]="pageIndex" [nzTotal]="total" [nzPageSize]="pageSize" [nzShowSizeChanger]="true"
+            (nzPageIndexChange)="onPageIndexChange($event)" (nzPageSizeChange)="onPageSizeChange($event)">
+        </nz-pagination>
+    </div>
+</div>

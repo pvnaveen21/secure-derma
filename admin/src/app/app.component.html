@@ -1,0 +1,26 @@
+<!-- <div class="theme-switcher" [ngClass]="showSubMenus ? 'bg-primary' : 'bg-secondary' ">
+  <button class="theme-option theme-light" [class.active]="currentTheme === 'default'" (click)="changeTheme('light')">
+    <lucide-angular [img]="icons.theme.light"></lucide-angular>
+    @if (currentTheme === 'default') {
+    <span class="b3">Light</span>
+    }
+  </button>
+
+  <button class="theme-option theme-dark" [class.active]="currentTheme === 'dark'" (click)="changeTheme('dark')">
+    <lucide-angular [img]="icons.theme.dark"></lucide-angular>
+    @if (currentTheme === 'dark') {
+    <span class="b3">Dark</span>
+    }
+  </button>
+
+  <button class="theme-option theme-coloured" [class.active]="currentTheme === 'coloured'"
+    (click)="changeTheme('coloured')">
+    <lucide-angular [img]="icons.theme.coloured"></lucide-angular>
+    @if (currentTheme === 'coloured') {
+    <span class="b3">Coloured</span>
+    }
+  </button>
+</div> -->
+<div class="app-container h-100">
+  <router-outlet></router-outlet>
+</div>

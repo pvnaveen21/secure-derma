@@ -1,0 +1,82 @@
+.cart-body-content {
+    .ant-dropdown-menu {
+        border-radius: 10px !important;
+    }
+
+    .ant-dropdown-menu {
+        padding: 0px;
+    }
+
+    .ant-dropdown-menu-item {
+        padding: 8px 25px;
+    }
+
+    .ant-collapse-content {
+        border-top: none !important;
+        background-color: var(--tej-bg-secondary) !important;
+
+    }
+
+    .ant-table-content {
+        background-color: var(--tej-bg-secondary) !important;
+    }
+
+    .ant-collapse-header-text {
+        font-weight: 600 !important;
+    }
+
+    .childer-panel .ant-collapse-header {
+        border-bottom: 1px solid rgb(245, 240, 240) !important;
+    }
+
+    .ant-table-thead>tr>th {
+        border-bottom: none !important;
+    }
+
+    .ant-collapse-content .childer-panel {
+        margin: 10px !important;
+    }
+
+    .ant-collapse-content>.ant-collapse-content-box {
+        padding: 0px 0px 0px 0px !important;
+    }
+
+    .ant-collapse>.ant-collapse-item {
+        margin-bottom: 10px !important;
+    }
+
+    .ant-table-thead>tr>th:not(:last-child):not(.ant-table-selection-column):not(.ant-table-row-expand-icon-cell):not([colspan])::before {
+        position: unset !important;
+    }
+
+    .ant-collapse-icon-position-end>.ant-collapse-item>.ant-collapse-header {
+        align-items: center !important;
+    }
+
+    .ant-table-thead>tr>th {
+        background-color: transparent !important;
+    }
+}
+
+.custom-modal-style {
+    .ant-modal-content {
+        border-radius: 15px !important;
+    }
+}
+
+.cart-summary-container {
+    background-color: red;
+
+    .ant-select-selector {
+        background-color: var(--tej-bg-primary) !important;
+        border: none !important;
+        border-radius: 20px !important;
+        min-width: 90px !important;
+    }
+}
+
+.ant-menu-title-content {
+    display: flex !important;
+    align-items: center;
+    gap: 12px;
+}

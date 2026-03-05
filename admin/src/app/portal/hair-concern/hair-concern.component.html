@@ -1,0 +1,78 @@
+<!-- secura -->
+<div class="h-100">
+    <app-common-data-table [tableColumns]="customDataTableColumns" [tableConfig]="customDataTableConfig"
+        (modelAction)="modelAction($event)" #custumtable
+        [searchPlaceholder]="'Search by Hair Concern'"></app-common-data-table>
+</div>
+<nz-modal [(nzVisible)]="isVisible" nzTitle="" (nzOnCancel)="handleCancel()" (nzOnOk)="handleOk()" [nzFooter]="null"
+    [nzClosable]="false" [nzMaskClosable]="false" class="padding-less-modal" [nzAutofocus]="null">
+
+    <ng-container *nzModalContent>
+        <form [formGroup]="executiveForm" (ngSubmit)="onSubmitExe()">
+            <div class="pt-4">
+                <div class="flex-box px-4 pb-3">
+                    <h2 class="m-0">{{editUser ? 'Update': 'Add New'}} Hair Concern</h2>
+                    <div class="border rounded-pill tej-close-icon clickable" (click)=handleCancel()>
+                        <lucide-angular [img]="icons.common.close" [size]="20"></lucide-angular>
+                    </div>
+                </div>
+
+                <div class="exe-form-content px-4 mb-5">
+                    <div class="pt-2">
+                        <div class="pb-2">
+                            <label for="nameId" class="label-text">Hair Concern</label>
+                        </div>
+                        <input nz-input formControlName="hair_concern" placeholder="Enter Your Hair Concern"
+                            nzSize="large" id="nameId" appInputSanitize [removeLeadingSpace]="true" />
+                        <control-messages [control]="executiveForm.controls['hair_concern']"></control-messages>
+                    </div>
+
+                    <div class="flex-box switch-main rounded-xl p-3 mb-3 mt-4">
+                        <div class="b1">Show Banner</div>
+                        <nz-switch formControlName="show_banner"></nz-switch>
+                    </div>
+
+                </div>
+
+
+                <div class=" buttons  d-flex footer-btn-main align-items-center w-100 px-4 pb-4">
+                    <button class="tej-btn btn-lg  border-0 rounded-lg bg-danger-50 text-primary b2 fw-semibold w-100"
+                        type="button" (click)="handleCancel()">Cancel</button>
+                    <button class="tej-btn btn-lg border-0 rounded-lg btn-primary b2 fw-semibold w-100" type="submit"
+                        [disabled]="submitAPILoading">
+                        {{editUser ? "Update" : "Save"}} @if (submitAPILoading) {
+                        <nz-icon class="ms-2" nzType="loading"></nz-icon>
+                        }
+                    </button>
+                </div>
+            </div>
+
+        </form>
+    </ng-container>
+</nz-modal>
+
+<!--  -->
+
+
+<ng-template #actionTemplate let-row>
+    <div class="d-flex justify-content-end">
+        <button nz-button nzType="default" class="more-btn border" nz-dropdown [nzDropdownMenu]="menu">
+            <span class="text-xl fw-bold clickable">⋯</span>
+        </button>
+    </div>
+
+    <nz-dropdown-menu #menu="nzDropdownMenu">
+        <ul nz-menu>
+
+            <li nz-menu-item (click)="editAction(row)"><lucide-angular [img]="icons.common.edit"
+                    [size]="20"></lucide-angular>Edit Product</li>
+
+            <li nz-menu-item class="text-danger pe-4" (click)="deleteAction(row.id)"><lucide-angular
+                    [img]="icons.common.delete" [size]="20"></lucide-angular>Delete Product</li>
+        </ul>
+    </nz-dropdown-menu>
+</ng-template>
+
+
+<app-delete-model #deleteModel [headerText]="headerText" [subText]="subText"
+    (confirmDelete)="confirmDelete($event)"></app-delete-model>

@@ -1,0 +1,44 @@
+@if(!previewUrl){
+<div class="thumbnail-upload-box" (click)="triggerUpload(fileInput)">
+    <input type="file" #fileInput [accept]="accept" hidden (change)="onFileChange($event)" />
+    <div class="upload-content">
+        @if(showLabel){
+        <lucide-angular [img]="icons.common.fileUp" class=" text-primary mb-2"></lucide-angular>
+        }
+        @for(data of label;track data){
+        <p>{{ data }}</p>
+        }
+    </div>
+
+</div>
+@if(showErrorMesage){
+<p class="error text-danger py-1">{{ errorMessage ? errorMessage : '' }}</p>
+}
+}
+@else{
+<ng-container>
+    <div class="img-preview-main">
+        <img [src]="previewUrl" class="thumbnail-preview" />
+        @if(showDeleteIcon){
+        @if(download){
+        <div class="img-download m-0 clickable" (click)="downloadImg(previewUrl)">
+            <lucide-angular [img]="icons.common.download" class="delete-icon d-flex m-0" size="20"></lucide-angular>
+        </div>
+     }
+        <div class="img-remover m-0 clickable" (click)="deleteImg()">
+            <lucide-angular [img]="icons.common.delete" class="delete-icon d-flex m-0" size="20"></lucide-angular>
+        </div>
+        }
+    </div>
+    @if(!showDeleteIcon){
+    <div (click)="triggerUpload(fileInput)">
+        <div class="change-file py-2">Change file</div>
+        <input type="file" #fileInput [accept]="accept" hidden (change)="onFileChange($event)" />
+    </div>
+
+    }
+</ng-container>
+}
+
+<app-delete-model #deleteModel [headerText]="headerText" [subText]="subText"
+    (confirmDelete)="confirmDelete($event)"></app-delete-model>

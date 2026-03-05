@@ -1,0 +1,25 @@
+// Overflow
+@each $val in (auto, hidden, scroll, visible) {
+  .overflow-#{$val} {
+    overflow: $val;
+  }
+}
+
+// Shadow
+.shadow {
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+.shadow-sm {
+  box-shadow: 0 0.05rem 0.1rem rgba(0, 0, 0, 0.05);
+}
+.shadow-lg {
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+// Border
+.border {
+  border: 1px solid #dee2e6;
+}
+.border-0 {
+  border: 0;
+}

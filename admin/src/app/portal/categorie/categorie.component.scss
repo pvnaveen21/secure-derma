@@ -1,0 +1,94 @@
+.label-text {
+    font-weight: 500;
+}
+
+.switch-text {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.selected-clr {
+    background-color: var(--ant-primary-1);
+    color: var(--ant-primary-color);
+    border: 1px solid transparent !important;
+}
+
+.zone-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 10px;
+}
+
+.metal-chip {
+    border-radius: 7px;
+    min-width: 100%;
+    padding: 7px;
+    cursor: pointer;
+    display: flex;
+    // gap: 7px;
+}
+
+.footer-btn-main {
+    justify-content: space-around;
+    gap: 20px;
+}
+
+
+.active-status {
+    padding: 6px 12px;
+    border-radius: 15px;
+    color: var(--success-color);
+    background-color: var(--success-bg-color);
+}
+
+.non-status {
+    padding: 6px 12px;
+    border-radius: 15px;
+    color: var(--muted);
+    background-color: var(--tej-bg-primary);
+}
+
+.error-message {
+    font-size: 12px;
+}
+
+.switch-main {
+    background-color: var(--tej-bg-primary);
+}
+
+.metal-chip {
+    border-radius: 7px;
+    min-width: 100%;
+    padding: 7px;
+    cursor: pointer;
+    display: flex;
+    // gap: 7px;
+}
+
+.permisson-selected-clr {
+    background-color: var(--ant-primary-1);
+    color: var(--ant-primary-color);
+    border: 1px solid transparent !important;
+}
+
+.disable-pointer {
+    pointer-events: none !important;
+    cursor: not-allowed !important;
+    border-color: gray !important;
+    opacity: 0.3 !important;
+}
+
+.exe-form-content {
+    max-height: 50vh;
+    overflow-y: auto;
+    scrollbar-width: thin;
+}
+
+::ng-deep .ant-modal-body {
+    padding: 0px !important;
+}
+
+.reset-header {
+    gap: 7px;
+}

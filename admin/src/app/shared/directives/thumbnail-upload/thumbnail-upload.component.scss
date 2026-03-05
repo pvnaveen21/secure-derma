@@ -1,0 +1,69 @@
+/* thumbnail-upload.component.scss */
+.thumbnail-upload-box {
+    border: 2px dashed #c0392b;
+    background: #fcecec;
+    border-radius: 8px;
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.3s ease;
+    height: 149px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    &:hover {
+        border-color: #e74c3c;
+    }
+}
+
+.upload-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: #a93226;
+}
+
+.thumbnail-preview {
+    width: 100%;
+    height: 150px;
+    border-radius: 6px;
+    object-fit: cover;
+}
+
+.img-preview-main {
+    position: relative;
+}
+
+.img-remover {
+    position: absolute;
+    bottom: 12px;
+    right: 12px;
+    background: var(--white);
+    padding: 5px;
+    border-radius: 5px;
+}
+
+.img-download {
+    position: absolute;
+    bottom: 12px;
+    right: 50px;
+    background: var(--white);
+    padding: 5px;
+    border-radius: 5px;
+}
+
+.delete-icon {
+    color: black;
+}
+
+.change-file {
+    color: rgb(91, 91, 255);
+    display: inline-block;
+    cursor: pointer;
+}
+
+.error {
+    margin-top: 5px;
+    font-size: 12px;
+}

@@ -1,0 +1,11 @@
+.sub-text {
+    color: var(--muted);
+}
+
+.footer-btn-main {
+    gap: 14px;
+}
+
+::ng-deep .delete-model .ant-modal-content {
+    border-radius: 21px !important;
+}

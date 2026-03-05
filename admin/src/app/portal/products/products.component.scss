@@ -1,0 +1,53 @@
+.info-icon {
+    color: #1890ff;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+::ng-deep .ant-modal-body {
+    padding: 0px !important;
+}
+
+.more-images-headers {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.product-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1rem;
+}
+.add-product-deatil-main{
+    display: flex;
+    justify-content: end;
+}
+.product-count-header{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.remove-header{
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+.table-pro-image{
+    width: 70px;
+    height: 70px;
+    object-fit: contain;
+}
+.input-width{
+    flex:1 !important
+}
+.switch-main {
+    background-color: var(--tej-bg-primary);
+}
+.h-btn{
+    white-space: nowrap;
+}
+.active-btn{
+    background-color: green !important;
+    color: white !important;
+}
