@@ -1,0 +1,520 @@
+<!-- <div>
+    <button class="tej-btn border-0 rounded-lg btn-primary b2 fw-semibold " (click)="showUploadModal()">
+        <lucide-angular [img]="icons.common.upload" class="d-flex me-1" [size]="20"></lucide-angular>
+        Add Product
+    </button>
+</div> -->
+
+
+<app-common-data-table [tableColumns]="customDataTableColumns" [tableConfig]="customDataTableConfig"
+    (modelAction)="modelAction($event)" #custumtable >
+    <div>
+        <button class="tej-btn border-0 h-btn" [ngClass]="{'active-btn':trendingStatus}"
+            (click)="headerBtnStatus(1,!trendingStatus)">Trending Product</button>
+    </div>
+    <div>
+        <button class="tej-btn border-0 h-btn" [ngClass]="{'active-btn':bestSellerStatus}"
+            (click)="headerBtnStatus(2,!bestSellerStatus)">Best Seller</button>
+    </div>
+</app-common-data-table>
+
+<nz-modal [(nzVisible)]="isVisible" (nzOnCancel)="handleCancel()" (nzOnOk)="handleOk()" [nzFooter]="null"
+    [nzClosable]="false" [nzMaskClosable]="false" class="import-import-modal" [nzWidth]="600">
+    <ng-container *nzModalContent>
+        <div class="flex-box px-3 pt-3">
+            <div>
+                <h2 class="m-0">{{ editUser ? 'Update' : 'Add' }} Product
+                </h2>
+            </div>
+            <div class="border rounded-pill tej-close-icon clickable" (click)=handleCancel()>
+                <lucide-angular [img]="icons.common.close" [size]="20"></lucide-angular>
+            </div>
+        </div>
+        <div class="px-3 py-4">
+            <form [formGroup]="productForm" (ngSubmit)="submitForm()">
+                <div class="flex-box switch-main rounded-xl p-3 mb-3 mt-3">
+                    <div class="b1">Trending Product</div>
+                    <nz-switch formControlName="trending_product"></nz-switch>
+                </div>
+                <div class="flex-box switch-main rounded-xl p-3 mb-3 mt-3">
+                    <div class="b1">Best Seller</div>
+                    <nz-switch formControlName="best_seller"></nz-switch>
+                </div>
+                <!-- Brand Select -->
+                <div class="pb-2">
+                    <label for="brand_name" class="label-text">Brand Name
+                        <lucide-angular [img]="icons.common.asterisk" class="text-danger" [size]="14"></lucide-angular>
+                    </label>
+                </div>
+                <nz-select formControlName="brand_id" nzShowSearch nzAllowClear class="w-100" nzSize="large"
+                    nzPlaceHolder="Select a Brand" id="brand_name">
+                    @for (data of brandsList; track data.id) {
+                    <nz-option [nzLabel]="data.brand_name" [nzValue]="data.id">
+                    </nz-option>
+                    }
+                </nz-select>
+                <control-messages [control]="productForm.controls['brand_id']"
+                    [ErrorText]="'brand name'"></control-messages>
+
+                <!-- Categories -->
+                <div class="mt-2">
+                    <div class="pb-2">
+                        <label for="categorie" class="label-text">Categories
+                            <lucide-angular [img]="icons.common.asterisk" class="text-danger"
+                                [size]="14"></lucide-angular>
+                        </label>
+                    </div>
+                    <nz-select formControlName="categorie" nzShowSearch nzAllowClear class="w-100" nzSize="large"
+                        nzPlaceHolder="Select a Product type" id="categorie">
+                        @for (data of categoriesList; track data.id) {
+                        <nz-option [nzLabel]="data.categorie" [nzValue]="data.id">
+                        </nz-option>
+                        }
+                    </nz-select>
+                    <control-messages [control]="productForm.controls['categorie']"
+                        [ErrorText]="'categorie'"></control-messages>
+                </div>
+
+
+                <!-- Product type -->
+                <div class="mt-2">
+                    <div class="pb-2">
+                        <label for="product_type" class="label-text">Product type
+                            <lucide-angular [img]="icons.common.asterisk" class="text-danger"
+                                [size]="14"></lucide-angular>
+                        </label>
+                    </div>
+                    <nz-select formControlName="product_type" nzShowSearch nzAllowClear class="w-100" nzSize="large"
+                        nzPlaceHolder="Select a Product type" id="product_type">
+                        @for (data of productTypeList; track data.id) {
+                        <nz-option [nzLabel]="data.product_type" [nzValue]="data.id">
+                        </nz-option>
+                        }
+                    </nz-select>
+                    <control-messages [control]="productForm.controls['product_type']"
+                        [ErrorText]="'product type'"></control-messages>
+                </div>
+
+                <!-- Product Name -->
+                <div class="mt-2">
+                    <div class="pb-2">
+                        <label for="product_name" class="label-text">Product Name
+                            <lucide-angular [img]="icons.common.asterisk" class="text-danger"
+                                [size]="14"></lucide-angular>
+                        </label>
+                    </div>
+                    <input nz-input placeholder="Enter product name" formControlName="product_name" nzSize="large" />
+                    <control-messages [control]="productForm.controls['product_name']"
+                        [ErrorText]="'product name'"></control-messages>
+
+                </div>
+
+                <!-- ingredient -->
+                <div class="mt-2">
+                    <div class="pb-2">
+                        <label for="ingredient" class="label-text">Add Ingredient
+                            <lucide-angular [img]="icons.common.asterisk" class="text-danger"
+                                [size]="14"></lucide-angular>
+                        </label>
+                    </div>
+                    <nz-select nzMode="tags" nzPlaceHolder="Add Ingredient" formControlName="ingredient" class="w-100"
+                        nzSize="large">
+                        @for (data of ingredientList; track data) {
+                        <nz-option [nzLabel]="data.ingredient" [nzValue]="data.id"></nz-option>
+                        }
+                    </nz-select>
+
+                </div>
+
+
+                <!-- skin Concern  -->
+                <div class="mt-2">
+                    <div class="pb-2">
+                        <label for="skin_concern" class="label-text">Add Skin Concern </label>
+                    </div>
+                    <nz-select nzMode="tags" nzPlaceHolder="Add Skin Concern" formControlName="skin_concern"
+                        class="w-100" nzSize="large">
+                        @for (data of skinConcernList; track data) {
+                        <nz-option [nzLabel]="data.skin_concern" [nzValue]="data.id"></nz-option>
+                        }
+                    </nz-select>
+
+                </div>
+
+                <!-- hair Concern  -->
+                <div class="mt-2">
+                    <div class="pb-2">
+                        <label for="hair_concern" class="label-text">Add hair Concern </label>
+                    </div>
+                    <nz-select nzMode="tags" nzPlaceHolder="Add hair Concern" formControlName="hair_concern"
+                        class="w-100" nzSize="large">
+                        @for (data of hairConcernList; track data) {
+                        <nz-option [nzLabel]="data.hair_concern" [nzValue]="data.id"></nz-option>
+                        }
+                    </nz-select>
+
+                </div>
+                <div class="mt-2">
+                    <nz-divider></nz-divider>
+                </div>
+
+                <div class="mt-2">
+                    <div style="display: grid;grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <!-- thumbnail image -->
+                        <div>
+                            <div class="mb-2">Product thumbnail image
+                                <lucide-angular [img]="icons.common.asterisk" class="text-danger"
+                                    [size]="14"></lucide-angular>
+
+                            </div>
+                            <app-thumbnail-upload [label]="['Upload Image Size 1270x240','File Type: PNG, JPEG']"
+                                [showLabel]="false" [allowedTypes]="['image/png','image/jpeg','image/webp']"
+                                [fileUrl]="productForm.get('thumbnail_image')?.value"
+                                (thumbnailSelected)="onThumbnailSelected($event)"
+                                (deleteImgValue)="deleteImgValue($event)" [download]="true">
+                            </app-thumbnail-upload>
+                            <control-messages [control]="productForm.controls['thumbnail_image']"
+                                [ErrorText]="'thumbnail image'"></control-messages>
+                        </div>
+
+                        <!-- hover image -->
+                        <div>
+                            <div class="mb-2">Product hover image
+                                <lucide-angular [img]="icons.common.asterisk" class="text-danger"
+                                    [size]="14"></lucide-angular>
+                            </div>
+                            <app-thumbnail-upload [label]="['Upload Image Size 1270x240','File Type: PNG, JPEG']"
+                                [showLabel]="false" [allowedTypes]="['image/png','image/jpeg','image/webp']"
+                                [fileUrl]="productForm.get('hover_image')?.value"
+                                (thumbnailSelected)="selectedHoverImage($event)"
+                                (deleteImgValue)="deleteImgValue($event)" [download]="true">
+                            </app-thumbnail-upload>
+
+                            <control-messages [control]="productForm.controls['hover_image']"
+                                [ErrorText]="'hover image'"></control-messages>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                </div>
+                <div class="mt-2">
+                    <nz-divider></nz-divider>
+                </div>
+                <div class="mt-2">
+                    <p>Additional images
+                        <lucide-angular [img]="icons.common.asterisk" class="text-danger"
+                            [size]="14"></lucide-angular><span>(minimum 3 images needs)</span>
+                    </p>
+                    <div class=" more-images-headers">
+                        @for(img of imagesArray.controls ;track img;let i=$index){
+                        <app-thumbnail-upload [label]="['Upload Image Size 1270x240','File Type: PNG, JPEG']"
+                            [showLabel]="false" [allowedTypes]="['image/png','image/jpeg','image/webp']"
+                            [fileUrl]="img.value" (thumbnailSelected)="selectedMoreImages($event,i)"
+                            (deleteImgValue)="deleteAddedimagesValue($event,i)" [download]="true">
+                        </app-thumbnail-upload>
+                        }
+                    </div>
+                </div>
+                @if(submitBoolean && additionalImageCheck()){
+                <p class="text-danger"><small>Minimum 3 images needs</small></p>
+                }
+
+                <div class="mt-2">
+                    <nz-divider></nz-divider>
+                </div>
+
+                <!-- EXTRA KEY POINTS -->
+                <div class="mt-2">
+                    <p>Product Description</p>
+                    <textarea nz-input placeholder="Product Description" [nzAutosize]="{ minRows: 3, maxRows: 10 }"
+                        formControlName="product_description" appInputSanitize [removeLeadingSpace]="true"></textarea>
+                </div>
+
+                <div class="mt-3">
+                    <div class="flex-box">
+                        <p class="m-0">Key Benefits</p>
+                        <div class="text-primary my-3 clickable" (click)="addKeyBenefitsBtn()">Add Point</div>
+                    </div>
+
+                    <div formArrayName="key_benefits">
+                        @for(data of keyBenefitArray.controls; track data; let i = $index) {
+                        <div class=" pb-2">
+                            <div class="flex-box gap-5">
+                                <div [formGroupName]="i" class=" input-width">
+                                    <input nz-input placeholder="Enter Key Benefits" nzSize="large"
+                                        formControlName="value" appInputSanitize [removeLeadingSpace]="true" />
+                                </div>
+                                <div class="clickable text-danger" (click)="removeKeybenefit(data.value,i)">
+                                    <lucide-angular [img]="icons.common.close" class="d-flex"
+                                        [size]="25"></lucide-angular>
+                                </div>
+                            </div>
+                        </div>
+                        }
+                    </div>
+                </div>
+
+                <!-- how to use -->
+                <div class="mt-3">
+                    <div class="flex-box">
+                        <p class="m-0">How to use</p>
+                        <div class="text-primary my-3 clickable" (click)="addHowToUseBtn()">Add Point</div>
+                    </div>
+
+                    <div formArrayName="how_to_use">
+                        @for(data of howToUseArray.controls; track data; let i = $index) {
+                        <div class=" pb-2">
+                            <div class="flex-box gap-5">
+                                <div [formGroupName]="i" class=" input-width">
+                                    <input nz-input placeholder="Enter how to use" nzSize="large"
+                                        formControlName="value" appInputSanitize [removeLeadingSpace]="true" />
+                                </div>
+                                <div class="clickable text-danger" (click)="removeHowToUse(data.value,i)">
+                                    <lucide-angular [img]="icons.common.close" class="d-flex"
+                                        [size]="25"></lucide-angular>
+                                </div>
+                            </div>
+                        </div>
+                        }
+                    </div>
+                </div>
+
+                <!-- Key Ingredients -->
+                <div class="mt-3">
+                    <div class="flex-box">
+                        <p class="m-0">Key Ingredients</p>
+                        <div class="text-primary my-3 clickable" (click)="addKeyIngredientsBtn()">Add Point</div>
+                    </div>
+
+                    <div formArrayName="key_ingredients">
+                        @for(data of keyIngredientsArray.controls; track data; let i = $index) {
+                        <div class=" pb-2">
+                            <div class="flex-box gap-5">
+                                <div [formGroupName]="i" class=" input-width">
+                                    <input nz-input placeholder="Enter Key Ingredients" nzSize="large"
+                                        formControlName="value" appInputSanitize [removeLeadingSpace]="true" />
+                                </div>
+                                <div class="clickable text-danger" (click)="removeKeyIngredients(data.value,i)">
+                                    <lucide-angular [img]="icons.common.close" class="d-flex"
+                                        [size]="25"></lucide-angular>
+                                </div>
+                            </div>
+                        </div>
+                        }
+                    </div>
+                </div>
+
+
+
+                <div class="mt-2">
+                    <nz-divider></nz-divider>
+                </div>
+
+                <div>
+                    <div class="add-product-deatil-main">
+                        <div class="text-primary my-3 clickable " (click)="addProductDetailsBtn()">Add
+                            Product</div>
+                    </div>
+                    <div formArrayName="product_details">
+                        @for(product of productDetailsArray.controls; track product; let i = $index) {
+                        @if(i > 0){
+                        <div class="mt-2">
+                            <nz-divider></nz-divider>
+                        </div>
+                        }
+                        <div class="product-count-header">
+                            <div class="fw-semibold my-2 text-primary">Product {{i+1}}
+                                @if(i ==0){
+                                <lucide-angular [img]="icons.common.asterisk" class="text-danger"
+                                    [size]="14"></lucide-angular>
+                                }
+                            </div>
+                            <div class="remove-header clickable text-danger"
+                                (click)="removeProductDetail(product.value,i)">
+                                <span> Remove</span>
+                                <lucide-angular [img]="icons.common.close" class="d-flex" [size]="16"></lucide-angular>
+                            </div>
+                        </div>
+                        <div [formGroupName]="i" class="product-row">
+
+                            <!-- Product Weight -->
+                            <div class="">
+                                <label for="product_weight" class="label-text">Product Weight</label>
+                                <nz-input-group [nzAddOnAfter]="addOnAfterTemplate" nzSize="large">
+                                    <input type="text" nz-input placeholder="Product Weight"
+                                        formControlName="product_weight" appInputSanitize [removeLeadingSpace]="true"
+                                        [allowOnlyNumbers]="true" />
+                                </nz-input-group>
+                                <ng-template #addOnAfterTemplate>
+                                    <nz-select formControlName="weight_type" style="width: 100px;">
+                                        <nz-option nzLabel="gm" nzValue="gm"></nz-option>
+                                        <nz-option nzLabel="tablet" nzValue="tablet"></nz-option>
+                                        <nz-option nzLabel="tablets" nzValue="tablets"></nz-option>
+                                        <nz-option nzLabel="ml" nzValue="ml"></nz-option>
+                                        <nz-option nzLabel="sachets" nzValue="sachets"></nz-option>
+                                        <nz-option nzLabel="mg" nzValue="mg"></nz-option>
+                                        <nz-option nzLabel="g" nzValue="g"></nz-option>
+                                        <nz-option nzLabel="kg" nzValue="kg"></nz-option>
+                                        <nz-option nzLabel="L" nzValue="L"></nz-option>
+                                        <nz-option nzLabel="oz" nzValue="oz"></nz-option>
+                                    </nz-select>
+                                </ng-template>
+                            </div>
+
+                            <!-- Combo -->
+                            <div class="">
+                                <label for="combo" class="label-text">Combo</label>
+                                <nz-input-group [nzPrefix]="comboTemplate" nzSize="large">
+                                    <input nz-input placeholder="Combo" appInputSanitize [removeLeadingSpace]="true"
+                                        [allowOnlyNumbers]="true" formControlName="combo" />
+                                </nz-input-group>
+                                <ng-template #comboTemplate>
+                                    <lucide-angular [img]="icons.common.indianRupee" [size]="16"></lucide-angular>
+                                </ng-template>
+                            </div>
+
+                            <!-- original price -->
+                            <div class="">
+                                <label for="original_price" class="label-text">Original price</label>
+                                <nz-input-group [nzPrefix]="prefixTemplate" nzSize="large">
+                                    <input nz-input formControlName="original_price" placeholder="Original Price"
+                                        appInputSanitize [removeLeadingSpace]="true" [allowOnlyNumbers]="true" />
+                                </nz-input-group>
+                                <ng-template #prefixTemplate>
+                                    <lucide-angular [img]="icons.common.indianRupee" [size]="16"></lucide-angular>
+                                </ng-template>
+                            </div>
+
+                            <!-- selling price -->
+                            <div class="">
+                                <label for="original_price" class="label-text">Selling Price</label>
+                                <nz-input-group [nzPrefix]="prefixSellingPriceTemplate" nzSize="large">
+                                    <input nz-input placeholder="Selling Price" appInputSanitize
+                                        formControlName="selling_price" [removeLeadingSpace]="true"
+                                        [allowOnlyNumbers]="true" />
+                                </nz-input-group>
+                                <ng-template #prefixSellingPriceTemplate>
+                                    <lucide-angular [img]="icons.common.indianRupee" [size]="16"></lucide-angular>
+                                </ng-template>
+                            </div>
+
+                            <!-- discount price -->
+                            <div class="">
+                                <label for="original_price" class="label-text">Discount Price</label>
+                                <nz-input-group [nzPrefix]="prefixDiscountPriceTemplate" nzSize="large">
+                                    <input nz-input placeholder="Discount Price" appInputSanitize
+                                        formControlName="discount_price" [removeLeadingSpace]="true"
+                                        [allowOnlyNumbers]="true" readonly nzDisabled />
+                                </nz-input-group>
+                                <ng-template #prefixDiscountPriceTemplate>
+                                    <lucide-angular [img]="icons.common.indianRupee" [size]="16"></lucide-angular>
+                                </ng-template>
+                            </div>
+
+                            <!-- Stock Count -->
+                            <div class="">
+                                <label for="original_price" class="label-text">Available Stock Count</label>
+                                <nz-input-group [nzPrefix]="prefixStockCountTemplate" nzSize="large">
+                                    <input nz-input placeholder="Available Stock Count" appInputSanitize
+                                        [removeLeadingSpace]="true" [allowOnlyNumbers]="true"
+                                        formControlName="available_stock_count" />
+                                </nz-input-group>
+                                <ng-template #prefixStockCountTemplate>
+                                    <lucide-angular [img]="icons.common.warehouse" [size]="16"></lucide-angular>
+                                </ng-template>
+                            </div>
+                        </div>
+                        }
+                    </div>
+
+                </div>
+
+            </form>
+
+        </div>
+
+        <nz-divider></nz-divider>
+
+        <div class=" buttons  d-flex footer-btn-main align-items-center w-100 px-4 pb-4 gap-5">
+            <button class="tej-btn btn-lg  border-0 rounded-lg bg-danger-50 text-primary b2 fw-semibold w-100"
+                type="button" (click)="handleCancel()">Cancel</button>
+            <button class="tej-btn btn-lg border-0 rounded-lg btn-primary b2 fw-semibold w-100" type="submit"
+                [disabled]="submitAPILoading" (click)="submitForm()">
+                {{editUser ? "Update" : "Save"}} @if (submitAPILoading) {
+                <nz-icon class="ms-2" nzType="loading"></nz-icon>
+                }
+            </button>
+        </div>
+
+    </ng-container>
+</nz-modal>
+
+<!-- upload success modal -->
+<nz-modal [(nzVisible)]="isSuccessVisible" (nzOnCancel)="handleSucessCancel()" (nzOnOk)="handleOk()" [nzFooter]="null"
+    [nzClosable]="false" [nzMaskClosable]="false" class="import-import-modal">
+    <ng-container *nzModalContent>
+        <div class=" flex-box">
+            <div>
+            </div>
+            <div class="border rounded-pill tej-close-icon clickable" (click)=handleSucessCancel()>
+                <lucide-angular [img]="icons.common.close" [size]="20"></lucide-angular>
+            </div>
+        </div>
+        <div class="success-img-main">
+            <svg-load class="star-svg" [src]="assets.common.successTick"></svg-load>
+            <img [src]="assets.common.successPop" class="pop-gif" loading="lazy" />
+        </div>
+
+        <div class="mt-3 text-center">
+            <h2 class="mb-1">Import Successful</h2>
+            <div class="b3 mut-clr pb-3">The products in the Excel file have been imported successfully.</div>
+        </div>
+    </ng-container>
+</nz-modal>
+
+
+<ng-template #actionTemplate let-row>
+    <div class="d-flex justify-content-end">
+        <button nz-button nzType="default" class="more-btn border" nz-dropdown [nzDropdownMenu]="menu">
+            <span class="text-xl fw-bold clickable">⋯</span>
+        </button>
+    </div>
+
+    <nz-dropdown-menu #menu="nzDropdownMenu">
+        <ul nz-menu>
+
+            <li nz-menu-item (click)="editAction(row)"><lucide-angular [img]="icons.common.edit"
+                    [size]="20"></lucide-angular>Edit Brand</li>
+
+            <li nz-menu-item class="text-danger pe-4" (click)="deleteAction(row.id)"><lucide-angular
+                    [img]="icons.common.delete" [size]="20"></lucide-angular>Delete Brand</li>
+        </ul>
+    </nz-dropdown-menu>
+</ng-template>
+
+<ng-template #imageTemplate let-row>
+    <img [src]="row?.thumbnail_image" alt="product image" class="table-pro-image">
+</ng-template>
+
+<ng-template #trendingProductTemplate let-data>
+    <span>
+        @if(data.trending_product) {
+        <lucide-angular [img]="icons.product.star" [size]="20" style="color: green;"></lucide-angular>
+        }
+        @else{
+        ---
+        }</span>
+</ng-template>
+
+<ng-template #bestSellerTemplate let-data>
+    <span>
+        @if(data.best_seller) {
+        <lucide-angular [img]="icons.product.star" [size]="20" style="color: green;"></lucide-angular>
+        }
+        @else{
+        ---
+        }</span>
+</ng-template>
+
+<app-delete-model #deleteModel [headerText]="headerText" [subText]="subText"
+    (confirmDelete)="confirmDelete($event)"></app-delete-model>

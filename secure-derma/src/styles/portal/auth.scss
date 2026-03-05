@@ -1,0 +1,71 @@
+.login-page-container {
+  --background-image_pattern: '';
+  position: relative;
+  background: url('/assets/images/login/background.svg');
+  min-height: 100%;
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
+
+  .login-content {
+    width: 622px;
+    height: 620px;
+
+    .content {
+      padding: 20px;
+    }
+
+
+    input,
+    .password-input-group {
+      background-color: white;
+    }
+
+    input::placeholder,
+    input {
+      color: #0B0A0AB2 !important;
+      opacity: 1 !important;
+    }
+
+    .top-star-icon {
+      position: absolute;
+      top: 70px;
+      left: 0;
+    }
+
+    .login-form-container {
+      width: 400px;
+      height: 540px;
+      background-color: white;
+    }
+
+    .bottom-star-icon {
+      position: absolute;
+      bottom: 70px;
+      right: 0;
+    }
+  }
+
+  .password-input {
+    padding: 0.21875rem 0 !important;
+    font-size: 16px !important;
+  }
+
+  .tej-btn {
+    background-position: center;
+    background-size: cover;
+    background-repeat: no-repeat;
+    height: 45px;
+    border: none;
+  }
+}
+
+.change-password-container {
+  background-color: white;
+}
+
+.login-loader {
+  .ant-spin-dot i {
+    background-color: var(--white) !important;
+  }
+}

@@ -1,0 +1,31 @@
+/* Sticky header */
+.header-container {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    background-color: white;
+    transition: box-shadow 0.3s ease;
+    // box-shadow: 0px 6px 20px rgba(0, 0, 0, 0.25);
+}
+
+/* Shadow appears when scrolled */
+.header-container.scrolled {
+    box-shadow: 0rem 0.2rem 1.2rem rgba(0, 0, 0, 0.25) !important;
+}
+
+/* Ensure parent does not block sticky */
+.secure-derma-main {
+    width: 100%;
+    margin: 0;
+    overflow: visible;
+    background-color: #faf9f6;
+    /* MUST */
+}
+
+/* Content to enable scrolling */
+.page-content, .footer {
+    max-width: 90rem;
+    margin: auto;
+}
+
+.header-container {}

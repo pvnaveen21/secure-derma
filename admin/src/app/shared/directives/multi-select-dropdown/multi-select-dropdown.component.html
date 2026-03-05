@@ -1,0 +1,54 @@
+<nz-space-compact class="clickable">
+    <div nz-dropdown nzTrigger="click" [nzDropdownMenu]="menu" [nzClickHide]="false"
+        class="flex-box gap-4 text-black bg-secondary box-round" (nzVisibleChange)="onDropdownVisibleChange($event)">
+        @if(showIcon){
+        <lucide-angular [img]="showIcon" [size]="16"></lucide-angular>
+        }
+        {{ placeholder }}
+        <div class="selected-view-main">
+
+            @if (selectedItems.length > 0) {
+            <div class="v-line"></div>
+            }
+
+            @for (data of selectedItems.slice(0, 2); track data) {
+            <div class="viewText">
+                {{ data[labelKey] }}
+            </div>
+            }
+
+            @if (selectedItems.length > 2) {
+            <span class="btn-danger bg-danger-50 border-0 text-primary rounded-lg py-1 px-2 ms-1 plusMoreText">
+                + {{ selectedItems.length - 2 }} more
+            </span>
+            }
+        </div>
+    </div>
+</nz-space-compact>
+
+<nz-dropdown-menu #menu="nzDropdownMenu" class="w-100 drop-show">
+    <div nz-menu nzSelectable>
+        <nz-input-group [nzPrefix]="prefixIconSearch" nzSize="large" class="drop-search">
+            <input type="text" nz-input placeholder="Search" (input)="onSearch($event)" [(ngModel)]="searchText" />
+        </nz-input-group>
+
+        <ng-template #prefixIconSearch>
+            <nz-icon nzType="search" />
+        </ng-template>
+
+        <ul class="list-container">
+            @for (item of filteredItems; track item[idKey]) {
+            <li nz-menu-item class="w-100 p-0" style="display: block;">
+                <label nz-checkbox [ngModel]="selectedIds.includes(item[idKey])" (ngModelChange)="toggleSelect(item)"
+                    class="w-100 list-label">
+                    {{ item[labelKey] }}
+                </label>
+            </li>
+            }
+        </ul>
+
+        @if (filteredItems.length == 0) {
+        <div class="py-3 text-center">No Search Found</div>
+        }
+    </div>
+</nz-dropdown-menu>

@@ -1,0 +1,37 @@
+.main {
+    display: flex;
+}
+
+.header-main {
+    display: flex;
+    align-items: center;
+    background-color: var(--white);
+    border-radius: 10px;
+    padding: 5px;
+
+    .list-data {
+        width: 100px;
+        text-align: center;
+        padding: 7px;
+    }
+
+    .selectedDir {
+        background-color: var(--ant-primary-color);
+        border-radius: 7px;
+        color: var(--white);
+    }
+}
+
+.banner-main {
+    background-color: var(--white);
+}
+
+.main-thumbnail-conatiner {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 25px;
+
+    @media only screen and (max-width:1200px) {
+        grid-template-columns: 1fr;
+    }
+}

@@ -1,0 +1,85 @@
+<div class="login-page">
+
+  <!-- Background layers -->
+  <div class="bg-image"></div>
+  <div class="bg-overlay"></div>
+
+  <!-- Card -->
+  <div class="login-card">
+
+    <!-- Brand -->
+    <div class="brand">
+      <div class="brand-icon">
+        <span nz-icon nzType="appstore" nzTheme="outline"></span>
+      </div>
+      <span class="brand-name">Nexus</span>
+    </div>
+
+    <h2 class="card-title">Welcome back</h2>
+    <p class="card-sub">Sign in to your account</p>
+
+    <!-- Form -->
+    <form nz-form nzLayout="vertical" [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="form" autocomplete="on">
+      <div id="googleBtn"></div>
+
+      <!-- Username -->
+      <nz-form-item>
+        <nz-form-label nzFor="email">Email</nz-form-label>
+        <nz-form-control [nzErrorTip]="emailTpl" nzHasFeedback>
+          <nz-input-group nzPrefixIcon="user">
+            <input nz-input id="email" formControlName="email" placeholder="Enter your email"
+              autocomplete="email" />
+          </nz-input-group>
+          <ng-template #emailTpl let-control>
+            <ng-container *ngIf="control.hasError('required')">email is required.</ng-container>
+            <ng-container *ngIf="control.hasError('minlength')">At least 3 characters required.</ng-container>
+          </ng-template>
+        </nz-form-control>
+      </nz-form-item>
+
+      <!-- Password -->
+      <nz-form-item>
+        <nz-form-label nzFor="password">Password</nz-form-label>
+        <nz-form-control [nzErrorTip]="passwordTpl" nzHasFeedback>
+          <nz-input-group nzPrefixIcon="lock" [nzSuffix]="suffixTpl">
+            <input nz-input id="password" formControlName="password" [type]="passwordVisible ? 'text' : 'password'"
+              placeholder="Enter your password" autocomplete="current-password" />
+          </nz-input-group>
+          <ng-template #suffixTpl>
+            <span nz-icon [nzType]="passwordVisible ? 'eye' : 'eye-invisible'" nzTheme="outline" class="eye-icon"
+              (click)="passwordVisible = !passwordVisible"></span>
+          </ng-template>
+          <ng-template #passwordTpl let-control>
+            <ng-container *ngIf="control.hasError('required')">Password is required.</ng-container>
+            <ng-container *ngIf="control.hasError('minlength')">At least 6 characters required.</ng-container>
+          </ng-template>
+        </nz-form-control>
+      </nz-form-item>
+
+      <!-- Remember me + Forgot -->
+      <!-- <div class="options-row">
+        <label nz-checkbox formControlName="remember">Remember me</label>
+        <a class="forgot-link" href="#">Forgot password?</a>
+      </div> -->
+
+      <!-- Error banner -->
+      <div class="error-banner" *ngIf="loginError">
+        <span nz-icon nzType="close-circle" nzTheme="outline"></span>
+        {{ loginError }}
+      </div>
+
+      <!-- Submit -->
+      <button nz-button nzType="primary" nzBlock [nzLoading]="isLoading" type="submit" class="mt-5">
+        <span nz-icon nzType="login" nzTheme="outline" *ngIf="!isLoading"></span>
+        Sign In
+      </button>
+
+    </form>
+
+    <!-- <p class="register-row">
+      Don't have an account? <a href="#">Register now</a>
+    </p> -->
+
+  </div>
+
+</div>

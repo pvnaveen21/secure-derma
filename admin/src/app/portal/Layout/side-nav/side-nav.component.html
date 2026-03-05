@@ -1,0 +1,98 @@
+<div class="sider-group1">
+    <!-- <div class="d-flex align-items-center justify-content-between mt-3 p-3 bg-secondary clickable"
+        [routerLink]="'/dashboard'">
+        <div class="d-flex gap-2">
+            <img class="" [src]="assets.home.dashboard" alt="">
+            <span class="ms-2">Dashboard</span>
+        </div>
+        <div>
+            <lucide-angular class="d-flex ms-1" [img]="icons.chevron.rightIcon" [size]="17"></lucide-angular>
+        </div>
+    </div> -->
+    @for(menu of sideMenu | keyvalue: null; track $index){
+    <!-- @if (hasPermission(menu.value, currentUserType)) { -->
+    <p class="ms-3 mt-3 b2 menu-name">{{menu.key | titlecase}}</p>
+    <!-- } -->
+    <ul class="list-unstyled bg-secondary">
+        @for (item of menu.value; track $index) {
+        <!-- @if(item.permissions.includes(currentUserType)){ -->
+        <li class="gap-10 d-flex align-items-center side-menu-titles clickable px-3"
+            [ngClass]="{'selectedMenu':item?.currentUrl.includes(activeUrl)}" (click)=" selectMenu(item)">
+            <div class="d-flex justify-content-between align-items-center w-100">
+                <div class="text-decoration-none d-flex align-items-center text-black gap-2"
+                    [ngClass]="{ 'text-logout': item.title === 'Logout' }">
+                    <lucide-angular [ngClass]="{ 'text-logout': item.title === 'Logout' }"
+                        class="d-flex side-menu-icon-clr" [img]="item.icon" [size]="22">
+                    </lucide-angular>
+                    <span class="ms-2">{{item.title}}</span>
+                </div>
+                <div>
+                    <lucide-angular class="d-flex ms-1"
+                        [img]="(item?.currentUrl.includes(activeUrl)&& item.subList) && subToggle ? icons.sidemenu.chevronDown : icons.chevron.rightIcon"
+                        [size]="17">
+                    </lucide-angular>
+                </div>
+            </div>
+        </li>
+        <ul class="list-unstyled submenu"
+            [class.open]="item?.subList && item?.currentUrl.includes(activeUrl) && subToggle">
+            @if(item?.subList && item?.currentUrl.includes(activeUrl) ){
+            @for (subItem of item.subList; track $index) {
+            <li class="gap-10 d-flex align-items-center side-menu-titles clickable px-3"
+                [routerLink]="subItem?.routerLink"
+                [ngClass]="{'selectedSubMenu':subItem?.currentUrl.includes(activeUrl)}"
+                (click)="selectSubMenu(subItem)">
+                <div class="d-flex justify-content-between align-items-center w-100">
+                    <div class="text-decoration-none d-flex align-items-center text-black gap-2 ms-4">
+                        <lucide-angular [img]="subItem.icon" class="sub-icon" size="20"></lucide-angular>
+                        <span class="ms-2">{{ subItem?.title }}</span>
+                    </div>
+                    <lucide-angular class="d-flex ms-1" [img]="icons.chevron.rightIcon" [size]="17">
+                    </lucide-angular>
+                </div>
+            </li>
+            }
+            }
+        </ul>
+        <!-- } -->
+        }
+    </ul>
+    }
+</div>
+
+<!-- <ul class="list-unstyled bg-secondary">
+    @for (item of menu.value; track $index) {
+    <li class="gap-10 d-flex align-items-center side-menu-titles clickable px-3" [routerLink]="item.routerLink"
+        [ngClass]="{'selectedMenu':item?.currentUrl.includes(activeUrl)}" (click)="selectMenu(item)">
+        <div class="d-flex justify-content-between align-items-center w-100">
+            <div class="text-decoration-none d-flex align-items-center text-black gap-2">
+                <img [src]="item.icon" alt="">
+                <span class="ms-2">{{item.title}}</span>
+            </div>
+            <div>
+                <lucide-angular class="d-flex ms-1"
+                    [img]="item?.currentUrl.includes(activeUrl) ? icons.sidemenu.chevronDown : icons.chevron.rightIcon"
+                    [size]="17">
+                </lucide-angular>
+            </div>
+        </div>
+    </li>
+        @if(item?.subList && item?.currentUrl.includes(activeUrl)){
+    <ul class="list-unstyled submenu" [class.open]="item?.subList && item?.currentUrl.includes(activeUrl)">
+        @for (subItem of item.subList; track $index) {
+        <li class="gap-10 d-flex align-items-center side-menu-titles clickable px-3" [routerLink]="subItem?.routerLink"
+            [ngClass]="{'selectedSubMenu':subItem?.currentUrl.includes(activeUrl)}" (click)="selectSubMenu(subItem)">
+            <div class="d-flex justify-content-between align-items-center w-100">
+                <div class="text-decoration-none d-flex align-items-center text-black gap-2 ms-4">
+                    <lucide-angular [img]="subItem.icon" class="sub-icon" size="20"></lucide-angular>
+                    <span class="ms-2">{{ subItem?.title }}</span>
+                </div>
+                <lucide-angular class="d-flex ms-1" [img]="icons.chevron.rightIcon" [size]="17">
+                </lucide-angular>
+            </div>
+        </li>
+        }
+    </ul>
+}
+    }
+</ul>  -->

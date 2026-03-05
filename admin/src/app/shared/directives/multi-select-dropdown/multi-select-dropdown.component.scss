@@ -1,0 +1,65 @@
+.ant-input-affix-wrapper {
+    border: none !important;
+    box-shadow: none !important;
+    border-radius: 6px !important;
+}
+
+.sort-section {
+    margin-left: auto;
+    padding: 5px;
+}
+
+.box-round {
+    border-radius: 6px;
+    padding: 8px 10px;
+}
+
+
+.drop-search {
+    border: none !important;
+    border-bottom: 0.5px solid #0B0A0A1A !important;
+    border-radius: unset !important;
+    box-shadow: none !important;
+}
+
+.order-search {
+    max-width: 300px !important;
+}
+
+.list-container {
+    max-height: 300px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+}
+
+.v-line {
+    background-color: var(--muted);
+    width: 1px;
+    height: 18px;
+}
+
+.option-box {
+    border-radius: 10px !important;
+    display: none;
+}
+
+.selected-view-main {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+
+    .viewText {
+        background-color: #FFF7F0;
+        border-radius: 6px;
+        padding: 0.5px 3px;
+    }
+
+    .plusMoreText {
+        font-size: 10px;
+        white-space: nowrap;
+    }
+}
+
+.list-label {
+    padding: 5px 12px;
+}

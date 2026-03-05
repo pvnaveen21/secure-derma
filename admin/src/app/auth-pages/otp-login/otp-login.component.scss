@@ -1,0 +1,38 @@
+.error-maxw {
+  display: flex;
+  width: 300px !important;
+}
+.login-page-container {
+  max-height: 100vh !important;
+  overflow: hidden  !important;
+}
+
+.keyboard-open {
+  height: auto !important;
+  padding-bottom: 300px;
+  overflow: auto !important;
+}
+
+.keyboard-open .login-content {
+  transform: translateY(-60px);
+}
+.odered-main {
+  background: var(--proceed-brn-gradient);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.success-text {
+  color: var(--white);
+}
+
+.pop-main {
+  position: relative;
+}
+
+.pop-gif {
+  position: absolute;
+  top: 0%;
+  left: 68px;
+}

@@ -1,0 +1,22 @@
+<div class="portal-container h-100">
+  <nz-layout class="w-100 h-100">
+    <div class="main-header-container">
+      <div class="header-side-container py-2">
+        <app-header></app-header>
+      </div>
+      <div class="menu-header-name">
+        <h2 class="m-0">{{menuHeader}}</h2>
+      </div>
+    </div>
+    <nz-layout class="">
+      <nz-sider nzWidth="300px" nzTheme="light" class="sider-container">
+        <app-side-nav></app-side-nav>
+      </nz-sider>
+      <nz-layout class="inner-layout h-100">
+        <nz-content>
+          <router-outlet></router-outlet>
+        </nz-content>
+      </nz-layout>
+    </nz-layout>
+  </nz-layout>
+</div>

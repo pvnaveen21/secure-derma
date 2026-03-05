@@ -1,0 +1,28 @@
+<nz-modal [(nzVisible)]="isVisible" nzTitle="" (nzOnCancel)="handleCancel()" [nzFooter]="null" [nzClosable]="false"
+    [nzMaskClosable]="false" [nzWidth]="350" class="delete-model" nzWrapClassName="delete-model">
+    <ng-container *nzModalContent>
+
+        <div class="clickable d-flex justify-content-end p-3" (click)=handleCancel()>
+            <lucide-angular [img]="icons.common.close" [size]="23"></lucide-angular>
+        </div>
+
+        <div>
+            <svg-load [src]="assets.common.delete"></svg-load>
+        </div>
+        <h2 class="text-center">{{headerText}}</h2>
+        <p class="sub-text text-center px-3">{{subText}}
+        </p>
+
+        <div class=" buttons  d-flex footer-btn-main align-items-center w-100 px-4 pb-4 pt-2">
+            <button class="tej-btn btn-lg  border-0 rounded-lg bg-danger-50 text-primary b2 fw-semibold w-100"
+                type="button" (click)="handleCancel()">Cancel</button>
+            <button class="tej-btn btn-lg border-0 rounded-lg btn-primary b2 fw-semibold w-100" type="submit"
+                [disabled]="submitAPILoading" (click)="deleteConfirm()">
+                {{buttonName}} @if (submitAPILoading) {
+                <nz-icon class="ms-2" nzType="loading"></nz-icon>
+                }
+            </button>
+        </div>
+    </ng-container>
+
+</nz-modal>

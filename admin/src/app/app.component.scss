@@ -1,0 +1,46 @@
+.app-container {
+    //height: 100%;
+    width: 100%;
+}
+
+.theme-switcher {
+    display: flex;
+    align-items: center;
+    border-radius: 50px;
+    padding: 4px;
+    height: 48px;
+    width: fit-content;
+
+    .theme-option {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: none;
+        outline: none;
+        background: transparent;
+        border-radius: 50px;
+        padding: 0 16px;
+        cursor: pointer;
+        height: 40px;
+        transition: all 0.2s ease;
+
+        span {
+            margin-left: 8px;
+        }
+
+        .theme-dark .theme-coloured {
+            lucide-angular {
+                filter: brightness(0) invert(1);
+            }
+        }
+
+        &.active {
+            background: var(--ant-primary-color);
+            color: var(--white);
+
+            lucide-angular {
+                filter: brightness(0) invert(1);
+            }
+        }
+    }
+}
