@@ -1,0 +1,27 @@
+ .design-count-section {
+     .ant-collapse>.ant-collapse-item>.ant-collapse-header {
+         align-items: center !important;
+     }
+
+     .ant-collapse {
+         border: none !important;
+         background-color: var(--tej-bg-primary) !important;
+     }
+
+     .ant-collapse-content {
+         border-top: none !important;
+         background-color: var(--tej-bg-secondary);
+     }
+
+     .ant-collapse-content-box .ant-collapse-icon-position-start {
+         background-color: transparent !important;
+     }
+
+     .ant-collapse>.ant-collapse-item {
+         border: none !important;
+         background-color: var(--tej-bg-secondary) !important;
+         border-radius: 20px !important;
+         margin-bottom: 20px !important;
+         overflow: hidden !important;
+     }
+ }
