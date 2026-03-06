@@ -76,7 +76,7 @@
     gap: 2.5rem;
     padding: 3rem 1rem;
     text-align: center;
-    background: #ffffff;
+    background: var(--section-bg);
 }
 
 .trust-item {
@@ -128,12 +128,12 @@
     font-family: serif;
     font-weight: 600;
     margin-bottom: 2rem;
-    color: #0f172a;
+    color: var(--text-heading);
 }
 
 .sub-header-text {
     font-size: 1.2rem;
-    color: #666;
+    color: var(--text-secondary);
 }
 
 .brand_name {
@@ -156,7 +156,7 @@
     cursor: pointer;
     border-radius: 1rem;
     padding: 1.2rem 0.8rem;
-    background: #ffffff;
+    background: var(--card-bg);
     box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05);
     transition: all 0.35s ease;
     position: relative;
@@ -216,7 +216,7 @@
     margin-top: 0.9rem;
     font-size: 0.95rem;
     font-weight: 600;
-    color: #0f172a;
+    color: var(--text-heading);
     transition: color 0.3s ease;
 }
 
@@ -245,7 +245,7 @@
 
 .testimonials {
     padding: 3rem 4rem;
-    background-color: #ffffff;
+    background-color: var(--section-bg);
 }
 
 .testimonials__header {
@@ -256,13 +256,13 @@
 .testimonials__title {
     font-size: 2.2rem;
     font-weight: 700;
-    color: #0f172a;
+    color: var(--text-heading);
     margin-bottom: 1.2rem;
 }
 
 .testimonials__subtitle {
     font-size: 1.2rem;
-    color: #64748b;
+    color: var(--text-subtle);
 }
 
 .testimonials__list {
@@ -275,7 +275,7 @@
 }
 
 .testimonial-card {
-    background-color: #f8fafc;
+    background-color: var(--testimonial-card-bg);
     border-radius: 1.6rem;
     padding: 3rem;
     max-width: 36rem;
@@ -290,7 +290,7 @@
 
 .testimonial-card__text {
     font-size: 1rem;
-    color: #1e293b;
+    color: var(--text-body);
     line-height: 1.7rem;
     margin-bottom: 1.4rem;
 }
@@ -311,13 +311,13 @@
 .testimonial-card__name {
     font-size: 1rem;
     font-weight: 600;
-    color: #0f172a;
+    color: var(--text-heading);
 }
 
 // brand-spotlight
 .brand-spotlight {
     padding: 3rem 4rem;
-    background-color: #ffffff;
+    background-color: var(--section-bg);
 }
 
 .brand-spotlight__container {
@@ -355,13 +355,13 @@
 .brand-spotlight__title {
     font-size: 2.2rem;
     font-weight: 700;
-    color: #0f172a;
+    color: var(--text-heading);
     margin-bottom: 1.6rem;
 }
 
 .brand-spotlight__description {
     font-size: 1.2rem;
-    color: #475569;
+    color: var(--text-subtle);
     line-height: 1.6rem;
     margin-bottom: 1.8rem;
 }
@@ -377,7 +377,7 @@
     align-items: center;
     gap: 1.2rem;
     font-size: 1rem;
-    color: #1e293b;
+    color: var(--text-body);
     margin-bottom: 1.4rem;
 }
 
@@ -417,7 +417,7 @@
 }
 
 .feature-box {
-    background-color: #f9f9f9;
+    background-color: var(--feature-box-bg);
     border-radius: 0.5rem;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
     padding: 2rem;
@@ -437,13 +437,13 @@
 .feature-title {
     font-size: 1.2rem;
     font-weight: bold;
-    color: #333;
+    color: var(--text-heading);
     margin-bottom: 1rem;
 }
 
 .feature-description {
     font-size: 1rem;
-    color: #777;
+    color: var(--text-secondary);
     line-height: 1.5;
 }
 
@@ -510,12 +510,12 @@
 .ant-input {
     font-size: 1.3rem !important;
     border-radius: 0.5rem !important;
-    border: 0.1rem solid #F4F4F4 !important;
-    background-color: #F4F4F4;
+    border: 0.1rem solid var(--input-bg) !important;
+    background-color: var(--input-bg);
     padding: 0.3rem 0.5rem !important;
 
     input {
-        background-color: #F4F4F4 !important;
+        background-color: var(--input-bg) !important;
     }
 }
 
@@ -549,7 +549,7 @@
     height: 10rem;
 
     overflow: hidden;
-    background-color: white;
+    background-color: var(--card-bg);
     padding: 2.1rem;
 }
 
@@ -576,7 +576,7 @@
 
 .product-card {
     min-width: 12rem;
-    background: #ffffff;
+    background: var(--card-bg);
     border-radius: 16px;
     padding: 14px;
     box-shadow: rgba(149, 157, 165, 0.2) 0px 8px 24px;
@@ -641,7 +641,7 @@
     font-size: 0.9rem;
     font-weight: 600;
     margin: 0.4rem 0;
-    color: #1f2937;
+    color: var(--text-heading);
     white-space: normal;
     line-height: 1.34rem;
     white-space: nowrap;
@@ -664,7 +664,7 @@
 
 .review-count {
     font-size: 0.7rem;
-    color: #6b7280;
+    color: var(--text-subtle);
 }
 
 /* PRICE */
@@ -675,7 +675,7 @@
 .selling-price {
     font-size: 1.2rem;
     font-weight: 700;
-    color: #111827;
+    color: var(--text-primary);
     margin-right: 0.4rem;
 }
 

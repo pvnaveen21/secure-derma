@@ -18,6 +18,7 @@ import { NzEmptyModule } from 'ng-zorro-antd/empty';
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzInputNumberModule } from 'ng-zorro-antd/input-number';
 import { NzIconModule } from 'ng-zorro-antd/icon';
+import { SettingsService } from '../services/settings/settings.service';
 interface Panel {
   name: string;
   active: boolean;
@@ -91,7 +92,8 @@ export class HeaderComponent {
   constructor(
     private router: Router,
     private headerService: HeaderService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private settingsService: SettingsService
   ) {
     // Initialize the search subscription
     this.searchSub = this.searchSubject
@@ -408,6 +410,14 @@ export class HeaderComponent {
   startShop(){
     this.closeCartDrawer();
     this.router.navigate(['collections/all'])
+  }
+
+  get isDark(): boolean {
+    return this.settingsService.isDarkTheme();
+  }
+
+  toggleTheme(): void {
+    this.settingsService.toggleLightDark();
   }
 
 }

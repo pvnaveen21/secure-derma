@@ -235,6 +235,9 @@
 
 
             <div class="user-bag">
+                <button class="theme-toggle-btn" (click)="toggleTheme()" [title]="isDark ? 'Switch to Light mode' : 'Switch to Dark mode'" aria-label="Toggle theme">
+                    <lucide-angular class="icon-display theme-icon" [img]="isDark ? icons.theme.light : icons.theme.dark" [size]="22"></lucide-angular>
+                </button>
                 <div class="cart-icon" (click)="openCartDrawer()">
                     <nz-badge nz-flex nzAlign="center" nzJustify="center" class="clickable"
                         [nzCount]="(cartQuantity$ | async) || 0" nzShowZero [nzOffset]="[-1, 1]">

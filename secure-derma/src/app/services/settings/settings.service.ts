@@ -101,6 +101,15 @@ export class SettingsService {
     }).catch(console.error);
   }
 
+  public isDarkTheme(): boolean {
+    return this.currentTheme === ThemeType.dark;
+  }
+
+  public toggleLightDark(): void {
+    const next = this.currentTheme === ThemeType.dark ? ThemeType.light : ThemeType.dark;
+    this.changeTheme(next);
+  }
+
   loadAppData(): Promise<any> {
     return new Promise((resolve, reject) => {
       this.loadTheme().then(() => {

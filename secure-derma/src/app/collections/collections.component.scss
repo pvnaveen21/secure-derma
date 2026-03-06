@@ -151,14 +151,14 @@
     justify-content: space-between;
     margin-bottom: 1.5rem;
     padding-bottom: 1rem;
-    border-bottom: 0.0625rem solid #f0f0f0;
+    border-bottom: 0.0625rem solid var(--filter-border);
 }
 
 .filter-title {
     font-size: 1.5rem;
     font-weight: 600;
     margin: 0;
-    color: #000;
+    color: var(--text-primary);
 }
 
 .clear-all-btn {
@@ -191,14 +191,14 @@
     }
 
     ::ng-deep .ant-collapse-item {
-        border-bottom: 0.0625rem solid #f0f0f0;
+        border-bottom: 0.0625rem solid var(--filter-border);
     }
 
     ::ng-deep .ant-collapse-header {
         padding: 0.75rem 0 !important;
         font-weight: 600;
         font-size: 1rem;
-        color: #000;
+        color: var(--text-primary);
     }
 
     ::ng-deep .ant-collapse-content-box {
@@ -219,7 +219,7 @@
     label {
         cursor: pointer;
         font-size: 0.875rem;
-        color: #595959;
+        color: var(--text-secondary);
         display: flex;
         align-items: center;
 
@@ -231,7 +231,7 @@
 
 .item-count {
     margin-left: 0.25rem;
-    color: #8c8c8c;
+    color: var(--text-muted);
     font-size: 0.75rem;
 }
 
@@ -268,7 +268,7 @@
 .product-count {
     margin: 0;
     font-size: 0.875rem;
-    color: #595959;
+    color: var(--text-secondary);
 }
 
 .sort-dropdown {
@@ -278,7 +278,7 @@
 
     span {
         font-size: 0.875rem;
-        color: #595959;
+        color: var(--text-secondary);
     }
 }
 
@@ -345,7 +345,7 @@
     width: 100%;
     height: 18rem;
     overflow: hidden;
-    background-color: #f5f5f5;
+    background-color: var(--product-img-bg);
 
     @media only screen and (max-width: 48rem) {
         height: 14rem;
@@ -404,9 +404,9 @@
     }
 
     &.new {
-        background-color: white;
-        color: #000;
-        border: 0.0625rem solid #d9d9d9;
+        background-color: var(--badge-new-bg);
+        color: var(--text-primary);
+        border: 0.0625rem solid var(--badge-new-border);
     }
 }
 
@@ -427,7 +427,7 @@
 
 .product-description {
     font-size: 0.8rem;
-    color: #979696;
+    color: var(--text-muted);
     margin: 0;
     line-height: 1.5;
     overflow: hidden;
@@ -440,13 +440,13 @@
     font-size: 0.9rem;
     margin: 0;
     text-decoration: line-through;
-    color: #9ca3af;
+    color: var(--text-muted);
 }
 
 .product-sell-price {
     font-size: 1.125rem;
     font-weight: 600;
-    color: #000;
+    color: var(--text-primary);
     margin: 0;
 }
 
@@ -501,8 +501,8 @@
     font-size: 0.75rem;
     border:
 
-        0.0625rem solid #d9d9d9;
-    background-color: #fafafa;
+        0.0625rem solid var(--badge-new-border);
+    background-color: var(--tag-bg);
     color: #595959;
     display: inline-flex;
     align-items: center;
