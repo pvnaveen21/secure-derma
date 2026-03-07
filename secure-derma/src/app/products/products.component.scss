@@ -212,7 +212,7 @@
 }
 
 .save-more {
-    background-color: green;
+    background-color: var(--brand-primary);
     color: white;
     font-size: 0.6rem;
     font-weight: bold;
@@ -228,14 +228,14 @@
 
 .add-to-cart-btn {
     background-color: #FFFFFF;
-    color: #108010;
-    border: 0.1rem solid #108010;
+    color: var(--brand-primary);
+    border: 0.1rem solid var(--brand-primary);
 }
 
 .buy-now-btn {
-    background-color: #108010;
+    background-color: var(--brand-primary);
     color: #FFFFFF;
-    border: 0.1rem solid #108010;
+    border: 0.1rem solid var(--brand-primary);
 }
 
 .both-btn-container {
@@ -467,7 +467,7 @@
 }
 
 .badgeIcon {
-    color: green;
+    color: var(--brand-primary);
 }
 
 .review-from {

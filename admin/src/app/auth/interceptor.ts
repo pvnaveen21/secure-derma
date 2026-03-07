@@ -49,7 +49,7 @@ function handleTokenRefresh(req: HttpRequest<any>, next: HttpHandlerFn, authServ
 
         const refreshToken = getToken(REFRESH_TOKEN);
 
-        if (!refreshToken || isTokenExpired(REFRESH_TOKEN)) {
+        if (!refreshToken || isTokenExpired(REFRESH_TOKEN, 0)) {
             // Refresh token is also expired, force logout
             isRefreshing = false;
             unsetToken();
