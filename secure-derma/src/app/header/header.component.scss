@@ -41,7 +41,7 @@
         cursor: pointer;
 
         .logo-title {
-            color: green;
+            color: var(--brand-primary);
             font-weight: bold;
             margin: 0;
             padding: 0;
@@ -49,7 +49,7 @@
         }
 
         .logo-subtitle {
-            color: rgb(73, 189, 73);
+            color: var(--brand-secondary);
             // line-height: 0.1rem;
         }
     }
@@ -87,7 +87,7 @@
     height: 100%;
 
     &:hover {
-        color: green;
+        color: var(--brand-primary);
     }
 }
 
@@ -95,10 +95,10 @@
     border-bottom: 1px solid transparent;
 
     &:hover {
-        border-bottom: 1px solid green;
+        border-bottom: 1px solid var(--brand-primary);
 
         .menu-title {
-            color: green;
+            color: var(--brand-primary);
         }
     }
 }
@@ -157,7 +157,7 @@
 
     &:hover {
         .brand-title {
-            color: green !important;
+            color: var(--brand-primary) !important;
         }
 
         background-color: var(--hover-bg);
@@ -427,7 +427,7 @@ nz-input-group {
 }
 
 .btn-primary {
-    background-color: green;
+    background-color: var(--brand-primary);
     color: white;
 }
 
@@ -476,7 +476,7 @@ nz-input-group {
 
 .alphabet-item:hover,
 .alphabet-item.active {
-    color: green;
+    color: var(--brand-primary);
     font-weight: 600;
     transform: scale(1.15);
 }
@@ -566,7 +566,7 @@ nz-input-group {
 }
 
 .plus-minus-icon {
-    color: green;
+    color: var(--brand-primary);
 }
 
 .icon.active {

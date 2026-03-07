@@ -66,4 +66,25 @@ export class HomeService extends InterfaceService {
       catchError(this.handleError)
     );
   }
+
+  getProductsByConcern(concern: string, limit = 12) {
+    return this.http.get(
+      this.getApiUrl(`/concern-products/?concern=${encodeURIComponent(concern)}&limit=${limit}`),
+      this.getHttpOptions()
+    ).pipe(
+      map(res => res),
+      catchError(this.handleError)
+    );
+  }
+
+  buildRoutine(payload: { skin_type: string; concern: string; budget: string }) {
+    return this.http.post(
+      this.getApiUrl(`/routine-builder/`),
+      payload,
+      this.getHttpOptions()
+    ).pipe(
+      map(res => res),
+      catchError(this.handleError)
+    );
+  }
 }

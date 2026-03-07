@@ -14,14 +14,14 @@ export const getToken = (flag: string): string | null => localStorage.getItem(fl
 
 // Remove tokens from local storage
 export const unsetToken = (): void => {
-     return [ACCESS_TOKEN, REFRESH_TOKEN].forEach((token) => localStorage.removeItem(token));
+    return [ACCESS_TOKEN, REFRESH_TOKEN].forEach((token) => localStorage.removeItem(token));
 };
 
 // Get token expiration date
 export const getTokenExpiration = (flag: string): Date | null => {
     const token = getToken(flag);
     console.log(token);
-    
+
     if (token) {
         try {
             const { exp } = jwtDecode<{ exp: number }>(token);
@@ -35,9 +35,9 @@ export const getTokenExpiration = (flag: string): Date | null => {
 };
 
 // Check if token is expired
-export const isTokenExpired = (flag: string): boolean => {
+export const isTokenExpired = (flag: string, bufferSeconds = 30): boolean => {
     const expiration = getTokenExpiration(flag);
-    console.log(expiration);
-    
-    return !expiration || expiration.getTime() <= Date.now();
+    if (!expiration) return true;
+
+    return (expiration.getTime() - (bufferSeconds * 1000)) <= Date.now();
 };

@@ -6,45 +6,95 @@
     </div>
 
     <!-- cate -->
-    <section class="category-section">
-        <div class="mb-4">
-            <h2 class="section-title">Shop by Category</h2>
-            <div class="b-lne"></div>
+    <section class="category-showcase pt-5">
+        <div class="category-header-wrap text-center mb-5">
+            <h2 class="section-title modern-title mb-2">Shop by Category</h2>
+            <p class="category-summary mx-auto">
+                Explore our expert-approved selection of dermatological essentials, carefully categorized for your daily
+                routine.
+            </p>
         </div>
-    
-        <div class="category-grid">
-            @for (item of categoryList; track item) {
-            <div class="category-card" (click)="producetNavigation(item.product_type)">
-                <div class="image-wrapper">
-                    <img [src]="item.image" [alt]="item.name" />
+
+        <app-horizontal-scroll [data]="categoryList" scrollDirection="horizontal">
+            <div data-scroll-body class="category-scroll-wrapper ps-3">
+                @for (item of categoryList; track item; let i = $index) {
+                <div class="category-circle-card" [style.--anim-delay]="(i * 0.1) + 's'"
+                    (click)="producetNavigation(item.product_type)">
+                    <div class="circle-image-wrapper">
+                        <img [src]="item.image" [alt]="item.product_type" class="circle-img" loading="lazy" />
+                        <div class="circle-overlay"></div>
+                    </div>
+                    <div class="circle-info mt-3">
+                        <h3 class="circle-title">{{ item.product_type }}</h3>
+                    </div>
                 </div>
-    
-                <p class="category-name">
-                    {{ item.product_type }}
-                </p>
+                }
             </div>
-            }
-        </div>
+        </app-horizontal-scroll>
     </section>
 
-<div class="top-brands-section mb-3">
-    <div class="mb-4">
-
-        <h2 class="section-title">Shop by Brands</h2>
-        <div class="b-lne"></div>
-    </div>
-
-
-    <app-horizontal-scroll [data]="topBrandsList" scrollDirection="horizontal">
-        <div data-scroll-body class="brands-wrapper">
-            @for (brand of topBrandsList; track brand) {
-            <div class="brand-card" (click)="producetNavigation(brand.brand_name)">
-                <img [src]="brand.brand_image" [alt]="brand.brand_name" class="top-brand-img" />
+    <section class="brands-showcase-v2 pt-4 mb-3">
+        <div class="brands-header-wrap mb-4 text-center">
+            <div class="brands-header-content">
+                <p class="brands-kicker m-0">Trusted Partners</p>
+                <h2 class="section-title modern-title brands-title mb-1">Shop by Brands</h2>
+                <p class="brands-summary m-0">
+                    Discover trusted brands recommended by dermatologists for quality, safety, and proven results.
+                </p>
             </div>
-            }
         </div>
-    </app-horizontal-scroll>
-</div>
+
+        <app-horizontal-scroll [data]="topBrandsList" scrollDirection="horizontal">
+            <div data-scroll-body class="brands-row ps-1">
+                @for (brand of topBrandsList; track brand; let i = $index) {
+                <article class="brand-logo-card" [style.--brand-delay]="(i * 70) + 'ms'"
+                    (click)="producetNavigation(brand.brand_name)">
+                    <div class="brand-logo-frame">
+                        <img [src]="brand.brand_image" [alt]="brand.brand_name" class="brand-logo-img" loading="lazy" />
+                    </div>
+                    <h3 class="brand-logo-name m-0">{{ brand.brand_name }}</h3>
+                </article>
+                }
+            </div>
+        </app-horizontal-scroll>
+    </section>
+
+
+    <section class="care-guidance-block">
+        <div class="care-guidance-block__inner">
+            <div class="care-guidance-block__intro">
+                <p class="care-guidance-block__eyebrow m-0">Care Guidance</p>
+                <h2 class="section-title care-guidance-block__title m-0">Build a Smarter Daily Routine</h2>
+                <p class="care-guidance-block__text m-0">
+                    Explore practical tips to choose products by concern, skin type, and routine order so your regimen
+                    stays simple and consistent.
+                </p>
+            </div>
+
+            <div class="care-guidance-block__grid">
+                <article class="care-guidance-card">
+                    <h3 class="care-guidance-card__title m-0">Dermatology-Led Selection</h3>
+                    <p class="care-guidance-card__text m-0">
+                        Products are shortlisted based on safety standards and practical treatment outcomes.
+                    </p>
+                </article>
+
+                <article class="care-guidance-card">
+                    <h3 class="care-guidance-card__title m-0">Verified Product Sourcing</h3>
+                    <p class="care-guidance-card__text m-0">
+                        We partner with trusted suppliers to ensure every order is genuine and quality checked.
+                    </p>
+                </article>
+
+                <article class="care-guidance-card">
+                    <h3 class="care-guidance-card__title m-0">Routine-Focused Discovery</h3>
+                    <p class="care-guidance-card__text m-0">
+                        Browse by category, concern, and brand to build routines that are clear and easy to follow.
+                    </p>
+                </article>
+            </div>
+        </div>
+    </section>
 
 
     <div class="banner-wrapper">
@@ -83,19 +133,139 @@
 </app-horizontal-scroll> -->
 
 
+<!-- <section class="routine-builder-mini">
+    <div class="routine-builder-mini__head">
+        <h2 class="section-title modern-title m-0">Routine Builder</h2>
+        <p class="m-0">Pick skin type, concern, and budget to get a starter AM/PM routine.</p>
+    </div>
+
+    <div class="routine-builder-mini__form">
+        <select [(ngModel)]="routineForm.skinType">
+            <option value="Oily">Oily</option>
+            <option value="Dry">Dry</option>
+            <option value="Combination">Combination</option>
+            <option value="Sensitive">Sensitive</option>
+            <option value="Normal">Normal</option>
+        </select>
+        <select [(ngModel)]="routineForm.concern">
+            @for (concern of concernList; track concern) {
+            <option [value]="concern">{{ concern }}</option>
+            }
+        </select>
+        <select [(ngModel)]="routineForm.budget">
+            <option value="low">Low</option>
+            <option value="medium">Medium</option>
+            <option value="high">High</option>
+        </select>
+        <button class="add-to-cart-btn routine-builder-mini__btn" (click)="submitRoutineBuilder()">
+            {{ routineLoading ? 'Building...' : 'Build Routine' }}
+        </button>
+    </div>
+
+    @if (routineResult) {
+    <div class="routine-builder-mini__result">
+        <div>
+            <h4>AM Routine</h4>
+            <ul>
+                @for (item of routineResult.am; track item.id) {
+                <li>{{ item.product_name }} - ₹{{ item.price }}</li>
+                }
+            </ul>
+        </div>
+        <div>
+            <h4>PM Routine</h4>
+            <ul>
+                @for (item of routineResult.pm; track item.id) {
+                <li>{{ item.product_name }} - ₹{{ item.price }}</li>
+                }
+            </ul>
+        </div>
+    </div>
+    }
+</section> -->
+
+<section class="concern-strip">
+    <div class="concern-strip__head">
+        <h2 class="section-title modern-title m-0">Shop by Concern</h2>
+        <p class="m-0">Select a concern to instantly view relevant products without leaving this page.</p>
+    </div>
+    <div class="concern-strip__tabs">
+        @for (concern of concernList; track concern) {
+        <button class="concern-strip__tab" [class.is-active]="selectedConcern === concern"
+            (click)="loadConcernProducts(concern)">
+            {{ concern }}
+        </button>
+        }
+    </div>
+
+    @if (concernProductsLoading) {
+    <p class="concern-strip__state">Loading products...</p>
+    } @else if (concernProducts.length === 0) {
+    <p class="concern-strip__state">No products found for {{ selectedConcern }}.</p>
+    } @else {
+    <app-horizontal-scroll [data]="concernProducts" scrollDirection="horizontal">
+        <div data-scroll-body class="concern-strip__products">
+            @for (product of concernProducts; track product.id) {
+            <div class="product-card concern-product-card">
+                <div class="product-image" (click)="producetView(product.product_name)">
+                    <div class="image-container">
+                        <img [src]="product.thumbnail_image" [attr.data-hover]="product.hover_image"
+                            [alt]="product.product_name" />
+                    </div>
+                </div>
+
+                <div class="product-content">
+                    <p class="text-start brand_name m-0">{{ product.brand_name }}</p>
+                    <h3 class="product-title text-start">{{ product.product_name }}</h3>
+
+                    <div class="rating-row">
+                        @if(product.review_count){
+                        <nz-rate [ngModel]="product.avg_rating" nzDisabled nzAllowHalf></nz-rate>
+                        <span class="review-count">
+                            {{ product.avg_rating }}
+                        </span>
+                        }
+                    </div>
+
+                    <div class="price-row mt-4">
+                        <span class="selling-price">₹ {{ product.price }}</span>
+                        <span class="original-price">₹ {{ product.original_price }}</span>
+                    </div>
+
+                    <button class="add-to-cart-btn">
+                        Add to Cart
+                    </button>
+                </div>
+            </div>
+            }
+        </div>
+    </app-horizontal-scroll>
+
+    @if (concernTotalCount > 10) {
+    <div class="concern-strip__footer">
+        <button class="add-to-cart-btn concern-strip__view-all-btn" (click)="viewAllConcernProducts()">
+            View All
+        </button>
+    </div>
+    }
+    }
+</section>
+
 <div class="top-brands-section">
-    <div class="text-center my-5">
-        <h1 class="section-title">Trending Products</h1>
-        <p class="sub-header-text">The most effective, results-driven formulas preferred by our top dermatologists this
-            season.</p>
+    <div class="top-brands-section__head text-center my-2">
+        <p class="top-brands-section__eyebrow m-0">Editor’s Picks</p>
+        <h1 class="section-title modern-title top-brands-section__title">Trending Products</h1>
+        <p class="sub-header-text top-brands-section__subtitle">
+            Discover dermatologist-recommended formulas trusted for visible results, everyday safety, and long-term
+            skin health.
+        </p>
     </div>
 
     <app-horizontal-scroll [data]="trendingProductList" scrollDirection="horizontal">
 
         <div data-scroll-body class="product-grid py-2">
             @for (product of trendingProductList; track product.id) {
-            <div class="product-card scroll-animate" style="flex: 0 0 18rem ; 
-  max-width: 100%;">
+            <div class="product-card scroll-animate">
                 <div class="product-image" (click)="producetView(product?.product_name)">
                     <div class="image-container">
                         <img [src]="product.thumbnail_image" [attr.data-hover]="product.hover_image"
@@ -139,50 +309,61 @@
 
 <!-- testimonials -->
 <section class="testimonials">
-    <div class="testimonials__header">
-        <h2 class="testimonials__title">Real Stories, Real Glow</h2>
-        <p class="testimonials__subtitle">
-            Join over 500,000+ happy customers on their skin journey.
-        </p>
-    </div>
-
-    <div class="testimonials__list">
-        <div class="testimonial-card">
-            <div class="testimonial-card__stars">
-                ★★★★★
-            </div>
-            <p class="testimonial-card__text">
-                "Secure Derma is my go-to. Their products are authentic and the delivery is super fast."
+    <div class="testimonials__panel">
+        <div class="testimonials__header">
+            <p class="testimonials__eyebrow m-0">Community Feedback</p>
+            <h2 class="testimonials__title">Real Stories, Real Glow</h2>
+            <p class="testimonials__subtitle">
+                Honest experiences from customers building better skin and hair routines with Secure Derma.
             </p>
-            <div class="testimonial-card__user">
-                <span class="testimonial-card__avatar"></span>
-                <span class="testimonial-card__name">Suman V.</span>
-            </div>
         </div>
 
-        <div class="testimonial-card">
-            <div class="testimonial-card__stars">
-                ★★★★★
-            </div>
-            <p class="testimonial-card__text">
-                "The pediatric range is amazing. My baby's skin cleared up in just 3 days."
-            </p>
-            <div class="testimonial-card__user">
-                <span class="testimonial-card__avatar"></span>
-                <span class="testimonial-card__name">Kiran D.</span>
-            </div>
-        </div>
-
-        <div class="testimonial-card">
-            <div class="testimonial-card__stars">
-                ★★★★★
-            </div>
-            <p class="testimonial-card__text">
-                "Love the ingredient breakdown! Helps me understand what I'm putting on my face."
-            </p>
-            <div class="testimonial-card__user">
-                <span class="testimonial-card__avatar"></span>
-                <span class="testimonial-card__name">Ayesha S.</span>
+        <div class="testimonials__list">
+            <div class="testimonials__track">
+                <div class="testimonials__group">
+                    @for (comment of testimonialsData; track $index) {
+                    <article class="testimonial-card">
+                        <div class="testimonial-card__top">
+                            <div class="testimonial-card__stars">★★★★★</div>
+                            <span class="testimonial-card__tag">{{ comment.tag }}</span>
+                        </div>
+                        <p class="testimonial-card__text">"{{ comment.text }}"</p>
+                        <div class="testimonial-card__meta">
+                            <span class="testimonial-card__chip">Concern: {{ comment.concern }}</span>
+                            <span class="testimonial-card__chip">Result: {{ comment.result }}</span>
+                        </div>
+                        <div class="testimonial-card__user">
+                            <span class="testimonial-card__avatar">{{ comment.initial }}</span>
+                            <div>
+                                <p class="testimonial-card__name m-0">{{ comment.name }}</p>
+                                <span class="testimonial-card__verified">Verified Purchase</span>
+                            </div>
+                        </div>
+                    </article>
+                    }
+                </div>
+                <div class="testimonials__group" aria-hidden="true">
+                    @for (comment of testimonialsData; track $index) {
+                    <article class="testimonial-card">
+                        <div class="testimonial-card__top">
+                            <div class="testimonial-card__stars">★★★★★</div>
+                            <span class="testimonial-card__tag">{{ comment.tag }}</span>
+                        </div>
+                        <p class="testimonial-card__text">"{{ comment.text }}"</p>
+                        <div class="testimonial-card__meta">
+                            <span class="testimonial-card__chip">Concern: {{ comment.concern }}</span>
+                            <span class="testimonial-card__chip">Result: {{ comment.result }}</span>
+                        </div>
+                        <div class="testimonial-card__user">
+                            <span class="testimonial-card__avatar">{{ comment.initial }}</span>
+                            <div>
+                                <p class="testimonial-card__name m-0">{{ comment.name }}</p>
+                                <span class="testimonial-card__verified">Verified Purchase</span>
+                            </div>
+                        </div>
+                    </article>
+                    }
+                </div>
             </div>
         </div>
     </div>
@@ -193,48 +374,41 @@
 
 <section class="brand-spotlight">
     <div class="brand-spotlight__container">
+        <figure class="brand-spotlight__image-wrapper m-0">
+            <img [src]="why_secure_derma" alt="Secure Derma brand validation process" class="brand-spotlight__image" />
+        </figure>
 
-        <div class="brand-spotlight__image-wrapper">
-            <img [src]="why_secure_derma" alt="Ocean texture" class="brand-spotlight__image" />
-        </div>
-
-        <div class="brand-spotlight__content">
-            <span class="brand-spotlight__label">BRAND SPOTLIGHT</span>
-
-            <h2 class="brand-spotlight__title">
-                Why Secure Derma?
-            </h2>
-
-            <p class="brand-spotlight__description">
-                We believe that skincare shouldn't be a guessing game. Every brand we
-                partner with undergoes a rigorous 5-step validation process by our
-                panel of independent dermatologists.
+        <article class="brand-spotlight__content">
+            <p class="brand-spotlight__label m-0">Brand Spotlight</p>
+            <h2 class="brand-spotlight__title m-0">Why Secure Derma?</h2>
+            <p class="brand-spotlight__description m-0">
+                Skincare should be simple, credible, and safe. Every listed partner brand goes through a dermatologist
+                reviewed 5-step quality and authenticity process before appearing on Secure Derma.
+            </p>
+            <p class="brand-spotlight__narrative m-0">
+                Instead of overwhelming you with random choices, we organize trusted products around real skin goals,
+                ingredient clarity, and routine-level compatibility.
             </p>
 
             <ul class="brand-spotlight__features">
                 <li class="brand-spotlight__feature">
-                    <span class="brand-spotlight__icon">✓</span>
-                    100% Science-Backed Formulas
+                    <span class="brand-spotlight__icon" aria-hidden="true">✓</span>
+                    <span class="brand-spotlight__feature-text">Clear ingredient rationale, not vague marketing language</span>
                 </li>
                 <li class="brand-spotlight__feature">
-                    <span class="brand-spotlight__icon">✓</span>
-                    Authenticity Guaranteed Directly from Brands
+                    <span class="brand-spotlight__icon" aria-hidden="true">✓</span>
+                    <span class="brand-spotlight__feature-text">Routine-first discovery built around concern, category, and skin tolerance</span>
                 </li>
                 <li class="brand-spotlight__feature">
-                    <span class="brand-spotlight__icon">✓</span>
-                    Transparent Ingredient & Safety Verification
+                    <span class="brand-spotlight__icon" aria-hidden="true">✓</span>
+                    <span class="brand-spotlight__feature-text">Consistent safety and storage standards across listed brands</span>
                 </li>
                 <li class="brand-spotlight__feature">
-                    <span class="brand-spotlight__icon">✓</span>
-                    Strict Quality & Storage Compliance
-                </li>
-                <li class="brand-spotlight__feature">
-                    <span class="brand-spotlight__icon">✓</span>
-                    Clinically Tested for Indian Skin Types
+                    <span class="brand-spotlight__icon" aria-hidden="true">✓</span>
+                    <span class="brand-spotlight__feature-text">Focused guidance for Indian skin concerns and climate context</span>
                 </li>
             </ul>
-
-        </div>
+        </article>
 
     </div>
 </section>
