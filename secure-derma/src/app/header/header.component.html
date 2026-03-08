@@ -87,35 +87,42 @@
                     </div>
 
                     <nz-dropdown-menu #skinMenu="nzDropdownMenu">
-                        <div class="skin-dropdown-content" (mouseenter)="keepSkinDropdownOpen()"
+                        <div class="skin-dropdown-content skin-dropdown-content--skin-v2" (mouseenter)="keepSkinDropdownOpen()"
                             (mouseleave)="closeSkinDropdown()">
-                            <div>
-                                <p class="dropdown-header m-0">BY CATEGORY</p>
-                                <nz-divider class="mt-1 mb-1"></nz-divider>
-                                <div class="skin-section">
+                            <div class="skin-v2-col">
+                                <p class="dropdown-header m-0">By Category</p>
+                                <p class="skin-v2-subtitle m-0">Build by routine step</p>
+                                <div class="skin-v2-list">
                                     @for(data of skinBannerData?.skin_category?.data;track data ;let i = $index){
-                                    <p [ngClass]="i ==0 ? 'm-0' :'mt-1'" class="clickable"
-                                        (click)="producetNavigation(data.product_type ,'skin')">{{data?.product_type}}
-                                    </p>
+                                    <button class="skin-v2-item" (click)="producetNavigation(data.product_type ,'skin')">
+                                        {{data?.product_type}}
+                                    </button>
                                     }
                                 </div>
                             </div>
 
-                            <div>
-                                <p class="dropdown-header m-0">BY CONCERN</p>
-                                <nz-divider class="mt-1 mb-1"></nz-divider>
-                                <div class="skin-section">
+                            <div class="skin-v2-col">
+                                <p class="dropdown-header m-0">By Concern</p>
+                                <p class="skin-v2-subtitle m-0">Targeted treatment goals</p>
+                                <div class="skin-v2-list">
                                     @for(data of skinBannerData?.skin_concerns?.data;track data ;let i = $index){
-                                    <p [ngClass]="i ==0 ? 'm-0' :'mt-1'" class="clickable"
-                                        (click)="producetNavigation(data.skin_concern ,'skin')">{{data?.skin_concern}}
-                                    </p>
+                                    <button class="skin-v2-item" (click)="producetNavigation(data.skin_concern ,'skin')">
+                                        {{data?.skin_concern}}
+                                    </button>
                                     }
                                 </div>
                             </div>
 
-                            <div class="drop-down-img-container">
-                                <img [src]="skinBannerData?.skin_info?.image" alt="Skin concerns"
-                                    class="w-100 h-100 drop-down-img" />
+                            <div class="skin-v2-hero">
+                                <img [src]="skinBannerData?.skin_info?.image" alt="Skin concerns" class="skin-v2-hero__img" />
+                                <div class="skin-v2-hero__meta">
+                                    <p class="skin-v2-hero__kicker m-0">Skin Care Guide</p>
+                                    <h3 class="skin-v2-hero__title m-0">Start with your concern, finish with a complete routine.</h3>
+                                    <button class="secure-btn btn-primary skin-v2-hero__cta"
+                                        (click)="producetNavigation('skin-care','skin')">
+                                        Explore Skin
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </nz-dropdown-menu>
@@ -132,35 +139,42 @@
                     </div>
 
                     <nz-dropdown-menu #hairMenu="nzDropdownMenu">
-                        <div class="skin-dropdown-content" (mouseenter)="keepHairDropdownOpen()"
+                        <div class="skin-dropdown-content hair-dropdown-content--v2" (mouseenter)="keepHairDropdownOpen()"
                             (mouseleave)="closeHairDropdown()">
-                            <div>
-                                <p class="dropdown-header m-0 fw-bold">BY CATEGORY</p>
-                                <nz-divider class="mt-1 mb-1"></nz-divider>
-                                <div class="skin-section">
+                            <div class="hair-v2-col">
+                                <p class="dropdown-header m-0">By Category</p>
+                                <p class="hair-v2-subtitle m-0">Core haircare steps</p>
+                                <div class="hair-v2-list">
                                     @for(data of hairBannerData?.hair_category?.data;track data ;let i = $index){
-                                    <p [ngClass]="i ==0 ? 'm-0' :'mt-1'" class="clickable"
-                                        (click)="producetNavigation(data.product_type ,'hair')">{{data?.product_type}}
-                                    </p>
+                                    <button class="hair-v2-item" (click)="producetNavigation(data.product_type ,'hair')">
+                                        {{data?.product_type}}
+                                    </button>
                                     }
                                 </div>
                             </div>
 
-                            <div>
-                                <p class="dropdown-header m-0">BY CONCERN</p>
-                                <nz-divider class="mt-1 mb-1"></nz-divider>
-                                <div class="skin-section">
+                            <div class="hair-v2-col">
+                                <p class="dropdown-header m-0">By Concern</p>
+                                <p class="hair-v2-subtitle m-0">Scalp and strand goals</p>
+                                <div class="hair-v2-list">
                                     @for(data of hairBannerData?.hair_concerns?.data;track data ;let i = $index){
-                                    <p [ngClass]="i ==0 ? 'm-0' :'mt-1'" class="clickable"
-                                        (click)="producetNavigation(data.hair_concern ,'hair')">{{data?.hair_concern}}
-                                    </p>
+                                    <button class="hair-v2-item" (click)="producetNavigation(data.hair_concern ,'hair')">
+                                        {{data?.hair_concern}}
+                                    </button>
                                     }
                                 </div>
                             </div>
 
-                            <div class="drop-down-img-container">
-                                <img [src]="hairBannerData?.hair_info?.image" alt="Skin concerns"
-                                    class="w-100 h-100 drop-down-img" />
+                            <div class="hair-v2-hero">
+                                <img [src]="hairBannerData?.hair_info?.image" alt="Hair concerns" class="hair-v2-hero__img" />
+                                <div class="hair-v2-hero__meta">
+                                    <p class="hair-v2-hero__kicker m-0">Hair Care Guide</p>
+                                    <h3 class="hair-v2-hero__title m-0">Choose products by scalp need and hair type.</h3>
+                                    <button class="secure-btn btn-primary hair-v2-hero__cta"
+                                        (click)="producetNavigation('hair-care','hair')">
+                                        Explore Hair
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </nz-dropdown-menu>
@@ -177,17 +191,16 @@
                     </div>
 
                     <nz-dropdown-menu #supplementMenu="nzDropdownMenu">
-                        <div class="skin-dropdown-content" (mouseenter)="keepSupplementDropdownOpen()"
+                        <div class="skin-dropdown-content supplement-dropdown-content--v2" (mouseenter)="keepSupplementDropdownOpen()"
                             (mouseleave)="closeSupplementDropdown()">
-                            <div>
-                                <p class="dropdown-header m-0">SHOP BY TYPE</p>
-                                <nz-divider class="mt-1 mb-1"></nz-divider>
-                                <div class="skin-section">
+                            <div class="supplement-v2-col">
+                                <p class="dropdown-header m-0">Shop by Type</p>
+                                <p class="supplement-v2-subtitle m-0">Wellness and nutrition support</p>
+                                <div class="supplement-v2-list">
                                     @for(data of supplementBannerData?.supplements?.data;track data ;let i = $index){
-                                    <p [ngClass]="i ==0 ? 'm-0' :'mt-1'" class="clickable"
-                                        (click)="producetNavigation(data.product_type ,'supplements')">
+                                    <button class="supplement-v2-item" (click)="producetNavigation(data.product_type ,'supplements')">
                                         {{data?.product_type}}
-                                    </p>
+                                    </button>
                                     }
                                 </div>
                             </div>
@@ -205,9 +218,17 @@
                                 </div>
                             </div> -->
 
-                            <div class="drop-down-img-container">
-                                <img [src]="supplementBannerData?.category_info?.image" alt="Skin concerns"
-                                    class="w-100 h-100 drop-down-img" />
+                            <div class="supplement-v2-hero">
+                                <img [src]="supplementBannerData?.category_info?.image" alt="Supplements"
+                                    class="supplement-v2-hero__img" />
+                                <div class="supplement-v2-hero__meta">
+                                    <p class="supplement-v2-hero__kicker m-0">Supplement Guide</p>
+                                    <h3 class="supplement-v2-hero__title m-0">Daily support tailored to your routine.</h3>
+                                    <button class="secure-btn btn-primary supplement-v2-hero__cta"
+                                        (click)="producetNavigation('supplements','supplements')">
+                                        Explore Supplements
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </nz-dropdown-menu>
