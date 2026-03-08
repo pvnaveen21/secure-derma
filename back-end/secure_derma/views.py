@@ -1114,10 +1114,28 @@ class ProductListWithFiltersAPIView(APIView):
         }
 
         # =====================================================
+        # PAGINATION
+        # =====================================================
+        try:
+            limit = int(request.GET.get("limit", 12))
+        except (TypeError, ValueError):
+            limit = 12
+        try:
+            offset = int(request.GET.get("offset", 0))
+        except (TypeError, ValueError):
+            offset = 0
+
+        limit = max(1, min(limit, 100))
+        offset = max(0, offset)
+
+        total_count = products.count()
+        paginated_products = products[offset: offset + limit]
+
+        # =====================================================
         # RESPONSE
         # =====================================================
         serializer = ProductListSerializer(
-            products,
+            paginated_products,
             many=True,
             context={"request": request}
         )
@@ -1126,7 +1144,9 @@ class ProductListWithFiltersAPIView(APIView):
             "success": True,
             "filters": filters,
             "products": {
-                "count": products.count(),
+                "count": total_count,
+                "limit": limit,
+                "offset": offset,
                 "results": serializer.data
             }
         })

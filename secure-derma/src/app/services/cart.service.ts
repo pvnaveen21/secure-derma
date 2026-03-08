@@ -7,6 +7,8 @@ export interface CartItem {
   productName: string;
   thumbnail: string;
   price: number;           // selling_price
+  originalPrice?: number;  // original_price
+  discountPrice?: number;  // discount_price from API
   detailId?: number;       // if you support variants (weight/combo)
   quantity: number;
 }
@@ -65,6 +67,8 @@ export class CartService {
         productName: product.product_name,
         thumbnail: product.thumbnail_image,
         price: selectedDetail.selling_price,
+        originalPrice: selectedDetail.original_price,
+        discountPrice: selectedDetail.discount_price,
         detailId: selectedDetail.id,
         quantity: 1
       });

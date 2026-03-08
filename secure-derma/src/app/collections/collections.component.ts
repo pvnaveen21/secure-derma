@@ -1,5 +1,5 @@
 import { ActivatedRoute } from '@angular/router';
-import { ChangeDetectorRef, Component, Inject, OnInit, PLATFORM_ID } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, HostListener, Inject, OnInit, PLATFORM_ID, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { LucideAngularModule } from 'lucide-angular';
@@ -11,11 +11,14 @@ import { NzCarouselModule } from 'ng-zorro-antd/carousel';
 import { NzDividerModule } from 'ng-zorro-antd/divider';
 import { NzTagModule } from 'ng-zorro-antd/tag';
 import { NzSelectModule } from 'ng-zorro-antd/select';
+import { NzPaginationModule } from 'ng-zorro-antd/pagination';
+import { NzDrawerModule } from 'ng-zorro-antd/drawer';
 import { distinctUntilChanged, map } from 'rxjs';
 import { Icons } from '../shared/icons';
 import { CollectionsService } from '../services/collections.service';
-import { isPlatformBrowser } from '@angular/common';
-import { CartService } from '../services/cart.service';
+import { CommonModule, DOCUMENT, isPlatformBrowser } from '@angular/common';
+import { CartItem, CartService } from '../services/cart.service';
+import { Subscription } from 'rxjs';
 
 interface Product {
   id: number;
@@ -41,6 +44,7 @@ interface FilterItem {
 @Component({
   selector: 'app-collections',
   imports: [
+    CommonModule,
     NzCarouselModule,
     NzDividerModule,
     NzCollapseModule,
@@ -51,6 +55,8 @@ interface FilterItem {
     NzRateModule,
     NzTagModule,
     NzSelectModule,
+    NzPaginationModule,
+    NzDrawerModule,
   ],
   templateUrl: './collections.component.html',
   styleUrl: './collections.component.scss'
@@ -61,6 +67,7 @@ export class CollectionsComponent implements OnInit {
     private collectionsService: CollectionsService,
     private router: Router,
     @Inject(PLATFORM_ID) private platformId: Object,
+    @Inject(DOCUMENT) private document: Document,
     private cdr: ChangeDetectorRef,
     private cartService: CartService
   ) { }
@@ -79,17 +86,42 @@ export class CollectionsComponent implements OnInit {
     'hair-care': 'hair'
   }
   icons = Icons;
-  sortBy: string = 'featured';
+  sortBy: string = 'az';
   filterProduectValue: any = '';
 
   // Filter related properties
   selectedFilters: Map<string, Set<string>> = new Map();
+  draftSelectedFilters: Map<string, Set<string>> = new Map();
   allProducts: Product[] = [];
   filteredProducts: Product[] = [];
   productsData: any = {};
   filterPanels: any[] = [];
+  totalProducts = 0;
+  pageIndex = 1;
+  pageSize = 5;
+  isFilterDrawerVisible = false;
+  isSortDrawerVisible = false;
+  private readonly mobileBreakpoint = 1024;
+  private shouldScrollToProductsTop = false;
+  @ViewChild('productsTopAnchor') productsTopAnchor?: ElementRef<HTMLElement>;
+  cartItemsCount = 0;
+  cartSubtotal = 0;
+  cartSavings = 0;
+  private cartSubscription?: Subscription;
 
   ngOnInit() {
+    this.syncViewportState();
+
+    this.cartSubscription = this.cartService.cart$.subscribe((items: CartItem[]) => {
+      this.cartItemsCount = items.reduce((sum, item) => sum + item.quantity, 0);
+      this.cartSubtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+      this.cartSavings = items.reduce((sum, item) => {
+        const original = item.originalPrice ?? item.price;
+        const itemSaving = Math.max(original - item.price, 0) * item.quantity;
+        return sum + itemSaving;
+      }, 0);
+    });
+
     this.route.paramMap
       .pipe(
         map(params => params.get('slug')),
@@ -110,10 +142,23 @@ export class CollectionsComponent implements OnInit {
 
         // Reset filters on route change
         this.selectedFilters.clear();
+        this.pageIndex = this.getPageFromQueryParam();
+        this.isFilterDrawerVisible = false;
+        this.isSortDrawerVisible = false;
+        this.updatePaginationSeoTags();
         this.getBanner();
         this.getProductsList();
         this.getProductSideMenu();
       });
+  }
+
+  ngOnDestroy() {
+    this.cartSubscription?.unsubscribe();
+  }
+
+  @HostListener('window:resize')
+  onWindowResize() {
+    this.syncViewportState();
   }
 
   getProductSideMenu() {
@@ -134,10 +179,14 @@ export class CollectionsComponent implements OnInit {
   }
 
   getProductsList() {
-    this.collectionsService.getProductsList(this.filterProduectValue).subscribe({
+    this.collectionsService.getProductsList(
+      this.filterProduectValue,
+      undefined,
+      this.getPagination()
+    ).subscribe({
       next: (response: any) => {
-        console.log(response);
         this.allProducts = response.products?.results || [];
+        this.totalProducts = response.products?.count || 0;
         this.productsData = {
           ...response,
           products: {
@@ -156,6 +205,10 @@ export class CollectionsComponent implements OnInit {
         ];
 
         this.applySorting();
+        if (this.shouldScrollToProductsTop) {
+          this.scrollToProductsTop();
+          this.shouldScrollToProductsTop = false;
+        }
       }
     });
   }
@@ -164,10 +217,14 @@ export class CollectionsComponent implements OnInit {
   fetchProductsWithFilters() {
     const filterParams = this.buildFilterQueryParams();
 
-    this.collectionsService.getProductsList(this.filterProduectValue, filterParams).subscribe({
+    this.collectionsService.getProductsList(
+      this.filterProduectValue,
+      filterParams,
+      this.getPagination()
+    ).subscribe({
       next: (response: any) => {
-        console.log('Filtered products:', response);
         this.allProducts = response.products?.results || [];
+        this.totalProducts = response.products?.count || 0;
         this.productsData = {
           ...response,
           products: {
@@ -184,6 +241,10 @@ export class CollectionsComponent implements OnInit {
         ];
 
         this.applySorting();
+        if (this.shouldScrollToProductsTop) {
+          this.scrollToProductsTop();
+          this.shouldScrollToProductsTop = false;
+        }
       }
     });
   }
@@ -233,6 +294,8 @@ export class CollectionsComponent implements OnInit {
         }
       }
     }
+    this.pageIndex = 1;
+    this.updatePageQueryParam();
     this.fetchProductsWithFilters();
   }
 
@@ -244,12 +307,16 @@ export class CollectionsComponent implements OnInit {
         this.selectedFilters.delete(panelKey);
       }
     }
+    this.pageIndex = 1;
+    this.updatePageQueryParam();
     this.fetchProductsWithFilters();
   }
 
   // Clear all filters
   clearAllFilters() {
     this.selectedFilters.clear();
+    this.pageIndex = 1;
+    this.updatePageQueryParam();
     this.fetchProductsWithFilters();
   }
 
@@ -266,6 +333,14 @@ export class CollectionsComponent implements OnInit {
       });
     });
     return filters;
+  }
+
+  get selectedFilterCount(): number {
+    let total = 0;
+    this.selectedFilters.forEach((items) => {
+      total += items.size;
+    });
+    return total;
   }
 
   // Apply filters to products
@@ -305,10 +380,16 @@ export class CollectionsComponent implements OnInit {
     return values;
   }
 
-  // Extract numeric price from price string
-  private extractPrice(priceString?: string): number {
+  // Get numeric selling price for sorting
+  private getProductPrice(product: any): number {
+    const detailPrice = product?.details?.[0]?.selling_price;
+    if (typeof detailPrice === 'number') {
+      return detailPrice;
+    }
+
+    const priceString = product?.price;
     if (!priceString) return 0;
-    const match = priceString.match(/[\d,]+\.?\d*/);
+    const match = String(priceString).match(/[\d,]+\.?\d*/);
     return match ? parseFloat(match[0].replace(/,/g, '')) : 0;
   }
 
@@ -338,26 +419,34 @@ export class CollectionsComponent implements OnInit {
     const products = this.productsData?.products?.results || [];
 
     switch (this.sortBy) {
+      case 'az':
+        products.sort((a: any, b: any) =>
+          String(a.product_name || '').localeCompare(String(b.product_name || ''), undefined, { sensitivity: 'base' })
+        );
+        break;
+      case 'za':
+        products.sort((a: any, b: any) =>
+          String(b.product_name || '').localeCompare(String(a.product_name || ''), undefined, { sensitivity: 'base' })
+        );
+        break;
       case 'price-low':
         products.sort((a: any, b: any) => {
-          const priceA = this.extractPrice(a.price);
-          const priceB = this.extractPrice(b.price);
+          const priceA = this.getProductPrice(a);
+          const priceB = this.getProductPrice(b);
           return priceA - priceB;
         });
         break;
       case 'price-high':
         products.sort((a: any, b: any) => {
-          const priceA = this.extractPrice(a.price);
-          const priceB = this.extractPrice(b.price);
+          const priceA = this.getProductPrice(a);
+          const priceB = this.getProductPrice(b);
           return priceB - priceA;
         });
         break;
-      case 'newest':
-        products.sort((a: any, b: any) => b.id - a.id);
-        break;
-      case 'featured':
       default:
-        // Keep original order
+        products.sort((a: any, b: any) =>
+          String(a.product_name || '').localeCompare(String(b.product_name || ''), undefined, { sensitivity: 'base' })
+        );
         break;
     }
 
@@ -374,6 +463,72 @@ export class CollectionsComponent implements OnInit {
   // Handle sort change
   onSortChange() {
     this.applySorting();
+  }
+
+  get sortByLabel(): string {
+    switch (this.sortBy) {
+      case 'za':
+        return 'Z-A';
+      case 'price-low':
+        return 'Price: Low-High';
+      case 'price-high':
+        return 'Price: High-Low';
+      case 'az':
+      default:
+        return 'A-Z';
+    }
+  }
+
+  onPageIndexChange(page: number) {
+    this.pageIndex = page;
+    this.updatePageQueryParam();
+    this.shouldScrollToProductsTop = true;
+    this.fetchProductsWithFilters();
+  }
+
+  onPageSizeChange(size: number) {
+    this.pageSize = size;
+    this.pageIndex = 1;
+    this.updatePageQueryParam();
+    this.fetchProductsWithFilters();
+  }
+
+  openFilterDrawer() {
+    if (this.isDesktopViewport()) {
+      return;
+    }
+    this.draftSelectedFilters = this.cloneFiltersMap(this.selectedFilters);
+    this.isFilterDrawerVisible = true;
+  }
+
+  closeFilterDrawer() {
+    this.draftSelectedFilters = this.cloneFiltersMap(this.selectedFilters);
+    this.isFilterDrawerVisible = false;
+  }
+
+  applyFilterChanges() {
+    this.selectedFilters = this.cloneFiltersMap(this.draftSelectedFilters);
+    this.pageIndex = 1;
+    this.updatePageQueryParam();
+    this.fetchProductsWithFilters();
+    this.closeFilterDrawer();
+  }
+
+  openSortDrawer() {
+    if (this.isDesktopViewport()) {
+      return;
+    }
+    this.isSortDrawerVisible = true;
+  }
+
+  closeSortDrawer() {
+    this.isSortDrawerVisible = false;
+  }
+
+  applySortFromDrawer(value: string) {
+    this.sortBy = value;
+    this.onSortChange();
+    this.closeSortDrawer();
   }
 
   slugify(value: string): string {
@@ -394,5 +549,167 @@ export class CollectionsComponent implements OnInit {
     this.cartService.addToCart(product);
     // Optional: show notification
     // this.nzMessageService?.success('Added to cart!');
+  }
+
+  private getPagination() {
+    return {
+      limit: this.pageSize,
+      offset: (this.pageIndex - 1) * this.pageSize
+    };
+  }
+
+  private getPageFromQueryParam(): number {
+    const pageValue = Number(this.route.snapshot.queryParamMap.get('page'));
+    return Number.isInteger(pageValue) && pageValue > 0 ? pageValue : 1;
+  }
+
+  private updatePageQueryParam() {
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { page: this.pageIndex > 1 ? this.pageIndex : null },
+      queryParamsHandling: 'merge',
+      replaceUrl: true
+    });
+    this.updatePaginationSeoTags();
+  }
+
+  private updatePaginationSeoTags() {
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
+
+    const slug = this.route.snapshot.paramMap.get('slug') || '';
+    const pageSuffix = this.pageIndex > 1 ? `?page=${this.pageIndex}` : '';
+    const canonicalHref = `${this.document.location.origin}/collections/${slug}${pageSuffix}`;
+    const prevHref = this.pageIndex > 2
+      ? `${this.document.location.origin}/collections/${slug}?page=${this.pageIndex - 1}`
+      : `${this.document.location.origin}/collections/${slug}`;
+    const nextHref = `${this.document.location.origin}/collections/${slug}?page=${this.pageIndex + 1}`;
+
+    this.upsertLinkTag('canonical', canonicalHref);
+    if (this.pageIndex > 1) {
+      this.upsertLinkTag('prev', prevHref);
+    } else {
+      this.removeLinkTag('prev');
+    }
+    this.upsertLinkTag('next', nextHref);
+
+    const collectionName = slug.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()) || 'Collections';
+    this.document.title = this.pageIndex > 1
+      ? `${collectionName} - Page ${this.pageIndex} | Secure Derma`
+      : `${collectionName} | Secure Derma`;
+  }
+
+  private upsertLinkTag(rel: string, href: string) {
+    const head = this.document.head;
+    let link = head.querySelector(`link[rel="${rel}"]`) as HTMLLinkElement | null;
+    if (!link) {
+      link = this.document.createElement('link');
+      link.setAttribute('rel', rel);
+      head.appendChild(link);
+    }
+    link.setAttribute('href', href);
+  }
+
+  private removeLinkTag(rel: string) {
+    const link = this.document.head.querySelector(`link[rel="${rel}"]`);
+    if (link) {
+      link.remove();
+    }
+  }
+
+  isDraftFilterSelected(panelKey: string, itemName: string): boolean {
+    return this.draftSelectedFilters.has(panelKey) &&
+      this.draftSelectedFilters.get(panelKey)!.has(itemName);
+  }
+
+  onDraftFilterChange(panelKey: string, itemName: string, checked: boolean) {
+    if (checked) {
+      if (!this.draftSelectedFilters.has(panelKey)) {
+        this.draftSelectedFilters.set(panelKey, new Set());
+      }
+      this.draftSelectedFilters.get(panelKey)!.add(itemName);
+    } else {
+      if (this.draftSelectedFilters.has(panelKey)) {
+        this.draftSelectedFilters.get(panelKey)!.delete(itemName);
+        if (this.draftSelectedFilters.get(panelKey)!.size === 0) {
+          this.draftSelectedFilters.delete(panelKey);
+        }
+      }
+    }
+  }
+
+  clearDraftFilters() {
+    this.draftSelectedFilters.clear();
+  }
+
+  get draftSelectedFilterCount(): number {
+    let total = 0;
+    this.draftSelectedFilters.forEach((items) => {
+      total += items.size;
+    });
+    return total;
+  }
+
+  private cloneFiltersMap(source: Map<string, Set<string>>): Map<string, Set<string>> {
+    const clone = new Map<string, Set<string>>();
+    source.forEach((items, key) => {
+      clone.set(key, new Set(items));
+    });
+    return clone;
+  }
+
+  private scrollToProductsTop() {
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
+
+    setTimeout(() => {
+      const targetEl = this.productsTopAnchor?.nativeElement;
+      if (!targetEl) {
+        return;
+      }
+
+      const headerOffset = this.getStickyHeaderOffset();
+      const absoluteTop = targetEl.getBoundingClientRect().top + window.scrollY;
+      const targetTop = Math.max(absoluteTop - headerOffset - 8, 0);
+
+      window.scrollTo({
+        top: targetTop,
+        behavior: 'smooth'
+      });
+    }, 30);
+  }
+
+  private getStickyHeaderOffset(): number {
+    const selectors = ['.header-container', '.secura-header-container'];
+    return selectors.reduce((total, selector) => {
+      const el = document.querySelector(selector) as HTMLElement | null;
+      if (!el) {
+        return total;
+      }
+
+      const style = window.getComputedStyle(el);
+      const isStickyLayer = style.position === 'sticky' || style.position === 'fixed';
+      if (!isStickyLayer) {
+        return total;
+      }
+
+      return total + el.getBoundingClientRect().height;
+    }, 0);
+  }
+
+  private syncViewportState() {
+    if (!this.isDesktopViewport()) {
+      return;
+    }
+
+    this.isFilterDrawerVisible = false;
+    this.isSortDrawerVisible = false;
+    this.draftSelectedFilters = this.cloneFiltersMap(this.selectedFilters);
+  }
+
+  private isDesktopViewport(): boolean {
+    return isPlatformBrowser(this.platformId) && window.innerWidth > this.mobileBreakpoint;
   }
 }

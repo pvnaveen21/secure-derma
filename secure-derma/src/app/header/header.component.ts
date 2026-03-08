@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, ElementRef, inject, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, HostListener, inject, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { NzDropDownDirective, NzDropDownModule } from 'ng-zorro-antd/dropdown';
 import { NzInputModule } from 'ng-zorro-antd/input';
 import { LucideAngularModule } from 'lucide-angular';
@@ -19,11 +19,24 @@ import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzInputNumberModule } from 'ng-zorro-antd/input-number';
 import { NzIconModule } from 'ng-zorro-antd/icon';
 import { SettingsService } from '../services/settings/settings.service';
+interface MobilePanelItem {
+  label: string;
+  value: string;
+  type: 'skin' | 'hair' | 'supplements';
+}
+
 interface Panel {
+  key: string;
   name: string;
   active: boolean;
   disabled: boolean;
-  content: string;
+  image: string;
+  categoryTitle: string;
+  concernTitle: string;
+  categoryItems: MobilePanelItem[];
+  concernItems: MobilePanelItem[];
+  routeValue: string;
+  routeType: 'skin' | 'hair' | 'supplements';
 }
 @Component({
   selector: 'app-header',
@@ -47,7 +60,9 @@ interface Panel {
   styleUrl: './header.component.scss'
 })
 export class HeaderComponent {
+  private readonly mobileBreakpoint = 768;
   @ViewChild('brandListContainer') brandListContainer!: ElementRef;
+  @ViewChild('mobileBrandListContainer') mobileBrandListContainer?: ElementRef;
   @ViewChild(NzDropDownDirective) dropdown!: NzDropDownDirective;
   // Add a search property for two-way binding
   searchTerm: string = '';
@@ -63,13 +78,10 @@ export class HeaderComponent {
   cartDrawerPlacement: any = 'right'
   array = [{ image: this.assets.secura.banner1 }, { image: this.assets.secura.banner2 }, { image: this.assets.secura.banner3 }];
 
-  panels: Panel[] = [
-    {
-      name: 'Skin',
-      active: false,
-      disabled: false,
-      content: 'A dog is a type of domesticated animal. Known for its loyalty and faithfulness, it can be found as a welcome guest in many households across the world.'
-    }
+  panels: Panel[] = [];
+  mobileQuickLinks = [
+    { name: 'Pediatric', value: 'pediatric' },
+    { name: 'Shop All', value: 'all' }
   ];
 
   // Add these properties
@@ -86,7 +98,7 @@ export class HeaderComponent {
   allBrandKey: any[] = [];
   loading: boolean = false;
 
-  drawerReady = false;
+  drawerReady = true;
   visible = false;
 
   constructor(
@@ -114,6 +126,7 @@ export class HeaderComponent {
   private subscription!: Subscription;
   cartItems: CartItem[] = [];
   ngOnInit() {
+    this.initializePanels();
     this.getBrandsList();
     this.getSkinBannerList()
     this.getHairBannerList()
@@ -220,6 +233,7 @@ export class HeaderComponent {
     this.headerService.getHairBannerList().subscribe({
       next: (res) => {
         this.hairBannerData = res
+        this.syncPanelData();
         this.cdr.detectChanges();
       },
       error: (err) => {
@@ -234,6 +248,7 @@ export class HeaderComponent {
     this.headerService.getSupplementBannerList().subscribe({
       next: (res) => {
         this.supplementBannerData = res
+        this.syncPanelData();
         this.cdr.detectChanges();
       },
       error: (err) => {
@@ -248,7 +263,7 @@ export class HeaderComponent {
     this.headerService.getSkinBannerList().subscribe({
       next: (res) => {
         this.skinBannerData = res
-
+        this.syncPanelData();
         this.cdr.detectChanges();
       },
       error: (err) => {
@@ -274,28 +289,18 @@ export class HeaderComponent {
   }
 
   mobileSidescrollToLetter(letter: string) {
-    requestAnimationFrame(() => {
-      const container = document.querySelector('.side-menu-brand-list-wrapper .brand-list-container');
+    const container = this.mobileBrandListContainer?.nativeElement;
+    if (!container) {
+      return;
+    }
 
-      if (!container) {
-        console.log('Container not found');
-        return;
-      }
+    const targetSection = container.querySelector(`[data-letter="${letter}"]`);
+    if (!targetSection) {
+      return;
+    }
 
-      const targetSection = container.querySelector(`[data-letter="${letter}"]`);
-
-      if (targetSection) {
-        this.activeLetter = letter;
-        const containerRect = container.getBoundingClientRect();
-        const targetRect = targetSection.getBoundingClientRect();
-        const scrollPosition = container.scrollTop + (targetRect.top - containerRect.top) - 10;
-
-        container.scrollTo({
-          top: scrollPosition,
-          behavior: 'smooth'
-        });
-      }
-    });
+    this.activeLetter = letter;
+    targetSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   sideMenuView(type: any) {
@@ -341,21 +346,34 @@ export class HeaderComponent {
     this.isBrandDropdownVisible = true;
   }
   togglePanel(panel: Panel): void {
-    panel.active = !panel.active;
+    this.panels = this.panels.map((entry) => ({
+      ...entry,
+      active: entry.key === panel.key ? !entry.active : false
+    }));
   }
 
   ngAfterViewInit() {
-    setTimeout(() => {
-      // this.drawerReady = true;
-    }, 0);
+    this.drawerReady = true;
   }
 
   openSideMenu() {
+    if (this.isDesktopView()) {
+      this.visible = false;
+      return;
+    }
     this.visible = true;
+    this.selectedSideType = 1;
   }
 
   closeSideMenu() {
     this.visible = false;
+  }
+
+  @HostListener('window:resize')
+  onViewportResize() {
+    if (this.isDesktopView() && this.visible) {
+      this.closeSideMenu();
+    }
   }
 
   homeLocation() {
@@ -407,6 +425,18 @@ export class HeaderComponent {
     this.cartService.updateQuantity(item.productId, change);
   }
 
+  getDiscountPercent(item: CartItem): number {
+    if (item.discountPrice && item.discountPrice > 0) {
+      return item.discountPrice;
+    }
+
+    if (!item.originalPrice || item.originalPrice <= item.price) {
+      return 0;
+    }
+
+    return Math.round(((item.originalPrice - item.price) / item.originalPrice) * 100);
+  }
+
   startShop(){
     this.closeCartDrawer();
     this.router.navigate(['collections/all'])
@@ -418,6 +448,112 @@ export class HeaderComponent {
 
   toggleTheme(): void {
     this.settingsService.toggleLightDark();
+  }
+
+  private isDesktopView(): boolean {
+    return typeof window !== 'undefined' && window.innerWidth > this.mobileBreakpoint;
+  }
+
+  getMobilePanelTitle(panelKey: string): string {
+    if (panelKey === 'skin') {
+      return 'Start with your concern, finish with a complete routine.';
+    }
+    if (panelKey === 'hair') {
+      return 'Choose products by scalp need and hair type.';
+    }
+    return 'Daily support tailored to your routine.';
+  }
+
+  private initializePanels() {
+    this.panels = [
+      {
+        key: 'skin',
+        name: 'Skin',
+        active: false,
+        disabled: false,
+        image: '',
+        categoryTitle: 'BY CATEGORY',
+        concernTitle: 'BY CONCERN',
+        categoryItems: [],
+        concernItems: [],
+        routeValue: 'skin-care',
+        routeType: 'skin'
+      },
+      {
+        key: 'hair',
+        name: 'Hair',
+        active: false,
+        disabled: false,
+        image: '',
+        categoryTitle: 'BY CATEGORY',
+        concernTitle: 'BY CONCERN',
+        categoryItems: [],
+        concernItems: [],
+        routeValue: 'hair-care',
+        routeType: 'hair'
+      },
+      {
+        key: 'supplements',
+        name: 'Supplement',
+        active: false,
+        disabled: false,
+        image: '',
+        categoryTitle: 'SHOP BY TYPE',
+        concernTitle: 'BY CONCERN',
+        categoryItems: [],
+        concernItems: [],
+        routeValue: 'supplements',
+        routeType: 'supplements'
+      }
+    ];
+  }
+
+  private syncPanelData() {
+    this.panels = this.panels.map((panel) => {
+      if (panel.key === 'skin') {
+        return {
+          ...panel,
+          image: this.skinBannerData?.skin_info?.image || this.assets.secura.skin,
+          categoryItems: this.mapPanelItems(this.skinBannerData?.skin_category?.data, 'product_type', 'skin'),
+          concernItems: this.mapPanelItems(this.skinBannerData?.skin_concerns?.data, 'skin_concern', 'skin')
+        };
+      }
+      if (panel.key === 'hair') {
+        return {
+          ...panel,
+          image: this.hairBannerData?.hair_info?.image || this.assets.secura.skin,
+          categoryItems: this.mapPanelItems(this.hairBannerData?.hair_category?.data, 'product_type', 'hair'),
+          concernItems: this.mapPanelItems(this.hairBannerData?.hair_concerns?.data, 'hair_concern', 'hair')
+        };
+      }
+
+      return {
+        ...panel,
+        image: this.supplementBannerData?.category_info?.image || this.assets.secura.skin,
+        categoryItems: this.mapPanelItems(this.supplementBannerData?.supplements?.data, 'product_type', 'supplements'),
+        concernItems: []
+      };
+    });
+  }
+
+  private mapPanelItems(data: any[] | undefined, field: string, type: 'skin' | 'hair' | 'supplements'): MobilePanelItem[] {
+    if (!Array.isArray(data)) {
+      return [];
+    }
+
+    return data
+      .map((entry) => {
+        const label = entry?.[field];
+        if (!label) {
+          return null;
+        }
+        return {
+          label,
+          value: label,
+          type
+        };
+      })
+      .filter((entry): entry is MobilePanelItem => !!entry);
   }
 
 }
