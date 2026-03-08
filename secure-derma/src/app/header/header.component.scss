@@ -41,16 +41,21 @@
         cursor: pointer;
 
         .logo-title {
-            color: var(--brand-primary);
+            color: color-mix(in srgb, var(--brand-primary) 72%, var(--brand-secondary) 28%);
+            font-family: "Poppins", "Segoe UI", sans-serif;
+            font-style: normal;
             font-weight: bold;
             margin: 0;
             padding: 0;
-            line-height: 1.9rem;
+            line-height: 1.15;
+            letter-spacing: 0.01em;
+            font-size: 2.5rem;
         }
 
         .logo-subtitle {
             color: var(--brand-secondary);
             // line-height: 0.1rem;
+            font-size: 1.2rem;
         }
     }
 }
@@ -874,7 +879,12 @@ nz-input-group {
 .side-menu-brand-list-wrapper {
     padding-top: 1rem;
     position: relative;
-    height: 100%;
+    height: calc(100vh - 13rem);
+    overflow: hidden;
+
+    .brand-list-container {
+        height: 100%;
+    }
 }
 
 .brand-list-container {
@@ -1034,23 +1044,155 @@ nz-input-group {
     line-height: 1.6;
 }
 
+.mobile-panel-image {
+    position: relative;
+    overflow: hidden;
+    border-radius: 1rem;
+}
+
+.mobile-panel-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    gap: 0.35rem;
+    padding: 0.9rem;
+    background: linear-gradient(180deg,
+            rgba(15, 23, 42, 0.12) 0%,
+            rgba(15, 23, 42, 0.58) 62%,
+            rgba(15, 23, 42, 0.84) 100%);
+}
+
+.mobile-panel-overlay__kicker {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04rem;
+    font-weight: 700;
+    color: color-mix(in srgb, var(--brand-secondary) 72%, #ffffff 28%);
+}
+
+.mobile-panel-overlay__title {
+    color: color-mix(in srgb, #ffffff 80%, var(--brand-primary) 20%);
+    font-size: 1rem;
+    font-weight: 600;
+    line-height: 1.35rem;
+    margin-top: 0.2rem !important;
+}
+
 .m-img {
     border-radius: 1rem;
-    max-width: 30rem;
+    width: 100%;
+    max-height: 10rem;
+    object-fit: cover;
+}
+
+.mobile-link-list {
+    display: grid;
+    gap: 0.45rem;
+}
+
+.mobile-link-item {
+    width: 100%;
+    text-align: left;
+    padding: 0.42rem 0.55rem;
+    border: 0.06rem solid color-mix(in srgb, var(--border-color) 85%, transparent);
+    border-radius: 0.45rem;
+    background: color-mix(in srgb, var(--card-bg) 94%, #ffffff 6%);
+    color: var(--text-primary);
+    font-size: 0.88rem;
+    transition: transform 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
+    opacity: 0;
+    transform: translateY(6px);
+}
+
+.collapse-content.active .mobile-link-item {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.mobile-link-item:hover {
+    background: color-mix(in srgb, var(--hover-bg) 75%, var(--card-bg));
+    border-color: color-mix(in srgb, var(--brand-primary) 35%, var(--border-color));
+    transform: translateX(3px);
+}
+
+.mobile-empty-text {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.mobile-section-cta {
+    width: 100%;
+    border: none;
+    border-radius: 0.55rem;
+    padding: 0.58rem 0.7rem;
+    background: color-mix(in srgb, var(--brand-primary) 86%, var(--brand-secondary) 14%);
+    color: #ffffff;
+    font-weight: 600;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.mobile-section-cta--overlay {
+    width: fit-content;
+    max-width: 100%;
+    margin-top: 0.45rem;
+    font-size: 0.82rem;
+    padding: 0.45rem 0.7rem;
+    border-radius: 0.55rem;
+    border: 0.06rem solid #ffffff;
+    background: #ffffff;
+    color: #111827;
+    font-weight: 600;
+}
+
+.mobile-section-cta:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 0.45rem 0.85rem color-mix(in srgb, var(--brand-primary) 28%, transparent);
+}
+
+.collapse-content.active .mobile-panel-image {
+    animation: mobilePanelFadeIn 0.32s ease;
+}
+
+@keyframes mobilePanelFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .mobile-dropdown-header {
-    color: black;
-    font-weight: 600;
+    color: var(--text-primary) !important;
+    font-weight: bold;
     font-size: 1rem;
 }
-
-.fw-bold {}
-
 
 // cart drawer
 
 // src/app/components/cart-drawer/cart-drawer.component.scss
+::ng-deep .cart-drawer-shell {
+    .ant-drawer-header {
+        padding-bottom: 0.75rem;
+        border-bottom: 0.06rem solid color-mix(in srgb, var(--border-color) 70%, transparent);
+    }
+
+    .ant-drawer-body {
+        padding: 0.9rem 1rem 0.9rem 1rem !important;
+    }
+
+    .ant-drawer-footer {
+        border-top: 0.06rem solid color-mix(in srgb, var(--border-color) 70%, transparent);
+        padding: 0.9rem 1rem 1rem 1rem;
+        background: color-mix(in srgb, var(--card-bg) 92%, #ffffff 8%);
+    }
+}
+
 .drawer-header {
     display: flex;
     align-items: center;
@@ -1063,7 +1205,10 @@ nz-input-group {
 
     .items-count {
         font-size: 0.875rem;
-        color: #8c8c8c;
+        color: var(--text-secondary);
+        background: color-mix(in srgb, var(--hover-bg) 76%, var(--card-bg));
+        border-radius: 999px;
+        padding: 0.2rem 0.55rem;
     }
 }
 
@@ -1077,16 +1222,23 @@ nz-input-group {
     .cart-item {
         display: flex;
         gap: 1rem;
-        padding: 1rem 0;
+        padding: 0.8rem;
         align-items: flex-start;
+        background: color-mix(in srgb, var(--card-bg) 95%, #ffffff 5%);
+        border: 0.06rem solid color-mix(in srgb, var(--border-color) 80%, transparent);
+        border-radius: 0.8rem;
+        margin-bottom: 0.75rem;
+        opacity: 0;
+        transform: translateY(8px);
 
         .item-image {
             width: 4rem;
             height: 4rem;
-            border-radius: 0.5rem;
+            border-radius: 0.55rem;
             overflow: hidden;
-            background: #f5f5f5;
+            background: color-mix(in srgb, var(--hover-bg) 82%, var(--card-bg));
             flex-shrink: 0;
+            border: 0.06rem solid color-mix(in srgb, var(--border-color) 75%, transparent);
 
             img {
                 width: 100%;
@@ -1113,7 +1265,7 @@ nz-input-group {
 
             .item-sku {
                 font-size: 0.75rem;
-                color: #8c8c8c;
+                color: var(--text-secondary);
                 margin: 0 0 0.75rem;
             }
 
@@ -1126,31 +1278,25 @@ nz-input-group {
                 .quantity-list {
                     display: flex;
                     align-items: center;
-                    // width: 5rem;
-                    border: 0.1rem solid rgba(217, 216, 216, 0.85);
+                    border: 0.06rem solid color-mix(in srgb, var(--border-color) 80%, transparent);
                     border-radius: 0.4rem;
+                    background: color-mix(in srgb, var(--card-bg) 95%, #ffffff 5%);
 
                     .quantity-adjust {
-                        // width: 1rem;
-                        // text-align: center;
                         padding: 0.2rem;
-
-                        // background-color: red;
                         &:hover {
-                            background-color: #e3e2e2;
+                            background-color: color-mix(in srgb, var(--hover-bg) 76%, var(--card-bg));
                             border-radius: 0.2rem;
                         }
 
                         .menu-icon {
                             width: 1rem !important;
                             height: 1rem;
-                            // align-items: center;
                             cursor: pointer;
                         }
                     }
                     .disableClick{
                         cursor: not-allowed !important;
-                        // pointer-events:none !important ;
                         opacity: 0.2;
                         .menu-icon{
                         cursor: not-allowed !important;
@@ -1170,6 +1316,7 @@ nz-input-group {
                     display: flex;
                     align-items: center;
                     justify-content: center;
+                    border-radius: 0.4rem;
                 }
             }
         }
@@ -1177,10 +1324,30 @@ nz-input-group {
         .item-price {
             flex-shrink: 0;
             text-align: right;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 0.2rem;
+
+            .save-badge {
+                font-size: 0.7rem;
+                font-weight: 700;
+                color: #ffffff;
+                background: color-mix(in srgb, var(--brand-primary) 70%, var(--brand-secondary) 30%);
+                border-radius: 999px;
+                padding: 0.12rem 0.45rem;
+                letter-spacing: 0.01rem;
+            }
 
             .price {
                 font-size: 1rem;
                 font-weight: 600;
+            }
+
+            .original-price {
+                font-size: 0.76rem;
+                color: var(--text-secondary);
+                text-decoration: line-through;
             }
         }
     }
@@ -1189,6 +1356,26 @@ nz-input-group {
         margin: 0;
     }
 }
+
+.cart-items-container.cart-open {
+    .cart-item {
+        animation: cartItemLanding 420ms cubic-bezier(.2, .8, .2, 1) forwards;
+        animation-delay: calc(var(--item-index, 0) * 70ms);
+    }
+}
+
+@keyframes cartItemLanding {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
 .your_bag_text{
     line-height: 2.3rem;
     font-weight: 600;
@@ -1214,12 +1401,12 @@ nz-input-group {
             margin-bottom: 1rem;
 
             .value {
-                color: #52c41a;
+                color: color-mix(in srgb, var(--brand-primary) 75%, var(--brand-secondary) 25%);
             }
         }
 
         .label {
-            color: #595959;
+            color: var(--text-secondary);
         }
 
         .value {
@@ -1240,6 +1427,9 @@ nz-input-group {
         height: 3rem;
         font-weight: 600;
         font-size: 1rem;
+        border-radius: 0.6rem;
+        background: color-mix(in srgb, var(--brand-primary) 86%, var(--brand-secondary) 14%);
+        border-color: color-mix(in srgb, var(--brand-primary) 86%, var(--brand-secondary) 14%);
     }
 
     .trust-badges {
