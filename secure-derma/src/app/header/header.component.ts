@@ -132,7 +132,7 @@ export class HeaderComponent {
     this.getHairBannerList()
     this.getSupplementBannerList()
 
-    this.subscription = this.cartService.cart$.subscribe((items:any) => {
+    this.subscription = this.cartService.cart$.subscribe((items: any) => {
       this.cartItems = items;
     });
   }
@@ -409,7 +409,7 @@ export class HeaderComponent {
   closeCartDrawer() {
     this.cartDrawerVisible = false;
   }
-  signIn(){
+  signIn() {
     this.router.navigate(['account/login'])
   }
 
@@ -421,7 +421,7 @@ export class HeaderComponent {
   }
 
   onQuantityChange(item: CartItem, newQuantity: number): void {
-    const change = newQuantity - item.quantity;    
+    const change = newQuantity - item.quantity;
     this.cartService.updateQuantity(item.productId, change);
   }
 
@@ -437,7 +437,7 @@ export class HeaderComponent {
     return Math.round(((item.originalPrice - item.price) / item.originalPrice) * 100);
   }
 
-  startShop(){
+  startShop() {
     this.closeCartDrawer();
     this.router.navigate(['collections/all'])
   }

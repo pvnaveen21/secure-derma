@@ -13,6 +13,7 @@ import { NzTagModule } from 'ng-zorro-antd/tag';
 import { NzSelectModule } from 'ng-zorro-antd/select';
 import { NzPaginationModule } from 'ng-zorro-antd/pagination';
 import { NzDrawerModule } from 'ng-zorro-antd/drawer';
+import { NzMessageService } from 'ng-zorro-antd/message';
 import { distinctUntilChanged, map } from 'rxjs';
 import { Icons } from '../shared/icons';
 import { CollectionsService } from '../services/collections.service';
@@ -69,18 +70,12 @@ export class CollectionsComponent implements OnInit {
     @Inject(PLATFORM_ID) private platformId: Object,
     @Inject(DOCUMENT) private document: Document,
     private cdr: ChangeDetectorRef,
-    private cartService: CartService
+    private cartService: CartService,
+    private message: NzMessageService
   ) { }
 
   bannerType: any;
   bannerImages: any = [];
-  bannerValues: any = {
-    'all': 'shop_all',
-    'skin-care': 'skin_banner',
-    'hair-care': 'hair_banner',
-    'supplements': 'supplement_banner',
-    'pediatric': 'pediatric_banner',
-  };
   slugChangesValues: any = {
     'skin-care': 'skin',
     'hair-care': 'hair'
@@ -107,6 +102,8 @@ export class CollectionsComponent implements OnInit {
   cartItemsCount = 0;
   cartSubtotal = 0;
   cartSavings = 0;
+  recentlyAddedProductId: number | null = null;
+  private addToCartFeedbackTimeout?: ReturnType<typeof setTimeout>;
   private cartSubscription?: Subscription;
 
   ngOnInit() {
@@ -131,7 +128,7 @@ export class CollectionsComponent implements OnInit {
         if (!slug) return;
 
         this.filterProduectValue = this.slugChangesValues[slug] ?? slug;
-        this.bannerType = this.bannerValues[slug];
+        this.bannerType = slug;
 
         if (isPlatformBrowser(this.platformId)) {
           window.scrollTo({
@@ -154,6 +151,9 @@ export class CollectionsComponent implements OnInit {
 
   ngOnDestroy() {
     this.cartSubscription?.unsubscribe();
+    if (this.addToCartFeedbackTimeout) {
+      clearTimeout(this.addToCartFeedbackTimeout);
+    }
   }
 
   @HostListener('window:resize')
@@ -196,7 +196,7 @@ export class CollectionsComponent implements OnInit {
         };
 
         const filters = response.filters;
-        this.filterPanels=[]
+        this.filterPanels = []
         this.filterPanels = [
           { key: 'product_types', title: 'Product Type', items: filters.product_types || [] },
           { key: 'hair_concerns', title: 'Hair Concerns', items: filters.hair_concerns || [] },
@@ -546,9 +546,33 @@ export class CollectionsComponent implements OnInit {
 
   // product.component.ts
   addToCart(product: any) {
-    this.cartService.addToCart(product);
-    // Optional: show notification
-    // this.nzMessageService?.success('Added to cart!');
+    const result = this.cartService.addToCart(product);
+
+    switch (result.status) {
+      case 'added':
+      case 'updated':
+        this.recentlyAddedProductId = product.id;
+        if (this.addToCartFeedbackTimeout) {
+          clearTimeout(this.addToCartFeedbackTimeout);
+        }
+        this.addToCartFeedbackTimeout = setTimeout(() => {
+          if (this.recentlyAddedProductId === product.id) {
+            this.recentlyAddedProductId = null;
+          }
+        }, 2200);
+        this.message.success(
+          result.status === 'added'
+            ? `${product.product_name} added to cart`
+            : `${product.product_name} quantity updated in cart`
+        );
+        break;
+      case 'limit_reached':
+        this.message.info(`${product.product_name} is already at the maximum quantity`);
+        break;
+      case 'missing_details':
+        this.message.error(`Unable to add ${product.product_name} right now`);
+        break;
+    }
   }
 
   private getPagination() {

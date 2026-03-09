@@ -67,13 +67,6 @@ export class CollectionsComponent implements OnInit {
 
   bannerType: any;
   bannerImages: any = [];
-  bannerValues: any = {
-    'all': 'shop_all',
-    'skin-care': 'skin_banner',
-    'hair-care': 'hair_banner',
-    'supplements': 'supplement_banner',
-    'pediatric': 'pediatric_banner',
-  };
   slugChangesValues: any = {
     'skin-care': 'skin',
     'hair-care': 'hair'
@@ -99,7 +92,7 @@ export class CollectionsComponent implements OnInit {
         if (!slug) return;
 
         this.filterProduectValue = this.slugChangesValues[slug] ?? slug;
-        this.bannerType = this.bannerValues[slug];
+        this.bannerType = slug;
 
         if (isPlatformBrowser(this.platformId)) {
           window.scrollTo({
