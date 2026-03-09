@@ -115,6 +115,8 @@
             <nz-divider></nz-divider>
             <div #productsTopAnchor></div>
 
+            <div class="products-content-shell"
+                [class.is-updating]="isProductsLoading && (productsData?.products?.results?.length || 0) > 0">
             <!-- Product Grid -->
             @if (productsData?.products?.results && productsData.products.results.length > 0) {
             <div class="products-grid">
@@ -190,10 +192,16 @@
                     </nz-pagination>
                 </div>
             </div>
-            } @else {
+            } @else if (!isProductsLoading) {
             <div class="no-products">
-                <p>No products found matching your filters.</p>
-                <button class="clear-filters-btn" (click)="clearAllFilters()">Clear Filters</button>
+                <div class="no-products-visual" aria-hidden="true">
+                    <span class="no-products-emoji">🔎</span>
+                    <span class="no-products-spark spark-left">✨</span>
+                    <span class="no-products-spark spark-right">✨</span>
+                </div>
+                <h3 class="no-products-title">No matching products found</h3>
+                <p class="no-products-copy">Try clearing a few filters to explore more skin-care options.</p>
+                <!-- <button class="clear-filters-btn" (click)="clearAllFilters()">Clear Filters</button> -->
             </div>
             <div class="products-pagination-wrap">
                 <div class="products-pagination-shell">
@@ -205,7 +213,24 @@
                     </nz-pagination>
                 </div>
             </div>
+            } @else {
+            <div class="products-initial-loading" aria-live="polite">
+                <div class="products-loading-bar"></div>
+                <p class="products-loading-title m-0">Loading products</p>
+                <p class="products-loading-copy m-0">Refreshing this collection for you.</p>
+            </div>
             }
+
+            @if (isProductsLoading && (productsData?.products?.results?.length || 0) > 0) {
+            <div class="products-loading-overlay" aria-live="polite">
+                <div class="products-loading-overlay__card">
+                    <div class="products-loading-bar"></div>
+                    <p class="products-loading-title m-0">Updating products</p>
+                    <p class="products-loading-copy m-0">Applying your latest selection.</p>
+                </div>
+            </div>
+            }
+            </div>
         </div>
     </div>
 

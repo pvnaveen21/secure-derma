@@ -273,6 +273,14 @@
                 </div>
             </div>
         </div>
+        @if (isSelectionLoading) {
+        <div class="header-selection-loader" aria-live="polite">
+            <div class="header-selection-loader__bar"></div>
+            <p class="header-selection-loader__text m-0">
+                Updating {{ pendingSelectionLabel || 'selection' }}...
+            </p>
+        </div>
+        }
     </div>
 
     <div class="dropdown-search px-1 py-1 mobile-view">
