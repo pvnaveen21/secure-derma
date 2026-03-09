@@ -146,22 +146,30 @@
                     </nz-card-meta> -->
                     <div class="product-footer">
                         <h5 class="m-0">{{product.product_name}}</h5>
-                        @if (product.avg_rating) {
-                        <nz-rate [ngModel]="product.avg_rating" nzDisabled [nzCount]="5"></nz-rate>
-                        }
+                        <div class="rate-height">
+                            @if (product.avg_rating) {
+                            <nz-rate [ngModel]="product.avg_rating" nzDisabled [nzCount]="5"></nz-rate>
+                            <span class="ms-2 rating_count">({{ product.rating_count }} {{ product.rating_count === 1 ?
+                                '' : '' }})</span>
+                            }
+                        </div>
                         @if(product?.product_description){
-                        <p class="product-description">{{product.product_description}}</p>
+                        <p class="product-description">{{ product.product_description.length > 100
+                            ? (product.product_description | slice:0:100) + '...'
+                            : product.product_description }}</p>
                         }
                         @if (product.details) {
-                        <div class="d-flex mt-3 mb-3" style="gap: 0.5rem;">
+                        <div class="d-flex mb-2" style="gap: 0.5rem;">
                             <p class="product-org-price">₹ {{ product.details[0].original_price }}</p>
                             <p class="product-sell-price">₹ {{ product.details[0].selling_price }}</p>
                         </div>
 
                         <div class="add-to-cart-btn">
                             <div style="flex: 1;">
-                                <button (click)="addToCart(product)"
-                                    class="secure-btn btn-primary btn-lg signin-btn ">Add to cart</button>
+                                <button (click)="addToCart(product)" class="secure-btn btn-primary btn-lg signin-btn"
+                                    [class.added]="recentlyAddedProductId === product.id">
+                                    {{ recentlyAddedProductId === product.id ? 'Added to cart' : 'Add to cart' }}
+                                </button>
                             </div>
                         </div>
                         }
@@ -178,8 +186,7 @@
                     </p>
                     <nz-pagination [nzTotal]="totalProducts" [nzPageIndex]="pageIndex" [nzPageSize]="pageSize"
                         [nzShowSizeChanger]="true" [nzPageSizeOptions]="[12, 24, 36]"
-                        (nzPageIndexChange)="onPageIndexChange($event)"
-                        (nzPageSizeChange)="onPageSizeChange($event)">
+                        (nzPageIndexChange)="onPageIndexChange($event)" (nzPageSizeChange)="onPageSizeChange($event)">
                     </nz-pagination>
                 </div>
             </div>
@@ -193,9 +200,8 @@
                     <p class="pagination-meta m-0">
                         Page {{ pageIndex }} • 0 products
                     </p>
-                    <nz-pagination [nzTotal]="0" [nzPageIndex]="1" [nzPageSize]="pageSize"
-                        [nzShowSizeChanger]="true" [nzPageSizeOptions]="[12, 24, 36]"
-                        (nzPageSizeChange)="onPageSizeChange($event)">
+                    <nz-pagination [nzTotal]="0" [nzPageIndex]="1" [nzPageSize]="pageSize" [nzShowSizeChanger]="true"
+                        [nzPageSizeOptions]="[12, 24, 36]" (nzPageSizeChange)="onPageSizeChange($event)">
                     </nz-pagination>
                 </div>
             </div>
@@ -275,10 +281,12 @@
                 <button class="mobile-sort-item" [class.active]="sortBy==='za'" (click)="applySortFromDrawer('za')">
                     Alphabetically, Z-A
                 </button>
-                <button class="mobile-sort-item" [class.active]="sortBy==='price-low'" (click)="applySortFromDrawer('price-low')">
+                <button class="mobile-sort-item" [class.active]="sortBy==='price-low'"
+                    (click)="applySortFromDrawer('price-low')">
                     Price, low to high
                 </button>
-                <button class="mobile-sort-item" [class.active]="sortBy==='price-high'" (click)="applySortFromDrawer('price-high')">
+                <button class="mobile-sort-item" [class.active]="sortBy==='price-high'"
+                    (click)="applySortFromDrawer('price-high')">
                     Price, high to low
                 </button>
             </div>

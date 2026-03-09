@@ -561,7 +561,7 @@ class SupplementBannerAPIView(ListAPIView):
 
 
 class CollectionBannerAPIView(ListAPIView):
-    """Common API for all banner types"""
+    """Common API for all banner types with intelligent fallback"""
     permission_classes = [AllowAny]
     pagination_class = None
     
@@ -576,21 +576,44 @@ class CollectionBannerAPIView(ListAPIView):
                 'data': []
             })
         
-        # Validate banner_type against choices
-        valid_types = [choice[0] for choice in ImageFile.TYPE_CHOICES]
-        if banner_type not in valid_types:
-            return Response({
-                'success': False,
-                'message': f'Invalid banner type. Valid types are: {", ".join(valid_types)}',
-                'data': []
-            })
-        
-        # Filter images by type
+        # 1. Try to find specific banners for the requested type
         banners = ImageFile.objects.filter(
             type=banner_type,
             is_deleted=False
         ).order_by('-created_at')
         
+        # 2. If not found, check if it's a product type and use its category banner
+        if not banners.exists():
+            resolved_type = None
+            
+            # Check if it's a ProductType slug
+            pt = ProductType.objects.filter(slug=banner_type, is_deleted=False).select_related('categorie').first()
+            if pt:
+                # Use category slug (e.g., 'skin', 'hair')
+                resolved_type = getattr(pt.categorie, 'slug', None)
+            else:
+                # Check if it's already a Category slug
+                cat = Categories.objects.filter(slug=banner_type, is_deleted=False).first()
+                if cat:
+                    resolved_type = banner_type
+            
+            if resolved_type:
+                banners = ImageFile.objects.filter(
+                    type=resolved_type,
+                    is_deleted=False
+                ).order_by('-created_at')
+                
+                if banners.exists():
+                    banner_type = resolved_type # Update for response info
+
+        # 3. Last resort fallback to 'default_banner'
+        if not banners.exists() and banner_type != 'default_banner':
+            banners = ImageFile.objects.filter(
+                type='default_banner',
+                is_deleted=False
+            ).order_by('-created_at')
+            banner_type = 'default_banner'
+
         # Build response data
         banner_list = []
         for banner in banners:
@@ -600,13 +623,13 @@ class CollectionBannerAPIView(ListAPIView):
                 relative_path = str(banner.image)
                 if relative_path.startswith('/'):
                     relative_path = relative_path[1:]
+                
                 image_url = request.build_absolute_uri(f'/media/{relative_path}')
             
             banner_list.append({
                 'id': banner.id,
                 'image_url': image_url,
                 'type': banner.type,
-                'type_display': banner.get_type_display(),  # Human-readable type
                 'created_at': banner.created_at
             })
         

@@ -13,6 +13,11 @@ export interface CartItem {
   quantity: number;
 }
 
+export interface AddToCartResult {
+  status: 'added' | 'updated' | 'limit_reached' | 'missing_details';
+  quantity?: number;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -36,7 +41,7 @@ export class CartService {
     this.cartItems.next([...this.cartItems.value]); // trigger update
   }
 
-  addToCart(product: any): void {   // 'any' → replace with your product interface later
+  addToCart(product: any): AddToCartResult {   // 'any' → replace with your product interface later
     const currentCart = [...this.cartItems.value];
 
     // For simplicity — using first detail (most common case)
@@ -45,18 +50,16 @@ export class CartService {
 
     if (!selectedDetail) {
       console.warn('Product has no price details');
-      return;
+      return { status: 'missing_details' };
     }
 
     const existingItem: any = currentCart.find(
       item => item.productId === product.id
       // && item.detailId === selectedDetail.id   ← uncomment if variants supported
     );
-    console.log(existingItem);
-
     if (existingItem) {
       if (existingItem.quantity >= 10) {
-        return
+        return { status: 'limit_reached', quantity: existingItem.quantity };
       }
       else {
         existingItem.quantity += 1;
@@ -77,8 +80,10 @@ export class CartService {
     this.cartItems.next(currentCart);
     this.saveCart();
 
-    // Optional: nice feedback
-    // this.nzMessageService.success(`${product.product_name} added to cart!`);
+    return {
+      status: existingItem ? 'updated' : 'added',
+      quantity: existingItem ? existingItem.quantity : 1
+    };
   }
 
   // Bonus methods you will need later
