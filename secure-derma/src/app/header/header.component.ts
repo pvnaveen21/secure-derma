@@ -2,7 +2,7 @@ import { ChangeDetectorRef, Component, ElementRef, HostListener, inject, OnDestr
 import { NzDropDownDirective, NzDropDownModule } from 'ng-zorro-antd/dropdown';
 import { NzInputModule } from 'ng-zorro-antd/input';
 import { LucideAngularModule } from 'lucide-angular';
-import { Router } from '@angular/router';
+import { NavigationCancel, NavigationEnd, NavigationError, NavigationStart, Router } from '@angular/router';
 import { NzBadgeModule } from 'ng-zorro-antd/badge';
 import { NzDividerModule } from 'ng-zorro-antd/divider';
 import { FormsModule } from '@angular/forms';
@@ -97,6 +97,10 @@ export class HeaderComponent {
   allBrands: any = {};
   allBrandKey: any[] = [];
   loading: boolean = false;
+  isSelectionLoading = false;
+  pendingSelectionLabel = '';
+  private selectionLoaderStartedAt = 0;
+  private selectionLoaderTimeout?: ReturnType<typeof setTimeout>;
 
   drawerReady = true;
   visible = false;
@@ -124,6 +128,7 @@ export class HeaderComponent {
     map((items: any) => items.reduce((sum: any, i: any) => sum + i.quantity, 0))
   );
   private subscription!: Subscription;
+  private routerEventsSubscription?: Subscription;
   cartItems: CartItem[] = [];
   ngOnInit() {
     this.initializePanels();
@@ -134,6 +139,20 @@ export class HeaderComponent {
 
     this.subscription = this.cartService.cart$.subscribe((items: any) => {
       this.cartItems = items;
+    });
+
+    this.routerEventsSubscription = this.router.events.subscribe((event) => {
+      if (event instanceof NavigationStart && event.url.includes('/collections/')) {
+        this.showSelectionLoader();
+      }
+
+      if (
+        event instanceof NavigationEnd ||
+        event instanceof NavigationCancel ||
+        event instanceof NavigationError
+      ) {
+        this.hideSelectionLoader();
+      }
     });
   }
 
@@ -173,6 +192,15 @@ export class HeaderComponent {
     // Clean up subscription to prevent memory leaks
     if (this.searchSub) {
       this.searchSub.unsubscribe();
+    }
+    if (this.subscription) {
+      this.subscription.unsubscribe();
+    }
+    if (this.routerEventsSubscription) {
+      this.routerEventsSubscription.unsubscribe();
+    }
+    if (this.selectionLoaderTimeout) {
+      clearTimeout(this.selectionLoaderTimeout);
     }
     this.searchSubject.complete();
   }
@@ -389,6 +417,7 @@ export class HeaderComponent {
       .replace(/\s+/g, '-');
   }
   producetNavigation(value: any, type?: any) {
+    this.pendingSelectionLabel = String(value);
     if (type == 'all') {
       this.closeBrandDropdown()
     }
@@ -554,6 +583,30 @@ export class HeaderComponent {
         };
       })
       .filter((entry): entry is MobilePanelItem => !!entry);
+  }
+
+  private showSelectionLoader() {
+    this.selectionLoaderStartedAt = Date.now();
+    this.isSelectionLoading = true;
+    if (this.selectionLoaderTimeout) {
+      clearTimeout(this.selectionLoaderTimeout);
+      this.selectionLoaderTimeout = undefined;
+    }
+  }
+
+  private hideSelectionLoader() {
+    if (!this.isSelectionLoading) {
+      return;
+    }
+
+    const elapsed = Date.now() - this.selectionLoaderStartedAt;
+    const remaining = Math.max(0, 300 - elapsed);
+
+    this.selectionLoaderTimeout = setTimeout(() => {
+      this.isSelectionLoading = false;
+      this.pendingSelectionLabel = '';
+      this.selectionLoaderTimeout = undefined;
+    }, remaining);
   }
 
 }

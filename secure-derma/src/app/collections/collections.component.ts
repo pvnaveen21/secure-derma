@@ -94,6 +94,7 @@ export class CollectionsComponent implements OnInit {
   totalProducts = 0;
   pageIndex = 1;
   pageSize = 5;
+  isProductsLoading = false;
   isFilterDrawerVisible = false;
   isSortDrawerVisible = false;
   private readonly mobileBreakpoint = 1024;
@@ -179,6 +180,7 @@ export class CollectionsComponent implements OnInit {
   }
 
   getProductsList() {
+    this.isProductsLoading = true;
     this.collectionsService.getProductsList(
       this.filterProduectValue,
       undefined,
@@ -209,6 +211,10 @@ export class CollectionsComponent implements OnInit {
           this.scrollToProductsTop();
           this.shouldScrollToProductsTop = false;
         }
+        this.isProductsLoading = false;
+      },
+      error: () => {
+        this.isProductsLoading = false;
       }
     });
   }
@@ -216,6 +222,7 @@ export class CollectionsComponent implements OnInit {
   // Fetch products with filter query parameters
   fetchProductsWithFilters() {
     const filterParams = this.buildFilterQueryParams();
+    this.isProductsLoading = true;
 
     this.collectionsService.getProductsList(
       this.filterProduectValue,
@@ -245,6 +252,10 @@ export class CollectionsComponent implements OnInit {
           this.scrollToProductsTop();
           this.shouldScrollToProductsTop = false;
         }
+        this.isProductsLoading = false;
+      },
+      error: () => {
+        this.isProductsLoading = false;
       }
     });
   }
