@@ -140,6 +140,13 @@ export class ReviewComponent {
         sortKey: 'review_text'
       },
       {
+        title: 'Review Date',
+        property: 'review_date',
+        isSortable: true,
+        sortKey: 'review_date',
+        isDate:true
+      },
+      {
         title: 'Review Images',
         property: '',
         sortKey: 'reorder_count',
@@ -221,6 +228,10 @@ export class ReviewComponent {
       this.message.error('Please add Reviewer Name')
       return;
     }
+    if (this.reviewForm.get('review_date')?.invalid) {
+      this.message.error('Please add Review Date')
+      return;
+    }
     if (this.reviewForm.get('rating')?.value == 0) {
       this.message.error('Please add Rating')
       return;
@@ -289,6 +300,7 @@ export class ReviewComponent {
   buildReviewForm(data?: any) {
     this.reviewForm = this.fb.group({
       reviewer_name: [data ? data?.reviewer_name : '', [Validators.required]],
+      review_date: [data ? data?.review_date : '', [Validators.required]],
       rating: [data ? data?.rating : 0, [Validators.required]],     // nz-rate value
       review_text: [data ? data?.review_text : ''],                       // optional
       images: this.fb.array([])                // multiple images

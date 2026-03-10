@@ -202,10 +202,14 @@ class ProductReviewSerializer(serializers.ModelSerializer):
             "reviewer_name",
             "review_text",
             "rating",
+            "review_date",
             "created_at",
             "images",
         ]
         read_only_fields = ["product", "user", "created_at"]
+        extra_kwargs = {
+            "review_date": {"required": True}
+        }
 
     def validate_rating(self, value):
         if not 1 <= value <= 5:

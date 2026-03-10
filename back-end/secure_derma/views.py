@@ -1398,7 +1398,7 @@ class ProductDetailAPIView(APIView):
         )
 
         # Latest 10 reviews (for performance)
-        latest_reviews = product.reviews.filter(is_deleted=False).order_by('-created_at')[:10]
+        latest_reviews = product.reviews.filter(is_deleted=False).order_by('-review_date', '-created_at')[:10]
         reviews_list = []
 
         for review in latest_reviews:
@@ -1415,6 +1415,7 @@ class ProductDetailAPIView(APIView):
                 'reviewer_name': reviewer_name,
                 'rating': review.rating,
                 'review_text': review.review_text or "",
+                'review_date': review.review_date.isoformat() if review.review_date else None,
                 'created_at': review.created_at.isoformat(),
                 'images': review_images
             })

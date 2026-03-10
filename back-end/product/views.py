@@ -17,6 +17,20 @@ class ProductPagination(LimitOffsetPagination):
     default_limit = 10
     max_limit = 100
 
+
+class ProductReviewPagination(LimitOffsetPagination):
+    default_limit = 10
+    max_limit = 100
+
+    def get_paginated_response(self, data):
+        return Response({
+            "count": self.count,
+            "next": self.get_next_link(),
+            "previous": self.get_previous_link() or "",
+            "results": data,
+        })
+
+
 class ProductListCreateAPIView(generics.ListCreateAPIView):
     queryset = Product.objects.filter(is_deleted=False).prefetch_related("product_details", "images")
     pagination_class = ProductPagination
@@ -228,29 +242,14 @@ class ProductDetailDeleteAPIView(generics.DestroyAPIView):
 
 class ProductReviewListCreateAPIView(generics.ListCreateAPIView):
     serializer_class = ProductReviewSerializer
-    parser_classes = [MultiPartParser, FormParser]
-
-    def get_queryset(self):
-        product_id = self.kwargs.get("product_id")
-        return ProductReview.objects.filter(product_id=product_id, is_deleted=False)
-
-    def perform_create(self, serializer):
-        review = serializer.save(user=self.request.user)
-
-        # Handle multiple images
-        images = self.request.FILES.getlist("images")
-        for img in images:
-            ProductReviewImage.objects.create(review=review, image=img)
-
-class ProductReviewListCreateAPIView(generics.ListCreateAPIView):
-    serializer_class = ProductReviewSerializer
+    pagination_class = ProductReviewPagination
     parser_classes = [MultiPartParser, FormParser]
 
     def get_queryset(self):
         return ProductReview.objects.filter(
             product_id=self.kwargs["product_id"],
             is_deleted=False
-        )
+        ).order_by("-review_date", "-created_at", "-id")
 
     def perform_create(self, serializer):
         product = Product.objects.get(id=self.kwargs["product_id"])
