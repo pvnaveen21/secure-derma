@@ -1,0 +1,28 @@
+@import '../../node_modules/ng-zorro-antd/ng-zorro-antd';
+@import "./themes/dark";
+
+@primary-color: #AC404F;
+@secondary-color: #010101;
+
+:root {
+  --ant-primary-color: @primary-color; // Override primary color
+  --ant-secondary-color: @secondary-color; // Override secondary color
+  --tej-grey-color: @grey-color;
+  --tej-bg-primary: #010101;
+  --tej-bg-secondary: #1F1F1F;
+  --tej-body-bg: #1F1F1F;
+  --ant-primary-color-hover: darken(@primary-color, 10%); // Optional: Darker hover state
+  --ant-primary-color-active: darken(@primary-color, 15%); // Optional: Active state
+  --ant-primary-color-outline: fade(@primary-color, 20%); // Optional: Focus outline
+  --muted: #F7F3EAB2;
+  --tej-text-color: #ffffffd9;
+  --notification-bg-color: #010101;
+  --change-password-bg: #D2E4FF;
+  --tej-border-color: #0B0A0A14;
+  --success-color: #19B84F;
+  --success-bg-color: #E8F8ED;
+}
+
+
+@import "themes/components /_buttons";
+@import "themes/components /_text";

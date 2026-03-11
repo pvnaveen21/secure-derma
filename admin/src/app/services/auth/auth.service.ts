@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { InterfaceService } from '@app/services/core/interface.service';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { BehaviorSubject, Observable, Subject, map, catchError, timer, takeUntil, take } from 'rxjs';
+import { BehaviorSubject, Observable, Subject, map, catchError, timer, takeUntil, take, fromEvent, merge, throttleTime, Subscription } from 'rxjs';
 import {
   ACCESS_TOKEN,
   getToken,
@@ -22,17 +22,20 @@ export class AuthService extends InterfaceService {
   redirectUrl: string | null = null;
   user!: User;
   private stopTimer = new Subject();
+  private timerStop$ = new Subject<void>();
   private userSource = new BehaviorSubject<User>(new User());
   user$: Observable<User> = this.userSource.asObservable();
   private userPermissionsSource = new BehaviorSubject<Array<string>>([]);
   userPermissions$: Observable<Array<string>> = this.userPermissionsSource.asObservable();
   userPermissions: Array<any> = [];
+  private activitySubscription?: Subscription;
 
   constructor(
     http: HttpClient,
     private router: Router,
   ) {
     super("/auth", http);
+    this.setupActivityMonitor();
   }
 
   googleLogin(payload: any): Promise<any> {
@@ -161,31 +164,73 @@ export class AuthService extends InterfaceService {
   }
 
   refreshTokenTimer() {
-    const now = new Date().valueOf();
-    const exp = getTokenExpiration(ACCESS_TOKEN) as Date;
-    const delay = exp.valueOf() - now;
+    this.timerStop$.next(); // Stop any previous timer
+    const exp = getTokenExpiration(ACCESS_TOKEN);
+    if (!exp) return;
 
-    const time = timer(delay - (60 * 1000));
+    const now = Date.now();
+    const delay = exp.getTime() - now;
 
-    time.pipe(takeUntil(this.stopTimer)).subscribe(() => {
+    // Refresh 2 minutes before expiration for better safety, or immediately if already past that
+    const refreshDelay = Math.max(0, delay - (120 * 1000));
+
+    timer(refreshDelay).pipe(
+      takeUntil(this.timerStop$),
+      take(1)
+    ).subscribe(() => {
+      const currentExp = getTokenExpiration(ACCESS_TOKEN);
+      // If another tab or process already refreshed the token, just re-schedule
+      if (currentExp && currentExp.getTime() > exp.getTime()) {
+        this.refreshTokenTimer();
+        return;
+      }
+
       this.getUserData().subscribe({
         next: (response: any) => {
-          setToken(response['access'], ACCESS_TOKEN);
-          setToken(response['refresh'], REFRESH_TOKEN);
-          this.stopTimer.next(false);
-          timer(100).pipe(take(1)).subscribe({
-            next: () => {
-              this.stopTimer.next(true);
-              this.refreshTokenTimer();
-            }
-          });
+          if (response['access']) setToken(response['access'], ACCESS_TOKEN);
+          if (response['refresh']) setToken(response['refresh'], REFRESH_TOKEN);
+
+          this.refreshTokenTimer();
           this.getUserDetails(true).then(user => user).catch(error => error);
         },
-        error: () => {
-          this.router.navigate(['/']).then(res => res);
+        error: (error) => {
+          console.error('Failed to refresh token in timer', error);
+          // Only redirect if the refresh token is also expired
+          if (isTokenExpired(REFRESH_TOKEN)) {
+            this.router.navigate(['/users/login']).then(res => res);
+          } else {
+            // Try again in shorter interval if it was just a network error
+            timer(30000).pipe(take(1)).subscribe(() => this.refreshTokenTimer());
+          }
         }
       });
     });
+  }
+
+  private setupActivityMonitor() {
+    const activityEvents = ['mousedown', 'keydown', 'scroll', 'touchstart', 'mousemove'];
+    const activity$ = merge(...activityEvents.map(event => fromEvent(document, event)));
+
+    activity$.pipe(
+      throttleTime(60000), // Only check once per minute
+      takeUntil(this.stopTimer)
+    ).subscribe(() => {
+      this.checkAndRefreshSession();
+    });
+  }
+
+  private checkAndRefreshSession() {
+    // If the token is about to expire (less than 3 minutes left) and user is active, refresh it
+    if (this.isLoggedIn() && isTokenExpired(ACCESS_TOKEN, 180)) {
+      this.getUserData().subscribe({
+        next: (response: any) => {
+          if (response['access']) setToken(response['access'], ACCESS_TOKEN);
+          if (response['refresh']) setToken(response['refresh'], REFRESH_TOKEN);
+          this.refreshTokenTimer();
+        },
+        error: (err) => console.warn('Activity-triggered refresh failed', err)
+      });
+    }
   }
 
 
@@ -232,6 +277,10 @@ export class AuthService extends InterfaceService {
 
   isLoggedIn() {
     return getToken(ACCESS_TOKEN) && !isTokenExpired(ACCESS_TOKEN);
+  }
+
+  hasValidRefreshToken() {
+    return !!getToken(REFRESH_TOKEN) && !isTokenExpired(REFRESH_TOKEN);
   }
 
   redirectToLogin() {

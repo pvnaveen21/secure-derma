@@ -182,14 +182,14 @@ $theme-colors: (
 
 @for $i from 1 through 100 {
   .gap-#{$i} {
-    gap: #{$i}px !important;
+    gap: #{$i * 0.1}rem !important;
   }
 
   .gap-x-#{$i} {
-    column-gap: #{$i}px !important;
+    column-gap: #{$i * 0.1}rem !important;
   }
 
   .gap-y-#{$i} {
-    row-gap: #{$i}px !important;
+    row-gap: #{$i * 0.1}rem !important;
   }
 }

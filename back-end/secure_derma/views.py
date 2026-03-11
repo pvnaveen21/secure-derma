@@ -561,7 +561,7 @@ class SupplementBannerAPIView(ListAPIView):
 
 
 class CollectionBannerAPIView(ListAPIView):
-    """Common API for all banner types"""
+    """Common API for all banner types with intelligent fallback"""
     permission_classes = [AllowAny]
     pagination_class = None
     
@@ -576,21 +576,44 @@ class CollectionBannerAPIView(ListAPIView):
                 'data': []
             })
         
-        # Validate banner_type against choices
-        valid_types = [choice[0] for choice in ImageFile.TYPE_CHOICES]
-        if banner_type not in valid_types:
-            return Response({
-                'success': False,
-                'message': f'Invalid banner type. Valid types are: {", ".join(valid_types)}',
-                'data': []
-            })
-        
-        # Filter images by type
+        # 1. Try to find specific banners for the requested type
         banners = ImageFile.objects.filter(
             type=banner_type,
             is_deleted=False
         ).order_by('-created_at')
         
+        # 2. If not found, check if it's a product type and use its category banner
+        if not banners.exists():
+            resolved_type = None
+            
+            # Check if it's a ProductType slug
+            pt = ProductType.objects.filter(slug=banner_type, is_deleted=False).select_related('categorie').first()
+            if pt:
+                # Use category slug (e.g., 'skin', 'hair')
+                resolved_type = getattr(pt.categorie, 'slug', None)
+            else:
+                # Check if it's already a Category slug
+                cat = Categories.objects.filter(slug=banner_type, is_deleted=False).first()
+                if cat:
+                    resolved_type = banner_type
+            
+            if resolved_type:
+                banners = ImageFile.objects.filter(
+                    type=resolved_type,
+                    is_deleted=False
+                ).order_by('-created_at')
+                
+                if banners.exists():
+                    banner_type = resolved_type # Update for response info
+
+        # 3. Last resort fallback to 'default_banner'
+        if not banners.exists() and banner_type != 'default_banner':
+            banners = ImageFile.objects.filter(
+                type='default_banner',
+                is_deleted=False
+            ).order_by('-created_at')
+            banner_type = 'default_banner'
+
         # Build response data
         banner_list = []
         for banner in banners:
@@ -600,13 +623,13 @@ class CollectionBannerAPIView(ListAPIView):
                 relative_path = str(banner.image)
                 if relative_path.startswith('/'):
                     relative_path = relative_path[1:]
+                
                 image_url = request.build_absolute_uri(f'/media/{relative_path}')
             
             banner_list.append({
                 'id': banner.id,
                 'image_url': image_url,
                 'type': banner.type,
-                'type_display': banner.get_type_display(),  # Human-readable type
                 'created_at': banner.created_at
             })
         
@@ -617,7 +640,211 @@ class CollectionBannerAPIView(ListAPIView):
             'count': len(banner_list),
             'banner_type': banner_type
         })
-        
+
+
+class ConcernProductsAPIView(APIView):
+    permission_classes = [AllowAny]
+
+    def _product_payload(self, request, product):
+        thumbnail_url = None
+        if product.thumbnail_image:
+            thumbnail_url = request.build_absolute_uri(
+                f"/media/{str(product.thumbnail_image).lstrip('/')}"
+            )
+
+        hover_url = None
+        if product.hover_image:
+            hover_url = request.build_absolute_uri(
+                f"/media/{str(product.hover_image).lstrip('/')}"
+            )
+
+        detail = product.product_details.filter(is_deleted=False).order_by("selling_price").first()
+
+        return {
+            "id": product.id,
+            "slug": product.slug,
+            "product_name": product.product_name,
+            "brand_name": product.brand.brand_name,
+            "thumbnail_image": thumbnail_url,
+            "hover_image": hover_url,
+            "price": detail.selling_price if detail else 0,
+            "original_price": detail.original_price if detail else 0,
+            "avg_rating": round(product.avg_rating, 1) if product.avg_rating else 0,
+            "review_count": product.review_count or 0,
+            "product_type": product.product_type.product_type,
+        }
+
+    def get(self, request):
+        concern = (request.query_params.get("concern") or "").strip()
+        limit = int(request.query_params.get("limit", 12))
+
+        if not concern:
+            return Response(
+                {"success": False, "message": "concern query parameter is required", "products": []},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        concern_slug = concern.lower().replace("&", "and").replace("_", "-").replace(" ", "-")
+        print("Concern Slug:", concern_slug)  # Debugging line to check slug generation
+        print("Matching Skin Concerns:", SkinConcerns.objects.all().values_list('slug', flat=True))  # Debugging line to check existing slugs
+
+        skin_match = SkinConcerns.objects.filter(
+            Q(slug__iexact=concern_slug) | Q(skin_concern__iexact=concern), is_deleted=False
+        ).first()
+        hair_match = HairConcerns.objects.filter(
+            Q(slug__iexact=concern_slug) | Q(hair_concern__iexact=concern), is_deleted=False
+        ).first()
+
+        if not skin_match and not hair_match:
+            return Response(
+                {"success": False, "message": "No concern found for the given value", "products": []},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        product_q = Product.objects.filter(is_deleted=False)
+        concern_type = "skin"
+        concern_label = ""
+
+        if skin_match:
+            product_q = product_q.filter(skin_concern=skin_match)
+            concern_label = skin_match.skin_concern
+        else:
+            product_q = product_q.filter(hair_concern=hair_match)
+            concern_type = "hair"
+            concern_label = hair_match.hair_concern
+
+        total_count = product_q.count()
+
+        products = (
+            product_q.select_related("brand", "product_type")
+            .prefetch_related("product_details")
+            .annotate(
+                avg_rating=Avg("reviews__rating", filter=Q(reviews__is_deleted=False)),
+                review_count=Count("reviews__id", filter=Q(reviews__is_deleted=False), distinct=True),
+            )
+            .order_by("-created_at")[:limit]
+        )
+
+        return Response(
+            {
+                "success": True,
+                "concern": concern_label,
+                "concern_type": concern_type,
+                "count": len(products),
+                "total_count": total_count,
+                "limit": limit,
+                "products": [self._product_payload(request, p) for p in products],
+            }
+        )
+
+
+class RoutineBuilderAPIView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        skin_type = (request.data.get("skin_type") or "").strip()
+        concern = (request.data.get("concern") or "").strip()
+        budget = (request.data.get("budget") or "").strip().lower()
+
+        if not concern:
+            return Response(
+                {"success": False, "message": "concern is required"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        concern_slug = concern.lower().replace("&", "and").replace("_", "-").replace(" ", "-")
+        skin_match = SkinConcerns.objects.filter(
+            Q(slug__iexact=concern_slug) | Q(skin_concern__iexact=concern), is_deleted=False
+        ).first()
+        hair_match = HairConcerns.objects.filter(
+            Q(slug__iexact=concern_slug) | Q(hair_concern__iexact=concern), is_deleted=False
+        ).first()
+
+        if not skin_match and not hair_match:
+            return Response(
+                {"success": False, "message": "Concern not found"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        products = Product.objects.filter(is_deleted=False).select_related("brand", "product_type").prefetch_related("product_details")
+        is_hair = False
+        if skin_match:
+            products = products.filter(skin_concern=skin_match)
+        else:
+            is_hair = True
+            products = products.filter(hair_concern=hair_match)
+
+        price_cap = None
+        if budget == "low":
+            price_cap = 500
+        elif budget == "medium":
+            price_cap = 1000
+        elif budget == "high":
+            price_cap = None
+
+        shortlisted = []
+        for p in products.order_by("-trending_product", "-best_seller", "-created_at")[:60]:
+            detail = p.product_details.filter(is_deleted=False).order_by("selling_price").first()
+            if not detail:
+                continue
+            if price_cap and detail.selling_price > price_cap:
+                continue
+            shortlisted.append(
+                {
+                    "id": p.id,
+                    "slug": p.slug,
+                    "product_name": p.product_name,
+                    "brand_name": p.brand.brand_name,
+                    "product_type": p.product_type.product_type,
+                    "price": detail.selling_price,
+                    "thumbnail_image": request.build_absolute_uri(f"/media/{str(p.thumbnail_image).lstrip('/')}") if p.thumbnail_image else None,
+                }
+            )
+
+        if len(shortlisted) < 3:
+            for p in products.order_by("-created_at")[:30]:
+                detail = p.product_details.filter(is_deleted=False).order_by("selling_price").first()
+                if not detail:
+                    continue
+                if any(item["id"] == p.id for item in shortlisted):
+                    continue
+                shortlisted.append(
+                    {
+                        "id": p.id,
+                        "slug": p.slug,
+                        "product_name": p.product_name,
+                        "brand_name": p.brand.brand_name,
+                        "product_type": p.product_type.product_type,
+                        "price": detail.selling_price,
+                        "thumbnail_image": request.build_absolute_uri(f"/media/{str(p.thumbnail_image).lstrip('/')}") if p.thumbnail_image else None,
+                    }
+                )
+                if len(shortlisted) >= 5:
+                    break
+
+        routine_pool = shortlisted[:5]
+        am = routine_pool[:2] if is_hair else routine_pool[:3]
+        pm = routine_pool[2:4] if is_hair else routine_pool[3:5]
+
+        if not pm and len(routine_pool) >= 3:
+            pm = [routine_pool[-1]]
+
+        return Response(
+            {
+                "success": True,
+                "input": {
+                    "skin_type": skin_type,
+                    "concern": concern,
+                    "budget": budget or "any",
+                },
+                "routine": {
+                    "am": am,
+                    "pm": pm,
+                    "total_products": len(am) + len(pm),
+                },
+            }
+        )
+
 
 
 class ProductListWithFiltersAPIView(APIView):
@@ -910,10 +1137,28 @@ class ProductListWithFiltersAPIView(APIView):
         }
 
         # =====================================================
+        # PAGINATION
+        # =====================================================
+        try:
+            limit = int(request.GET.get("limit", 12))
+        except (TypeError, ValueError):
+            limit = 12
+        try:
+            offset = int(request.GET.get("offset", 0))
+        except (TypeError, ValueError):
+            offset = 0
+
+        limit = max(1, min(limit, 100))
+        offset = max(0, offset)
+
+        total_count = products.count()
+        paginated_products = products[offset: offset + limit]
+
+        # =====================================================
         # RESPONSE
         # =====================================================
         serializer = ProductListSerializer(
-            products,
+            paginated_products,
             many=True,
             context={"request": request}
         )
@@ -922,7 +1167,9 @@ class ProductListWithFiltersAPIView(APIView):
             "success": True,
             "filters": filters,
             "products": {
-                "count": products.count(),
+                "count": total_count,
+                "limit": limit,
+                "offset": offset,
                 "results": serializer.data
             }
         })
@@ -1151,7 +1398,7 @@ class ProductDetailAPIView(APIView):
         )
 
         # Latest 10 reviews (for performance)
-        latest_reviews = product.reviews.filter(is_deleted=False).order_by('-created_at')[:10]
+        latest_reviews = product.reviews.filter(is_deleted=False).order_by('-review_date', '-created_at')[:10]
         reviews_list = []
 
         for review in latest_reviews:
@@ -1168,6 +1415,7 @@ class ProductDetailAPIView(APIView):
                 'reviewer_name': reviewer_name,
                 'rating': review.rating,
                 'review_text': review.review_text or "",
+                'review_date': review.review_date.isoformat() if review.review_date else None,
                 'created_at': review.created_at.isoformat(),
                 'images': review_images
             })

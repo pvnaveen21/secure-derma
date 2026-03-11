@@ -1,0 +1,195 @@
+@use "variables" as *;
+@use "functions" as *;
+@use "sass:map";
+
+// Responsive mixin
+@mixin respond($breakpoint) {
+  @media (min-width: get($breakpoints, $breakpoint)) {
+    @content;
+  }
+}
+
+// Spacing rule helper
+@mixin spacing-rule($prop, $side, $val) {
+  $property: if($prop == m, margin, padding);
+
+  @if $side == "" {
+    #{$property}: $val !important;
+  } @else if $side == "t" {
+    #{$property}-top: $val !important;
+  } @else if $side == "b" {
+    #{$property}-bottom: $val !important;
+  } @else if $side == "s" {
+    #{$property}-left: $val !important;
+  } @else if $side == "e" {
+    #{$property}-right: $val !important;
+  } @else if $side == "x" {
+    #{$property}-left: $val !important;
+    #{$property}-right: $val !important;
+  } @else if $side == "y" {
+    #{$property}-top: $val !important;
+    #{$property}-bottom: $val !important;
+  }
+}
+
+// Generate spacing utilities
+@each $prop in (m, p) {
+  @each $side in ("", "t", "b", "s", "e", "x", "y") {
+    @each $size, $val in $spacers {
+      .#{$prop}#{$side}-#{$size} {
+        @include spacing-rule($prop, $side, $val);
+      }
+
+      @each $breakpoint, $bp-val in $breakpoints {
+        .#{$prop}#{$side}-#{$breakpoint}-#{$size} {
+          @include respond($breakpoint) {
+            @include spacing-rule($prop, $side, $val);
+          }
+        }
+      }
+    }
+  }
+}
+
+
+// Width and Height utilities
+@each $size, $val in $sizes {
+  .w-#{$size} {
+    width: $val;
+  }
+  .h-#{$size} {
+    height: $val;
+  }
+
+  @each $breakpoint in map.keys($breakpoints) {
+    .w-#{$breakpoint}-#{$size} {
+      @include respond($breakpoint) {
+        width: $val;
+      }
+    }
+    .h-#{$breakpoint}-#{$size} {
+      @include respond($breakpoint) {
+        height: $val;
+      }
+    }
+  }
+}
+
+// Position utilities
+@each $pos in $positions {
+  .position-#{$pos} {
+    position: $pos;
+  }
+
+  @each $breakpoint in map.keys($breakpoints) {
+    .position-#{$breakpoint}-#{$pos} {
+      @include respond($breakpoint) {
+        position: $pos;
+      }
+    }
+  }
+}
+
+// =============================
+//  Color Palettes
+// =============================
+
+// Danger
+$danger-colors: (
+  50: #FFEBEB,
+  75: #FFACAE,
+  100: #FF898D,
+  200: #FF575B,
+  300: #FF343A,
+  400: #B32429,
+  500: #9C2023
+);
+
+// Success
+$success-colors: (
+  50: #E8FBED,
+  75: #A1E2B7,
+  100: #7AD699,
+  200: #40C46D,
+  300: #19B84F,
+  400: #128137,
+  500: #0F7030
+);
+
+// Warning
+$warning-colors: (
+  50: #FFF3EA,
+  75: #FFCCA8,
+  100: #FFB784,
+  200: #FF984F,
+  300: #FF832B,
+  400: #B35C1E,
+  500: #9C501A
+);
+
+// Info
+$info-colors: (
+  50: #EBF3FF,
+  75: #AECEFF,
+  100: #8CB4FE,
+  200: #589CFC,
+  300: #389BFE,
+  400: #285FB2,
+  500: #235398
+);
+
+// Primary
+$primary-colors: (
+  50: var(--ant-primary-1),
+  75: var(--ant-primary-2),
+  100: var(--ant-primary-3),
+  200: var(--ant-primary-4),
+  300: var(--ant-primary-5),
+  400: var(--ant-primary-6),
+  500: var(--ant-primary-7),
+);
+
+// =============================
+//  Theme Map
+// =============================
+$theme-colors: (
+  "primary": $primary-colors,
+  "danger": $danger-colors,
+  "success": $success-colors,
+  "warning": $warning-colors,
+  "info": $info-colors
+);
+
+// =============================
+//  Utility Class Generator
+// =============================
+@each $name, $shades in $theme-colors {
+  @each $shade, $color in $shades {
+    // Text
+    .text-#{$name}-#{$shade} {
+      color: $color !important;
+    }
+    // Background
+    .bg-#{$name}-#{$shade} {
+      background-color: $color !important;
+    }
+    // Border
+    .border-#{$name}-#{$shade} {
+      border-color: $color !important;
+    }
+  }
+}
+
+@for $i from 1 through 100 {
+  .gap-#{$i} {
+    gap: #{$i}px !important;
+  }
+
+  .gap-x-#{$i} {
+    column-gap: #{$i}px !important;
+  }
+
+  .gap-y-#{$i} {
+    row-gap: #{$i}px !important;
+  }
+}

@@ -1,11 +1,9 @@
-import { BadgeCheckIcon, BadgeIndianRupeeIcon, ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon, ChevronUpIcon, HandbagIcon, IndianRupeeIcon, LocateFixed, MapPinIcon, MenuIcon, MinusIcon, PlusIcon, ReceiptIndianRupeeIcon, SearchIcon, SendToBackIcon, SquareArrowLeft, TruckElectricIcon, TruckIcon, UserIcon, XIcon } from 'lucide-angular';
+import { BadgeCheckIcon, BadgeIndianRupeeIcon, ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon, ChevronUpIcon, HandbagIcon, IndianRupeeIcon, LocateFixed, MapPinIcon, MenuIcon, MinusIcon, MoonIcon, PlusIcon, ReceiptIndianRupeeIcon, SearchIcon, SendToBackIcon, SquareArrowLeft, SunIcon, TruckElectricIcon, TruckIcon, UserIcon, XIcon } from 'lucide-angular';
 
 export const Icons = {
   theme: {
-    // light: SunIcon,
-    // dark: MoonIcon,
-    // auto: SunMoonIcon,
-    // coloured: SparklesIcon
+    light: SunIcon,
+    dark: MoonIcon,
   },
   header: {
     search: SearchIcon,

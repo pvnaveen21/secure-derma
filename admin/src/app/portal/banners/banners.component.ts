@@ -15,23 +15,24 @@ import { NzMessageService } from 'ng-zorro-antd/message';
 export class BannersComponent {
 
   bannerTypes = [
+    { key: "default_banner", label: "Default Banner", type: 'single' },
     { key: "main_image", label: "Main Image Banner", type: 'single' },
     { key: "why_secure_derma", label: "Why Secure Derma", type: 'single' },
     { key: "landing_page", label: "Landing Page Banner", type: 'multiple' },
 
     { key: "skin_thumbnail", label: "Skin Thumbnail", type: 'single' },
-    { key: "skin_banner", label: "Skin Banner", type: 'multiple' },
+    { key: "skin-care", label: "Skin Banner", type: 'multiple' },
 
     { key: "hair_thumbnail", label: "Hair Thumbnail", type: 'single' },
-    { key: "hair_banner", label: "Hair Banner", type: 'multiple' },
+    { key: "hair-care", label: "Hair Banner", type: 'multiple' },
 
     { key: "supplement_thumbnail", label: "Supplement Thumbnail", type: 'single' },
-    { key: "supplement_banner", label: "Supplement Banner", type: 'multiple' },
+    { key: "supplements", label: "Supplement Banner", type: 'multiple' },
 
-    { key: "pediatric", label: "Pediatric", type: 'single' },
-    { key: "pediatric_banner", label: "Pediatric Banner", type: 'multiple' },
+    { key: "pediatric_thumbnail", label: "Pediatric", type: 'single' },
+    { key: "pediatric", label: "Pediatric Banner", type: 'multiple' },
 
-    { key: "shop_all", label: "Shop All", type: 'multiple' }
+    { key: "all", label: "Shop All", type: 'multiple' }
   ];
 
   groupedBanners: any = {};

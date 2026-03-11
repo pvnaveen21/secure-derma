@@ -1,3 +1,4 @@
+from collections import defaultdict
 from rest_framework import generics
 from .models import ImageFile
 from .serializers import ImageFileSerializer
@@ -38,14 +39,14 @@ class GroupedImageListView(APIView):
 
     def get(self, request):
         images = ImageFile.objects.filter(is_deleted=False)
-        all_types = [choice[0] for choice in ImageFile.TYPE_CHOICES]
-        grouped = {t: [] for t in all_types}
+        grouped = defaultdict(list)
 
         for img in images:
             serializer = ImageFileSerializer(img, context={"request": request}).data
             grouped[img.type].append(serializer)
 
-        return Response(grouped)
+        # Convert defaultdict to normal dict before returning
+        return Response(dict(grouped))
 
 
 

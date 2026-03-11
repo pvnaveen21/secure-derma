@@ -7,8 +7,15 @@ export interface CartItem {
   productName: string;
   thumbnail: string;
   price: number;           // selling_price
+  originalPrice?: number;  // original_price
+  discountPrice?: number;  // discount_price from API
   detailId?: number;       // if you support variants (weight/combo)
   quantity: number;
+}
+
+export interface AddToCartResult {
+  status: 'added' | 'updated' | 'limit_reached' | 'missing_details';
+  quantity?: number;
 }
 
 @Injectable({
@@ -34,7 +41,7 @@ export class CartService {
     this.cartItems.next([...this.cartItems.value]); // trigger update
   }
 
-  addToCart(product: any): void {   // 'any' → replace with your product interface later
+  addToCart(product: any): AddToCartResult {   // 'any' → replace with your product interface later
     const currentCart = [...this.cartItems.value];
 
     // For simplicity — using first detail (most common case)
@@ -43,18 +50,16 @@ export class CartService {
 
     if (!selectedDetail) {
       console.warn('Product has no price details');
-      return;
+      return { status: 'missing_details' };
     }
 
     const existingItem: any = currentCart.find(
       item => item.productId === product.id
       // && item.detailId === selectedDetail.id   ← uncomment if variants supported
     );
-    console.log(existingItem);
-
     if (existingItem) {
       if (existingItem.quantity >= 10) {
-        return
+        return { status: 'limit_reached', quantity: existingItem.quantity };
       }
       else {
         existingItem.quantity += 1;
@@ -65,6 +70,8 @@ export class CartService {
         productName: product.product_name,
         thumbnail: product.thumbnail_image,
         price: selectedDetail.selling_price,
+        originalPrice: selectedDetail.original_price,
+        discountPrice: selectedDetail.discount_price,
         detailId: selectedDetail.id,
         quantity: 1
       });
@@ -73,8 +80,10 @@ export class CartService {
     this.cartItems.next(currentCart);
     this.saveCart();
 
-    // Optional: nice feedback
-    // this.nzMessageService.success(`${product.product_name} added to cart!`);
+    return {
+      status: existingItem ? 'updated' : 'added',
+      quantity: existingItem ? existingItem.quantity : 1
+    };
   }
 
   // Bonus methods you will need later

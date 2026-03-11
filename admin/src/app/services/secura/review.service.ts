@@ -51,6 +51,7 @@ export class ReviewService extends InterfaceService {
     formData.append('reviewer_name', payload.reviewer_name);
     formData.append('rating', payload.rating);
     formData.append('review_text', payload.review_text);
+    formData.append('review_date', payload.review_date);
 
 
     // Multiple images
