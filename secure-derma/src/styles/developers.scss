@@ -4,12 +4,12 @@
 
 
 .tej-colour svg {
-  height: 20px !important;
+  height: 2rem !important;
 }
 
 .ant-float-btn-default .ant-float-btn-body {
-  width: 36px !important;
-  height: 36px !important;
+  width: 3.6rem !important;
+  height: 3.6rem !important;
   text-align: center;
 }
 
@@ -59,10 +59,10 @@
     left: 50%;
     top: 50%;
     transform: translate(-50%, -50%);
-    width: 100px;
-    height: 100px;
+    width: 10rem;
+    height: 10rem;
     background: var(--eclipse);
-    background-size: 96px;
+    background-size: 9.6rem;
     background-repeat: no-repeat;
     background-position: center center;
   }
@@ -70,17 +70,17 @@
   &.end::after {
     right: 0 !important;
     left: unset;
-    transform: translate(5px, -50%);
+    transform: translate(0.5rem, -50%);
   }
 
   &.start::after {
     left: 0 !important;
     right: unset;
-    transform: translate(5px, -50%);
+    transform: translate(0.5rem, -50%);
   }
 
   &.sm::after {
-    background-size: 76px !important;
+    background-size: 7.6rem !important;
   }
 }
 
@@ -98,7 +98,7 @@ lucide-angular {
 
 .wishlist-modal {
   .ant-modal-content {
-    border-radius: 20px !important;
+    border-radius: 2rem !important;
     overflow: hidden !important;
   }
 
@@ -122,20 +122,20 @@ lucide-angular {
   .ant-select-selector {
     background-color: var(--tej-bg-primary) !important;
     border: none !important;
-    border-radius: 20px !important;
-    min-width: 90px !important;
-    height: 45px !important;
+    border-radius: 2rem !important;
+    min-width: 9rem !important;
+    height: 4.5rem !important;
     align-items: center !important;
   }
 }
 
 .header-container, .common-header-container {
-  gap: 20px;
+  gap: 2rem;
 
   .menu {
-    --size: 48px;
-    border: 1px solid var(--border-color);
-    backdrop-filter: blur(23.2375px);
+    --size: 4.8rem;
+    border: 0.1rem solid var(--border-color);
+    backdrop-filter: blur(2.3237rem);
 
     &:not(.w-auto) {
       width: var(--size);
@@ -155,7 +155,7 @@ lucide-angular {
 .home-container {
   .ant-carousel {
     .slick-list {
-      height: 180px;
+      height: 18rem;
     }
   }
 }

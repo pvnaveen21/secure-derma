@@ -6,6 +6,7 @@ from hair_concern.models import HairConcerns
 from ingredient.models import Ingredients
 from product_type.models import ProductType
 from skin_concern.models import SkinConcerns
+from django.utils import timezone
 from django.utils.text import slugify
 from django.conf import settings
 
@@ -88,6 +89,7 @@ class ProductReview(models.Model):
     reviewer_name = models.CharField(max_length=255, blank=True, null=True)
     review_text = models.TextField(blank=True, null=True)
     rating = models.IntegerField()
+    review_date = models.DateField(default=timezone.localdate)
     is_deleted = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -97,4 +99,3 @@ class ProductReview(models.Model):
 class ProductReviewImage(models.Model):
     review = models.ForeignKey(ProductReview, related_name="images", on_delete=models.CASCADE)
     image = models.ImageField(upload_to="products/reviews/")
-

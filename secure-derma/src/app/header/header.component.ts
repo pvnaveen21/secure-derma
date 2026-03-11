@@ -1,8 +1,8 @@
-import { ChangeDetectorRef, Component, ElementRef, inject, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, HostListener, inject, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { NzDropDownDirective, NzDropDownModule } from 'ng-zorro-antd/dropdown';
 import { NzInputModule } from 'ng-zorro-antd/input';
 import { LucideAngularModule } from 'lucide-angular';
-import { Router } from '@angular/router';
+import { NavigationCancel, NavigationEnd, NavigationError, NavigationStart, Router } from '@angular/router';
 import { NzBadgeModule } from 'ng-zorro-antd/badge';
 import { NzDividerModule } from 'ng-zorro-antd/divider';
 import { FormsModule } from '@angular/forms';
@@ -18,11 +18,25 @@ import { NzEmptyModule } from 'ng-zorro-antd/empty';
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzInputNumberModule } from 'ng-zorro-antd/input-number';
 import { NzIconModule } from 'ng-zorro-antd/icon';
+import { SettingsService } from '../services/settings/settings.service';
+interface MobilePanelItem {
+  label: string;
+  value: string;
+  type: 'skin' | 'hair' | 'supplements';
+}
+
 interface Panel {
+  key: string;
   name: string;
   active: boolean;
   disabled: boolean;
-  content: string;
+  image: string;
+  categoryTitle: string;
+  concernTitle: string;
+  categoryItems: MobilePanelItem[];
+  concernItems: MobilePanelItem[];
+  routeValue: string;
+  routeType: 'skin' | 'hair' | 'supplements';
 }
 @Component({
   selector: 'app-header',
@@ -46,7 +60,9 @@ interface Panel {
   styleUrl: './header.component.scss'
 })
 export class HeaderComponent {
+  private readonly mobileBreakpoint = 768;
   @ViewChild('brandListContainer') brandListContainer!: ElementRef;
+  @ViewChild('mobileBrandListContainer') mobileBrandListContainer?: ElementRef;
   @ViewChild(NzDropDownDirective) dropdown!: NzDropDownDirective;
   // Add a search property for two-way binding
   searchTerm: string = '';
@@ -62,13 +78,10 @@ export class HeaderComponent {
   cartDrawerPlacement: any = 'right'
   array = [{ image: this.assets.secura.banner1 }, { image: this.assets.secura.banner2 }, { image: this.assets.secura.banner3 }];
 
-  panels: Panel[] = [
-    {
-      name: 'Skin',
-      active: false,
-      disabled: false,
-      content: 'A dog is a type of domesticated animal. Known for its loyalty and faithfulness, it can be found as a welcome guest in many households across the world.'
-    }
+  panels: Panel[] = [];
+  mobileQuickLinks = [
+    { name: 'Pediatric', value: 'pediatric' },
+    { name: 'Shop All', value: 'all' }
   ];
 
   // Add these properties
@@ -84,14 +97,19 @@ export class HeaderComponent {
   allBrands: any = {};
   allBrandKey: any[] = [];
   loading: boolean = false;
+  isSelectionLoading = false;
+  pendingSelectionLabel = '';
+  private selectionLoaderStartedAt = 0;
+  private selectionLoaderTimeout?: ReturnType<typeof setTimeout>;
 
-  drawerReady = false;
+  drawerReady = true;
   visible = false;
 
   constructor(
     private router: Router,
     private headerService: HeaderService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private settingsService: SettingsService
   ) {
     // Initialize the search subscription
     this.searchSub = this.searchSubject
@@ -110,15 +128,31 @@ export class HeaderComponent {
     map((items: any) => items.reduce((sum: any, i: any) => sum + i.quantity, 0))
   );
   private subscription!: Subscription;
+  private routerEventsSubscription?: Subscription;
   cartItems: CartItem[] = [];
   ngOnInit() {
+    this.initializePanels();
     this.getBrandsList();
     this.getSkinBannerList()
     this.getHairBannerList()
     this.getSupplementBannerList()
 
-    this.subscription = this.cartService.cart$.subscribe((items:any) => {
+    this.subscription = this.cartService.cart$.subscribe((items: any) => {
       this.cartItems = items;
+    });
+
+    this.routerEventsSubscription = this.router.events.subscribe((event) => {
+      if (event instanceof NavigationStart && event.url.includes('/collections/')) {
+        this.showSelectionLoader();
+      }
+
+      if (
+        event instanceof NavigationEnd ||
+        event instanceof NavigationCancel ||
+        event instanceof NavigationError
+      ) {
+        this.hideSelectionLoader();
+      }
     });
   }
 
@@ -158,6 +192,15 @@ export class HeaderComponent {
     // Clean up subscription to prevent memory leaks
     if (this.searchSub) {
       this.searchSub.unsubscribe();
+    }
+    if (this.subscription) {
+      this.subscription.unsubscribe();
+    }
+    if (this.routerEventsSubscription) {
+      this.routerEventsSubscription.unsubscribe();
+    }
+    if (this.selectionLoaderTimeout) {
+      clearTimeout(this.selectionLoaderTimeout);
     }
     this.searchSubject.complete();
   }
@@ -218,6 +261,7 @@ export class HeaderComponent {
     this.headerService.getHairBannerList().subscribe({
       next: (res) => {
         this.hairBannerData = res
+        this.syncPanelData();
         this.cdr.detectChanges();
       },
       error: (err) => {
@@ -232,6 +276,7 @@ export class HeaderComponent {
     this.headerService.getSupplementBannerList().subscribe({
       next: (res) => {
         this.supplementBannerData = res
+        this.syncPanelData();
         this.cdr.detectChanges();
       },
       error: (err) => {
@@ -246,7 +291,7 @@ export class HeaderComponent {
     this.headerService.getSkinBannerList().subscribe({
       next: (res) => {
         this.skinBannerData = res
-
+        this.syncPanelData();
         this.cdr.detectChanges();
       },
       error: (err) => {
@@ -272,28 +317,18 @@ export class HeaderComponent {
   }
 
   mobileSidescrollToLetter(letter: string) {
-    requestAnimationFrame(() => {
-      const container = document.querySelector('.side-menu-brand-list-wrapper .brand-list-container');
+    const container = this.mobileBrandListContainer?.nativeElement;
+    if (!container) {
+      return;
+    }
 
-      if (!container) {
-        console.log('Container not found');
-        return;
-      }
+    const targetSection = container.querySelector(`[data-letter="${letter}"]`);
+    if (!targetSection) {
+      return;
+    }
 
-      const targetSection = container.querySelector(`[data-letter="${letter}"]`);
-
-      if (targetSection) {
-        this.activeLetter = letter;
-        const containerRect = container.getBoundingClientRect();
-        const targetRect = targetSection.getBoundingClientRect();
-        const scrollPosition = container.scrollTop + (targetRect.top - containerRect.top) - 10;
-
-        container.scrollTo({
-          top: scrollPosition,
-          behavior: 'smooth'
-        });
-      }
-    });
+    this.activeLetter = letter;
+    targetSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   sideMenuView(type: any) {
@@ -339,21 +374,34 @@ export class HeaderComponent {
     this.isBrandDropdownVisible = true;
   }
   togglePanel(panel: Panel): void {
-    panel.active = !panel.active;
+    this.panels = this.panels.map((entry) => ({
+      ...entry,
+      active: entry.key === panel.key ? !entry.active : false
+    }));
   }
 
   ngAfterViewInit() {
-    setTimeout(() => {
-      // this.drawerReady = true;
-    }, 0);
+    this.drawerReady = true;
   }
 
   openSideMenu() {
+    if (this.isDesktopView()) {
+      this.visible = false;
+      return;
+    }
     this.visible = true;
+    this.selectedSideType = 1;
   }
 
   closeSideMenu() {
     this.visible = false;
+  }
+
+  @HostListener('window:resize')
+  onViewportResize() {
+    if (this.isDesktopView() && this.visible) {
+      this.closeSideMenu();
+    }
   }
 
   homeLocation() {
@@ -369,6 +417,7 @@ export class HeaderComponent {
       .replace(/\s+/g, '-');
   }
   producetNavigation(value: any, type?: any) {
+    this.pendingSelectionLabel = String(value);
     if (type == 'all') {
       this.closeBrandDropdown()
     }
@@ -384,12 +433,13 @@ export class HeaderComponent {
     this.router.navigate([`./collections/${this.slugify(value)}`])
   }
   openCartDrawer() {
+    this.cartDrawerPlacement = 'right';
     this.cartDrawerVisible = true
   }
   closeCartDrawer() {
     this.cartDrawerVisible = false;
   }
-  signIn(){
+  signIn() {
     this.router.navigate(['account/login'])
   }
 
@@ -401,13 +451,171 @@ export class HeaderComponent {
   }
 
   onQuantityChange(item: CartItem, newQuantity: number): void {
-    const change = newQuantity - item.quantity;    
+    const change = newQuantity - item.quantity;
     this.cartService.updateQuantity(item.productId, change);
   }
 
-  startShop(){
+  getDiscountPercent(item: CartItem): number {
+    if (item.discountPrice && item.discountPrice > 0) {
+      return item.discountPrice;
+    }
+
+    if (!item.originalPrice || item.originalPrice <= item.price) {
+      return 0;
+    }
+
+    return Math.round(((item.originalPrice - item.price) / item.originalPrice) * 100);
+  }
+
+  startShop() {
     this.closeCartDrawer();
     this.router.navigate(['collections/all'])
+  }
+
+  get isDark(): boolean {
+    return this.settingsService.isDarkTheme();
+  }
+
+  toggleTheme(): void {
+    this.settingsService.toggleLightDark();
+  }
+
+  private isDesktopView(): boolean {
+    return typeof window !== 'undefined' && window.innerWidth > this.mobileBreakpoint;
+  }
+
+  get cartDrawerWidth(): string | number | undefined {
+    return this.isDesktopView() ? '28rem' : '100vw';
+  }
+
+  get cartDrawerHeight(): string | number | undefined {
+    return undefined;
+  }
+
+  getMobilePanelTitle(panelKey: string): string {
+    if (panelKey === 'skin') {
+      return 'Start with your concern, finish with a complete routine.';
+    }
+    if (panelKey === 'hair') {
+      return 'Choose products by scalp need and hair type.';
+    }
+    return 'Daily support tailored to your routine.';
+  }
+
+  private initializePanels() {
+    this.panels = [
+      {
+        key: 'skin',
+        name: 'Skin',
+        active: false,
+        disabled: false,
+        image: '',
+        categoryTitle: 'BY CATEGORY',
+        concernTitle: 'BY CONCERN',
+        categoryItems: [],
+        concernItems: [],
+        routeValue: 'skin-care',
+        routeType: 'skin'
+      },
+      {
+        key: 'hair',
+        name: 'Hair',
+        active: false,
+        disabled: false,
+        image: '',
+        categoryTitle: 'BY CATEGORY',
+        concernTitle: 'BY CONCERN',
+        categoryItems: [],
+        concernItems: [],
+        routeValue: 'hair-care',
+        routeType: 'hair'
+      },
+      {
+        key: 'supplements',
+        name: 'Supplement',
+        active: false,
+        disabled: false,
+        image: '',
+        categoryTitle: 'SHOP BY TYPE',
+        concernTitle: 'BY CONCERN',
+        categoryItems: [],
+        concernItems: [],
+        routeValue: 'supplements',
+        routeType: 'supplements'
+      }
+    ];
+  }
+
+  private syncPanelData() {
+    this.panels = this.panels.map((panel) => {
+      if (panel.key === 'skin') {
+        return {
+          ...panel,
+          image: this.skinBannerData?.skin_info?.image || this.assets.secura.skin,
+          categoryItems: this.mapPanelItems(this.skinBannerData?.skin_category?.data, 'product_type', 'skin'),
+          concernItems: this.mapPanelItems(this.skinBannerData?.skin_concerns?.data, 'skin_concern', 'skin')
+        };
+      }
+      if (panel.key === 'hair') {
+        return {
+          ...panel,
+          image: this.hairBannerData?.hair_info?.image || this.assets.secura.skin,
+          categoryItems: this.mapPanelItems(this.hairBannerData?.hair_category?.data, 'product_type', 'hair'),
+          concernItems: this.mapPanelItems(this.hairBannerData?.hair_concerns?.data, 'hair_concern', 'hair')
+        };
+      }
+
+      return {
+        ...panel,
+        image: this.supplementBannerData?.category_info?.image || this.assets.secura.skin,
+        categoryItems: this.mapPanelItems(this.supplementBannerData?.supplements?.data, 'product_type', 'supplements'),
+        concernItems: []
+      };
+    });
+  }
+
+  private mapPanelItems(data: any[] | undefined, field: string, type: 'skin' | 'hair' | 'supplements'): MobilePanelItem[] {
+    if (!Array.isArray(data)) {
+      return [];
+    }
+
+    return data
+      .map((entry) => {
+        const label = entry?.[field];
+        if (!label) {
+          return null;
+        }
+        return {
+          label,
+          value: label,
+          type
+        };
+      })
+      .filter((entry): entry is MobilePanelItem => !!entry);
+  }
+
+  private showSelectionLoader() {
+    this.selectionLoaderStartedAt = Date.now();
+    this.isSelectionLoading = true;
+    if (this.selectionLoaderTimeout) {
+      clearTimeout(this.selectionLoaderTimeout);
+      this.selectionLoaderTimeout = undefined;
+    }
+  }
+
+  private hideSelectionLoader() {
+    if (!this.isSelectionLoading) {
+      return;
+    }
+
+    const elapsed = Date.now() - this.selectionLoaderStartedAt;
+    const remaining = Math.max(0, 300 - elapsed);
+
+    this.selectionLoaderTimeout = setTimeout(() => {
+      this.isSelectionLoading = false;
+      this.pendingSelectionLabel = '';
+      this.selectionLoaderTimeout = undefined;
+    }, remaining);
   }
 
 }

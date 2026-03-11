@@ -49,6 +49,8 @@ class ProductListSerializer(serializers.ModelSerializer):
     skin_concern = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
     hair_concern = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
     ingredient = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
+    avg_rating = serializers.SerializerMethodField()
+    rating_count = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
@@ -57,8 +59,16 @@ class ProductListSerializer(serializers.ModelSerializer):
             'skin_concern', 'hair_concern','ingredient',
             'thumbnail_image', 'hover_image',
             'details', 'images','product_description',
-            'key_benefits' ,'key_ingredients' ,'how_to_use' ,'trending_product','best_seller'
+            'key_benefits' ,'key_ingredients' ,'how_to_use' ,'trending_product','best_seller',
+            'avg_rating', 'rating_count'
         ]
+
+    def get_avg_rating(self, obj):
+        avg_rating = getattr(obj, 'avg_rating_value', None)
+        return round(avg_rating, 1) if avg_rating else 0.0
+
+    def get_rating_count(self, obj):
+        return getattr(obj, 'total_reviews', 0) or 0
 
 
 class ProductSerializer(serializers.ModelSerializer):
@@ -192,10 +202,14 @@ class ProductReviewSerializer(serializers.ModelSerializer):
             "reviewer_name",
             "review_text",
             "rating",
+            "review_date",
             "created_at",
             "images",
         ]
         read_only_fields = ["product", "user", "created_at"]
+        extra_kwargs = {
+            "review_date": {"required": True}
+        }
 
     def validate_rating(self, value):
         if not 1 <= value <= 5:

@@ -1,21 +1,21 @@
 // banners
 
 .banner-wrapper {
-    margin-top: 0.5rem; // 8px
+    margin-top: 0.5rem; // 0.8rem
 
-    @media only screen and (max-width:768px) {
+    @media only screen and (max-width:76.8rem) {
         padding-inline: 1rem;
     }
 }
 
 .banner-carousel {
-    height: 21.0625rem; // 385px
-    border-radius: 0.625rem; // 10px
+    height: 21.0625rem; // 38.5rem
+    border-radius: 0.625rem; // 1rem
     overflow: hidden;
     position: relative;
     z-index: 1;
 
-    @media only screen and (max-width:768px) {
+    @media only screen and (max-width:76.8rem) {
         height: 10.0625rem;
     }
 
@@ -52,7 +52,7 @@
 ::ng-deep .ant-carousel .slick-dots-bottom {
     bottom: 1rem !important;
 
-    @media only screen and (max-width:768px) {
+    @media only screen and (max-width:76.8rem) {
         bottom: 0rem !important;
     }
 }
@@ -127,11 +127,14 @@
 // Main Content Wrapper
 .content-wrapper {
     display: flex;
+    align-items: flex-start;
     gap: 2rem;
     margin-top: 1.5rem;
+    position: relative;
 
     @media only screen and (max-width: 64rem) {
         flex-direction: column;
+        gap: 1rem;
     }
 }
 
@@ -139,40 +142,101 @@
 .sidebar-filter {
     width: 15rem;
     flex-shrink: 0;
+    align-self: flex-start;
+    border: 0.0625rem solid color-mix(in srgb, var(--filter-border) 78%, transparent);
+    border-radius: 0.85rem;
+    background: color-mix(in srgb, var(--card-bg) 95%, #ffffff 5%);
+    padding: 1rem 0.9rem;
+    height: fit-content;
+    max-height: calc(100vh - 8.5rem);
+    overflow-y: auto;
+    scrollbar-width: thin;
+    position: sticky;
+    top: 7rem;
+    z-index: 5;
+    box-shadow: 0 0.25rem 0.9rem rgba(15, 23, 42, 0.05);
 
     @media only screen and (max-width: 64rem) {
-        width: 100%;
+        display: none;
     }
 }
 
 .filter-header {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: space-between;
-    margin-bottom: 1.5rem;
-    padding-bottom: 1rem;
-    border-bottom: 0.0625rem solid #f0f0f0;
+    flex-wrap: wrap;
+    gap: 0.8rem;
+    margin-bottom: 1rem;
+    padding-bottom: 0.85rem;
+    border-bottom: 0.0625rem solid var(--filter-border);
+}
+
+.filter-heading-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    flex: 1;
+    min-width: 10rem;
 }
 
 .filter-title {
-    font-size: 1.5rem;
-    font-weight: 600;
+    font-size: 1.15rem;
+    font-weight: 700;
     margin: 0;
-    color: #000;
+    color: var(--text-primary);
+}
+
+.filter-subtitle {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    line-height: 1.3;
+}
+
+.filter-actions {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+}
+
+.selected-filter-count {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03rem;
+    border-radius: 99.9rem;
+    padding: 0.15rem 0.5rem;
+    color: var(--brand-primary);
+    background: color-mix(in srgb, var(--brand-primary) 12%, var(--card-bg));
+    border: 0.0625rem solid color-mix(in srgb, var(--brand-primary) 35%, transparent);
+    white-space: nowrap;
 }
 
 .clear-all-btn {
-    background: none;
-    border: none;
-    color: #ff4d4f;
+    background: color-mix(in srgb, #ff4d4f 12%, transparent);
+    border: 0.0625rem solid color-mix(in srgb, #ff4d4f 45%, transparent);
+    color: #e5484d;
     cursor: pointer;
-    font-size: 0.875rem;
-    font-weight: 500;
-    padding: 0;
+    font-size: 0.76rem;
+    font-weight: 600;
+    border-radius: 0.45rem;
+    padding: 0.2rem 0.55rem;
+    transition: transform 0.18s ease, background-color 0.18s ease;
+    white-space: nowrap;
 
     &:hover {
-        color: #ff7875;
+        background: color-mix(in srgb, #ff4d4f 18%, transparent);
+        transform: translateY(-0.1rem);
     }
+}
+
+.add-to-cart-btn button.added {
+    background: color-mix(in srgb, var(--brand-primary) 88%, #ffffff 12%);
+    border-color: color-mix(in srgb, var(--brand-primary) 72%, #000000 28%);
+    color: #ffffff;
+    box-shadow: 0 0.35rem 1rem color-mix(in srgb, var(--brand-primary) 22%, transparent);
 }
 
 // Active Filters
@@ -191,48 +255,157 @@
     }
 
     ::ng-deep .ant-collapse-item {
-        border-bottom: 0.0625rem solid #f0f0f0;
+        border-bottom: 0.0625rem solid var(--filter-border);
     }
 
     ::ng-deep .ant-collapse-header {
-        padding: 0.75rem 0 !important;
+        padding: 0.78rem 0.2rem !important;
         font-weight: 600;
-        font-size: 1rem;
-        color: #000;
+        font-size: 0.93rem;
+        color: var(--text-primary);
+        transition: color 0.2s ease;
     }
 
     ::ng-deep .ant-collapse-content-box {
-        max-height: 300px !important;
+        max-height: 30rem !important;
         overflow-y: auto !important;
         scrollbar-width: thin !important;
-        padding: 0.5rem 0 1rem 0 !important;
+        padding: 0.35rem 0 0.85rem 0 !important;
+        animation: filterSectionReveal 300ms ease;
+    }
+
+    ::ng-deep .ant-collapse-arrow {
+        color: var(--text-secondary);
+    }
+
+    ::ng-deep .ant-collapse-item-active {
+        .ant-collapse-header {
+            color: var(--brand-primary);
+        }
     }
 }
 
 .filter-list {
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
+    gap: 0.5rem;
 }
 
 .filter-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.45rem;
+    border-radius: 0.5rem;
+    transition: background-color 0.22s ease, transform 0.22s ease;
+    animation: filterItemFadeIn 320ms ease both;
+
+    &:hover {
+        background: color-mix(in srgb, var(--hover-bg) 74%, var(--card-bg));
+        transform: translateX(0.2rem);
+    }
+
     label {
         cursor: pointer;
-        font-size: 0.875rem;
-        color: #595959;
+        flex: 1;
+        min-width: 0;
+        font-size: 0.82rem;
+        color: var(--text-secondary);
         display: flex;
         align-items: center;
+        padding: 0.42rem 0.48rem;
+        border-radius: 0.45rem;
+        transition: color 0.2s ease;
 
         &:hover {
-            color: #000;
+            color: var(--text-primary);
         }
+    }
+
+    .filter-text {
+        display: inline-block;
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        vertical-align: middle;
+    }
+
+    ::ng-deep .ant-checkbox-wrapper {
+        display: inline-flex;
+        align-items: center;
+        width: 100%;
+        line-height: 1.25;
+    }
+
+    ::ng-deep .ant-checkbox+span {
+        flex: 1;
+        min-width: 0;
+        padding-right: 0.2rem;
+        display: flex;
+        align-items: center;
     }
 }
 
+.filter-item:nth-child(1) {
+    animation-delay: 40ms;
+}
+
+.filter-item:nth-child(2) {
+    animation-delay: 70ms;
+}
+
+.filter-item:nth-child(3) {
+    animation-delay: 100ms;
+}
+
+.filter-item:nth-child(4) {
+    animation-delay: 130ms;
+}
+
+.filter-item:nth-child(5) {
+    animation-delay: 160ms;
+}
+
+.filter-item:nth-child(6) {
+    animation-delay: 190ms;
+}
+
 .item-count {
-    margin-left: 0.25rem;
-    color: #8c8c8c;
-    font-size: 0.75rem;
+    color: var(--text-secondary);
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 0.05rem 0.35rem;
+    border-radius: 99.9rem;
+    background: color-mix(in srgb, var(--hover-bg) 85%, var(--card-bg));
+    line-height: 1.2;
+    flex-shrink: 0;
+    min-width: 1.45rem;
+    text-align: center;
+}
+
+@keyframes filterItemFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(0.5rem);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes filterSectionReveal {
+    from {
+        opacity: 0;
+        transform: translateY(-0.4rem);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 // Products Section
@@ -243,12 +416,64 @@
 
 .filter-tags-row {
     display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
+    flex-direction: column;
+    gap: 0.7rem;
     margin-bottom: 1rem;
+    border: 0.0625rem solid color-mix(in srgb, var(--filter-border) 78%, transparent);
+    border-radius: 0.7rem;
+    padding: 0.7rem 0.75rem;
+    background: color-mix(in srgb, var(--card-bg) 95%, #ffffff 5%);
+}
+
+.filter-tags-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.7rem;
+    flex-wrap: wrap;
+}
+
+.filter-tags-title {
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.02rem;
+    color: var(--text-primary);
+    text-transform: uppercase;
+}
+
+.filter-tags-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.filter-tags-clear-btn {
+    border: 0.0625rem solid color-mix(in srgb, #ff4d4f 45%, transparent);
+    background: color-mix(in srgb, #ff4d4f 11%, transparent);
+    color: #e5484d;
+    font-size: 0.74rem;
+    font-weight: 600;
+    border-radius: 0.42rem;
+    padding: 0.18rem 0.48rem;
+    cursor: pointer;
+    transition: background-color 0.18s ease, transform 0.18s ease;
+
+    &:hover {
+        background: color-mix(in srgb, #ff4d4f 18%, transparent);
+        transform: translateY(-0.1rem);
+    }
+}
+
+.filter-tags-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
 
     @media only screen and (max-width: 64rem) {
-        display: none;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        scrollbar-width: thin;
+        padding-bottom: 0.1rem;
     }
 }
 
@@ -268,17 +493,78 @@
 .product-count {
     margin: 0;
     font-size: 0.875rem;
-    color: #595959;
+    color: var(--text-secondary);
+}
+
+.collections-cart-strip {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    padding: 0.8rem 0.95rem;
+    margin-bottom: 0.9rem;
+    border: 0.0625rem solid color-mix(in srgb, var(--filter-border) 75%, transparent);
+    border-radius: 0.65rem;
+    background: color-mix(in srgb, var(--card-bg) 94%, #ffffff 6%);
+
+    @media only screen and (max-width: 48rem) {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.8rem;
+    }
+}
+
+.cart-strip-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+}
+
+.cart-strip-label {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03rem;
+    color: var(--text-secondary);
+}
+
+.cart-strip-value {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+
+    &.save {
+        color: color-mix(in srgb, var(--brand-primary) 74%, var(--brand-secondary) 26%);
+    }
 }
 
 .sort-dropdown {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.6rem;
+    padding: 0.35rem 0.45rem 0.35rem 0.65rem;
+    border: 0.0625rem solid color-mix(in srgb, var(--filter-border) 75%, transparent);
+    border-radius: 0.65rem;
+    background: color-mix(in srgb, var(--card-bg) 94%, #ffffff 6%);
 
-    span {
-        font-size: 0.875rem;
-        color: #595959;
+    @media only screen and (max-width: 48rem) {
+        width: 100%;
+        justify-content: space-between;
+    }
+}
+
+.sort-label {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03rem;
+    color: var(--text-secondary);
+    font-weight: 600;
+}
+
+.sort-select {
+    min-width: 13.5rem;
+
+    @media only screen and (max-width: 48rem) {
+        min-width: 11.5rem;
+        width: 100%;
     }
 }
 
@@ -295,6 +581,92 @@
     }
 }
 
+.products-content-shell {
+    position: relative;
+}
+
+.products-content-shell.is-updating {
+    .products-grid,
+    .products-pagination-wrap,
+    .no-products {
+        filter: blur(0.1rem);
+        opacity: 0.42;
+        transition: opacity 0.18s ease;
+        pointer-events: none;
+    }
+}
+
+.products-loading-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 6;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: 4.25rem;
+    pointer-events: none;
+}
+
+.products-loading-overlay__card,
+.products-initial-loading {
+    width: min(26rem, 100%);
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+    padding: 1rem 1.1rem;
+    border-radius: 0.9rem;
+    border: 0.0625rem solid color-mix(in srgb, var(--brand-primary) 18%, var(--filter-border));
+    background: color-mix(in srgb, var(--card-bg) 92%, #ffffff 8%);
+    box-shadow: 0 0.7rem 2rem rgba(15, 23, 42, 0.08);
+    backdrop-filter: blur(0.6rem);
+}
+
+.products-initial-loading {
+    margin-top: 1.2rem;
+}
+
+.products-loading-bar {
+    position: relative;
+    width: 100%;
+    height: 0.22rem;
+    overflow: hidden;
+    border-radius: 99.9rem;
+    background: color-mix(in srgb, var(--brand-primary) 10%, transparent);
+
+    &::after {
+        content: "";
+        position: absolute;
+        inset: 0 auto 0 0;
+        width: 28%;
+        border-radius: inherit;
+        background: linear-gradient(90deg,
+                color-mix(in srgb, var(--brand-secondary) 72%, var(--brand-primary) 28%) 0%,
+                var(--brand-primary) 100%);
+        animation: products-loading-progress 0.95s ease-in-out infinite;
+    }
+}
+
+.products-loading-copy {
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+}
+
+.products-loading-title {
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+@keyframes products-loading-progress {
+    0% {
+        transform: translateX(-120%);
+    }
+
+    100% {
+        transform: translateX(360%);
+    }
+}
+
 // Product Card
 // Products Grid
 .products-grid {
@@ -302,6 +674,7 @@
     grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
     gap: 1.5rem;
     margin-top: 1.5rem;
+    align-items: stretch;
 
     @media only screen and (max-width: 48rem) {
         grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
@@ -309,19 +682,93 @@
     }
 }
 
+.products-pagination-wrap {
+    margin-top: 1.35rem;
+    display: flex;
+    justify-content: center;
+}
+
+.products-pagination-shell {
+    width: 100%;
+    max-width: 28rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.55rem;
+    padding: 0.75rem 0.9rem;
+    border: 0.0625rem solid color-mix(in srgb, var(--filter-border) 78%, transparent);
+    border-radius: 0.8rem;
+    background: color-mix(in srgb, var(--card-bg) 95%, #ffffff 5%);
+    box-shadow: 0 0.2rem 0.75rem rgba(15, 23, 42, 0.06);
+}
+
+.pagination-meta {
+    font-size: 0.75rem;
+    letter-spacing: 0.02rem;
+    color: var(--text-secondary);
+}
+
+::ng-deep .products-pagination-shell .ant-pagination {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 0.2rem;
+}
+
+::ng-deep .products-pagination-shell .ant-pagination-item {
+    border-radius: 0.5rem;
+    border-color: color-mix(in srgb, var(--filter-border) 72%, transparent);
+    transition: all 0.2s ease;
+}
+
+::ng-deep .products-pagination-shell .ant-pagination-item:hover {
+    border-color: color-mix(in srgb, var(--brand-primary) 45%, var(--filter-border));
+}
+
+::ng-deep .products-pagination-shell .ant-pagination-item-active {
+    border-color: color-mix(in srgb, var(--brand-primary) 88%, var(--brand-secondary) 12%);
+    background: color-mix(in srgb, var(--brand-primary) 90%, var(--brand-secondary) 10%);
+}
+
+::ng-deep .products-pagination-shell .ant-pagination-item-active a {
+    color: #ffffff;
+}
+
+::ng-deep .products-pagination-shell .ant-pagination-options {
+    margin-left: 0.5rem;
+}
+
+@media only screen and (max-width: 48rem) {
+    .products-pagination-shell {
+        max-width: 100%;
+    }
+}
+
 // Product Card
 .product-card {
     border-radius: 0.5rem;
     overflow: hidden;
+    border: 0.0625rem solid color-mix(in srgb, var(--filter-border) 70%, transparent);
+    background: var(--card-bg);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
     &:hover {
-        box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.12);
-        transform: translateY(-0.25rem);
+        box-shadow: 0 0.22rem 0.7rem rgba(15, 23, 42, 0.1);
+        transform: translateY(-0.12rem);
     }
 
     ::ng-deep .ant-card-body {
         padding: 1rem;
+        background: color-mix(in srgb, var(--card-bg) 96%, #ffffff 4%);
+        color: var(--text-primary);
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        gap: 0.55rem;
     }
 
     ::ng-deep .ant-card-meta-title {
@@ -345,7 +792,7 @@
     width: 100%;
     height: 18rem;
     overflow: hidden;
-    background-color: #f5f5f5;
+    background-color: var(--product-img-bg);
 
     @media only screen and (max-width: 48rem) {
         height: 14rem;
@@ -404,10 +851,27 @@
     }
 
     &.new {
-        background-color: white;
-        color: #000;
-        border: 0.0625rem solid #d9d9d9;
+        background-color: var(--badge-new-bg);
+        color: var(--text-primary);
+        border: 0.0625rem solid var(--badge-new-border);
     }
+}
+
+.product-save-chip {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    z-index: 3;
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.6rem;
+    border-radius: 99.9rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.02rem;
+    color: #ffffff;
+    background: color-mix(in srgb, var(--brand-primary) 78%, var(--brand-secondary) 22%);
+    box-shadow: 0 0.2rem 0.55rem color-mix(in srgb, var(--brand-primary) 30%, transparent);
 }
 
 .product-card:hover .product-badge {
@@ -415,10 +879,27 @@
 }
 
 .product-footer {
-    margin-top: 0.75rem;
     display: flex;
     flex-direction: column;
-    // gap: 0.5rem;
+    flex: 1;
+    gap: 0.45rem;
+
+    .rate-height {
+        height: 1.3rem;
+    }
+
+    .rating_count {
+        font-size: 0.8rem;
+    }
+
+    h5 {
+        color: var(--text-primary);
+        font-weight: 600;
+        line-height: 1.35;
+        margin: 0;
+        font-size: 1rem;
+        min-height: 2.5rem;
+    }
 
     ::ng-deep .ant-rate {
         font-size: 0.875rem;
@@ -427,26 +908,22 @@
 
 .product-description {
     font-size: 0.8rem;
-    color: #979696;
-    margin: 0;
-    line-height: 1.5;
-    overflow: hidden;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
+    word-break: break-all;
+    color: var(--text-muted);
+    min-height: 4.8rem;
 }
 
 .product-org-price {
-    font-size: 0.9rem;
+    font-size: 1rem;
     margin: 0;
     text-decoration: line-through;
-    color: #9ca3af;
+    color: var(--text-muted);
 }
 
 .product-sell-price {
-    font-size: 1.125rem;
+    font-size: 1.2rem;
     font-weight: 600;
-    color: #000;
+    color: var(--text-primary);
     margin: 0;
 }
 
@@ -497,16 +974,24 @@
 // Tag Styling
 ::ng-deep .ant-tag {
     border-radius: 1.25rem;
-    padding: 0.25rem 0.75rem;
-    font-size: 0.75rem;
+    padding: 0.2rem 0.66rem;
+    font-size: 0.73rem;
     border:
 
-        0.0625rem solid #d9d9d9;
-    background-color: #fafafa;
-    color: #595959;
+        0.0625rem solid color-mix(in srgb, var(--badge-new-border) 85%, transparent);
+    background-color: color-mix(in srgb, var(--tag-bg) 90%, #ffffff 10%);
+    color: var(--text-primary);
     display: inline-flex;
     align-items: center;
     gap: 0.25rem;
+    margin: 0 !important;
+    white-space: nowrap;
+    transition: transform 0.2s ease, background-color 0.2s ease;
+
+    &:hover {
+        transform: translateY(-0.1rem);
+        background-color: color-mix(in srgb, var(--hover-bg) 72%, var(--card-bg));
+    }
 
     .anticon-close {
         font-size: 0.625rem;
@@ -518,13 +1003,287 @@
     margin: 1rem 0;
 }
 
-.add-to-cart-btn{
+.add-to-cart-btn {
     display: flex;
     align-items: center;
     gap: 1rem;
+    margin-top: auto;
 }
+
 .btn-primary {
-    background-color: green;
+    background-color: var(--brand-primary);
     color: white;
     width: 100%;
+}
+
+.no-products {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.8rem;
+    margin-top: 1.25rem;
+    padding: 2rem 1.25rem;
+    border: 0.0625rem solid color-mix(in srgb, var(--filter-border) 78%, transparent);
+    border-radius: 1rem;
+    background:
+        radial-gradient(circle at top, color-mix(in srgb, var(--brand-primary) 10%, transparent), transparent 52%),
+        color-mix(in srgb, var(--card-bg) 95%, #ffffff 5%);
+    text-align: center;
+    box-shadow: 0 0.3rem 1rem rgba(15, 23, 42, 0.05);
+}
+
+.no-products-visual {
+    position: relative;
+    width: 5.5rem;
+    height: 5.5rem;
+    display: grid;
+    place-items: center;
+    border-radius: 99.9rem;
+    background: color-mix(in srgb, var(--brand-primary) 12%, #ffffff 88%);
+    animation: empty-state-float 2.8s ease-in-out infinite;
+}
+
+.no-products-emoji {
+    font-size: 2.4rem;
+    line-height: 1;
+}
+
+.no-products-spark {
+    position: absolute;
+    font-size: 1rem;
+    color: color-mix(in srgb, var(--brand-primary) 72%, #f4b400 28%);
+    animation: empty-state-twinkle 1.9s ease-in-out infinite;
+}
+
+.spark-left {
+    top: 0.8rem;
+    left: 0.5rem;
+}
+
+.spark-right {
+    right: 0.45rem;
+    bottom: 0.75rem;
+    animation-delay: 0.7s;
+}
+
+.no-products-title {
+    margin: 0;
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.no-products-copy {
+    max-width: 26rem;
+    margin: 0;
+    color: var(--text-secondary);
+    line-height: 1.55;
+}
+
+.clear-filters-btn {
+    min-width: 10rem;
+    border: none;
+    border-radius: 99.9rem;
+    padding: 0.8rem 1.2rem;
+    background: var(--brand-primary);
+    color: #ffffff;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+
+    &:hover {
+        transform: translateY(-0.0625rem);
+        box-shadow: 0 0.45rem 1rem color-mix(in srgb, var(--brand-primary) 22%, transparent);
+    }
+}
+
+@keyframes empty-state-float {
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-0.35rem);
+    }
+}
+
+@keyframes empty-state-twinkle {
+    0%,
+    100% {
+        opacity: 0.55;
+        transform: scale(0.9);
+    }
+
+    50% {
+        opacity: 1;
+        transform: scale(1.15);
+    }
+}
+
+@media only screen and (max-width: 64rem) {
+    .collections-container {
+        padding: 0 0.75rem 4.7rem 0.75rem;
+    }
+
+    .products-header {
+        gap: 0.6rem;
+    }
+
+    .sort-dropdown {
+        display: none;
+    }
+
+    .sort-select {
+        min-width: 0;
+        width: 100%;
+    }
+
+    .products-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.75rem;
+        margin-top: 1rem;
+    }
+
+    .product-image-wrapper {
+        height: 11rem;
+    }
+
+    .product-footer h5 {
+        font-size: 0.9rem;
+        line-height: 1.25;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    .product-description {
+        font-size: 0.74rem;
+        line-height: 1.4;
+    }
+
+    .product-org-price {
+        font-size: 0.78rem;
+    }
+
+    .product-sell-price {
+        font-size: 0.96rem;
+    }
+
+    .add-to-cart-btn .btn-primary {
+        min-height: 2.35rem;
+        font-size: 0.82rem;
+    }
+
+    .filter-tags-row {
+        margin-bottom: 0.8rem;
+        padding: 0.6rem 0.65rem;
+    }
+}
+
+.mobile-fixed-actions {
+    display: none;
+}
+
+@media only screen and (max-width: 64rem) {
+    .mobile-fixed-actions {
+        position: fixed;
+        left: 0.75rem;
+        right: 0.75rem;
+        bottom: calc(0.7rem + env(safe-area-inset-bottom, 0rem));
+        z-index: 40;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.6rem;
+    }
+}
+
+.mobile-fixed-btn {
+    border: 0.0625rem solid color-mix(in srgb, var(--brand-primary) 40%, transparent);
+    background: color-mix(in srgb, var(--card-bg) 88%, #ffffff 12%);
+    color: var(--text-primary);
+    border-radius: 0.68rem;
+    min-height: 2.6rem;
+    font-size: 0.82rem;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    box-shadow: 0 0.25rem 0.85rem rgba(15, 23, 42, 0.08);
+}
+
+.mobile-fixed-badge {
+    min-width: 1.2rem;
+    height: 1.2rem;
+    border-radius: 99.9rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.68rem;
+    color: #ffffff;
+    background: color-mix(in srgb, var(--brand-primary) 82%, var(--brand-secondary) 18%);
+}
+
+.drawer-filter-content {
+    padding-bottom: 1rem;
+}
+
+.drawer-filter-actions {
+    position: sticky;
+    bottom: 0;
+    z-index: 2;
+    margin-top: 0.8rem;
+    padding-top: 0.65rem;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.55rem;
+    background: color-mix(in srgb, var(--card-bg) 95%, #ffffff 5%);
+}
+
+.drawer-filter-cancel,
+.drawer-filter-apply {
+    min-height: 2.45rem;
+    border-radius: 0.6rem;
+    font-size: 0.85rem;
+    font-weight: 700;
+}
+
+.drawer-filter-cancel {
+    border: 0.0625rem solid color-mix(in srgb, var(--filter-border) 80%, transparent);
+    background: color-mix(in srgb, var(--card-bg) 92%, #ffffff 8%);
+    color: var(--text-primary);
+}
+
+.drawer-filter-apply {
+    border: 0.0625rem solid color-mix(in srgb, var(--brand-primary) 60%, transparent);
+    background: color-mix(in srgb, var(--brand-primary) 86%, var(--brand-secondary) 14%);
+    color: #ffffff;
+}
+
+.mobile-sort-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.mobile-sort-item {
+    width: 100%;
+    text-align: left;
+    border: 0.0625rem solid color-mix(in srgb, var(--filter-border) 75%, transparent);
+    background: color-mix(in srgb, var(--card-bg) 96%, #ffffff 4%);
+    border-radius: 0.6rem;
+    padding: 0.65rem 0.8rem;
+    color: var(--text-primary);
+    font-size: 0.88rem;
+    font-weight: 600;
+}
+
+.mobile-sort-item.active {
+    border-color: color-mix(in srgb, var(--brand-primary) 65%, transparent);
+    background: color-mix(in srgb, var(--brand-primary) 12%, var(--card-bg));
+    color: var(--brand-primary);
 }

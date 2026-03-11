@@ -12,11 +12,11 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 6px 16px;
-  font-size: 14px;
+  padding: 0.6rem 1.6rem;
+  font-size: 1.4rem;
   font-weight: 400;
   line-height: 1.5;
-  border-radius: 4px;
+  border-radius: 0.4rem;
   transition: all 0.3s ease;
   overflow: hidden;
   cursor: pointer;
@@ -45,7 +45,7 @@
 .generate-button(@name, @color, @font-color) {
   .btn-@{name} {
     background-color: @color;
-    border: 1px solid @color;
+    border: 0.1rem solid @color;
     color: @font-color;
 
     &:hover {
@@ -62,7 +62,7 @@
 
   .btn-outline-@{name} {
     background-color: transparent;
-    border: 1px solid @color;
+    border: 0.1rem solid @color;
     color: @color;
 
     &:hover {
@@ -89,18 +89,18 @@
 
 // Size variants
 .btn-lg {
-  padding: 8px 20px;
-  font-size: 16px;
+  // padding: 0.8rem 2rem;
+  // font-size: 1.6rem;
 }
 
 .btn-sm {
-  padding: 4px 12px;
-  font-size: 12px;
+  padding: 0.4rem 1.2rem;
+  font-size: 1.2rem;
 }
 
 .btn-xl {
-  padding: 10px 22px;
-  font-size: 16px;
+  padding: 1rem 2.2rem;
+  font-size: 1.6rem;
 }
 
 .btn-rounded {

@@ -19,10 +19,16 @@
         <!-- Sidebar Filter -->
         <div class="sidebar-filter">
             <div class="filter-header">
-                <h2 class="filter-title">Filters</h2>
-                @if (selectedFilters.size > 0) {
-                <button class="clear-all-btn" (click)="clearAllFilters()">Clear All</button>
-                }
+                <div class="filter-heading-group">
+                    <h2 class="filter-title">Filters</h2>
+                    <p class="filter-subtitle m-0">Narrow products by concern, type, and ingredients.</p>
+                </div>
+                <div class="filter-actions">
+                    @if (selectedFilters.size > 0) {
+                    <span class="selected-filter-count">{{ selectedFilterCount }} active</span>
+                    <button class="clear-all-btn" (click)="clearAllFilters()">Clear all</button>
+                    }
+                </div>
             </div>
 
             <!-- Filter Panels -->
@@ -37,11 +43,11 @@
                                 <label nz-checkbox [ngModel]="isFilterSelected(panel.key, item.name)"
                                     (ngModelChange)="onFilterChange(panel.key, item.name, $event)"
                                     [nzDisabled]="!item.applicable">
-                                    {{ item.name }}
-                                    @if (getItemCount(panel.key, item.name) > 0) {
-                                    <span class="item-count">({{ getItemCount(panel.key, item.name) }})</span>
-                                    }
+                                    <span class="filter-text">{{ item.name }}</span>
                                 </label>
+                                @if (getItemCount(panel.key, item.name) > 0) {
+                                <span class="item-count">{{ getItemCount(panel.key, item.name) }}</span>
+                                }
                             </div>
                             }
                         </div>
@@ -57,12 +63,20 @@
             <!-- Filter Tags Row -->
             @if (getAllSelectedFilters().length > 0) {
             <div class="filter-tags-row">
-                @for (filter of getAllSelectedFilters(); track filter.panelKey + filter.itemName) {
-                <nz-tag [nzColor]="'default'" [nzMode]="'closeable'"
-                    (nzOnClose)="removeFilter(filter.panelKey, filter.itemName)">
-                    {{ filter.displayName }}
-                </nz-tag>
-                }
+                <div class="filter-tags-header">
+                    <p class="filter-tags-title m-0">Selected Filters</p>
+                    <div class="filter-tags-actions">
+                        <button class="filter-tags-clear-btn" (click)="clearAllFilters()">Clear all</button>
+                    </div>
+                </div>
+                <div class="filter-tags-chips">
+                    @for (filter of getAllSelectedFilters(); track filter.panelKey + filter.itemName) {
+                    <nz-tag [nzColor]="'default'" [nzMode]="'closeable'"
+                        (nzOnClose)="removeFilter(filter.panelKey, filter.itemName)">
+                        {{ filter.displayName }}
+                    </nz-tag>
+                    }
+                </div>
             </div>
             }
 
@@ -72,18 +86,37 @@
                 <p class="product-count">Showing {{ productsData?.products?.count }} products</p>
                 }
                 <div class="sort-dropdown">
-                    <span>Sort by:</span>
-                    <nz-select [(ngModel)]="sortBy" (ngModelChange)="onSortChange()" style="width: 10rem;">
-                        <nz-option nzValue="featured" nzLabel="Featured"></nz-option>
-                        <nz-option nzValue="price-low" nzLabel="Price: Low to High"></nz-option>
-                        <nz-option nzValue="price-high" nzLabel="Price: High to Low"></nz-option>
-                        <nz-option nzValue="newest" nzLabel="Newest"></nz-option>
+                    <span class="sort-label">Sort By</span>
+                    <nz-select class="sort-select" [(ngModel)]="sortBy" (ngModelChange)="onSortChange()">
+                        <nz-option nzValue="az" nzLabel="Alphabetically, A-Z"></nz-option>
+                        <nz-option nzValue="za" nzLabel="Alphabetically, Z-A"></nz-option>
+                        <nz-option nzValue="price-low" nzLabel="Price, low to high"></nz-option>
+                        <nz-option nzValue="price-high" nzLabel="Price, high to low"></nz-option>
                     </nz-select>
                 </div>
             </div>
+            @if (cartItemsCount > 0) {
+            <div class="collections-cart-strip">
+                <div class="cart-strip-item">
+                    <span class="cart-strip-label">In Cart</span>
+                    <span class="cart-strip-value">{{ cartItemsCount }} items</span>
+                </div>
+                <div class="cart-strip-item">
+                    <span class="cart-strip-label">Subtotal</span>
+                    <span class="cart-strip-value">₹{{ cartSubtotal }}</span>
+                </div>
+                <div class="cart-strip-item">
+                    <span class="cart-strip-label">You Save</span>
+                    <span class="cart-strip-value save">₹{{ cartSavings }}</span>
+                </div>
+            </div>
+            }
 
             <nz-divider></nz-divider>
+            <div #productsTopAnchor></div>
 
+            <div class="products-content-shell"
+                [class.is-updating]="isProductsLoading && (productsData?.products?.results?.length || 0) > 0">
             <!-- Product Grid -->
             @if (productsData?.products?.results && productsData.products.results.length > 0) {
             <div class="products-grid">
@@ -96,6 +129,9 @@
                                 [class.new]="product.badge === 'NEW'">
                                 {{ product.badge }}
                             </div>
+                            }
+                            @if (product.details && product.details[0]?.discount_price) {
+                            <div class="product-save-chip">Save {{ product.details[0].discount_price }}%</div>
                             }
                             <!-- Main Image -->
                             <img [alt]="product.product_name" [src]="product.thumbnail_image"
@@ -112,22 +148,30 @@
                     </nz-card-meta> -->
                     <div class="product-footer">
                         <h5 class="m-0">{{product.product_name}}</h5>
-                        @if (product.rating) {
-                        <nz-rate [ngModel]="product.rating" nzDisabled [nzCount]="5"></nz-rate>
-                        }
+                        <div class="rate-height">
+                            @if (product.avg_rating) {
+                            <nz-rate [ngModel]="product.avg_rating" nzDisabled [nzCount]="5"></nz-rate>
+                            <span class="ms-2 rating_count">({{ product.rating_count }} {{ product.rating_count === 1 ?
+                                '' : '' }})</span>
+                            }
+                        </div>
                         @if(product?.product_description){
-                        <p class="product-description">{{product.product_description}}</p>
+                        <p class="product-description">{{ product.product_description.length > 100
+                            ? (product.product_description | slice:0:100) + '...'
+                            : product.product_description }}</p>
                         }
                         @if (product.details) {
-                        <div class="d-flex mt-3 mb-3" style="gap: 0.5rem;">
+                        <div class="d-flex mb-2" style="gap: 0.5rem;">
                             <p class="product-org-price">₹ {{ product.details[0].original_price }}</p>
                             <p class="product-sell-price">₹ {{ product.details[0].selling_price }}</p>
                         </div>
 
                         <div class="add-to-cart-btn">
                             <div style="flex: 1;">
-                                <button (click)="addToCart(product)"
-                                    class="secure-btn btn-primary btn-lg signin-btn ">Add to cart</button>
+                                <button (click)="addToCart(product)" class="secure-btn btn-primary btn-lg signin-btn"
+                                    [class.added]="recentlyAddedProductId === product.id">
+                                    {{ recentlyAddedProductId === product.id ? 'Added to cart' : 'Add to cart' }}
+                                </button>
                             </div>
                         </div>
                         }
@@ -137,12 +181,140 @@
                 </nz-card>
                 }
             </div>
-            } @else {
+            <div class="products-pagination-wrap">
+                <div class="products-pagination-shell">
+                    <p class="pagination-meta m-0">
+                        Page {{ pageIndex }} • {{ totalProducts }} products
+                    </p>
+                    <nz-pagination [nzTotal]="totalProducts" [nzPageIndex]="pageIndex" [nzPageSize]="pageSize"
+                        [nzShowSizeChanger]="true" [nzPageSizeOptions]="[12, 24, 36]"
+                        (nzPageIndexChange)="onPageIndexChange($event)" (nzPageSizeChange)="onPageSizeChange($event)">
+                    </nz-pagination>
+                </div>
+            </div>
+            } @else if (!isProductsLoading) {
             <div class="no-products">
-                <p>No products found matching your filters.</p>
-                <button class="clear-filters-btn" (click)="clearAllFilters()">Clear Filters</button>
+                <div class="no-products-visual" aria-hidden="true">
+                    <span class="no-products-emoji">🔎</span>
+                    <span class="no-products-spark spark-left">✨</span>
+                    <span class="no-products-spark spark-right">✨</span>
+                </div>
+                <h3 class="no-products-title">No matching products found</h3>
+                <p class="no-products-copy">Try clearing a few filters to explore more skin-care options.</p>
+                <!-- <button class="clear-filters-btn" (click)="clearAllFilters()">Clear Filters</button> -->
+            </div>
+            <div class="products-pagination-wrap">
+                <div class="products-pagination-shell">
+                    <p class="pagination-meta m-0">
+                        Page {{ pageIndex }} • 0 products
+                    </p>
+                    <nz-pagination [nzTotal]="0" [nzPageIndex]="1" [nzPageSize]="pageSize" [nzShowSizeChanger]="true"
+                        [nzPageSizeOptions]="[12, 24, 36]" (nzPageSizeChange)="onPageSizeChange($event)">
+                    </nz-pagination>
+                </div>
+            </div>
+            } @else {
+            <div class="products-initial-loading" aria-live="polite">
+                <div class="products-loading-bar"></div>
+                <p class="products-loading-title m-0">Loading products</p>
+                <p class="products-loading-copy m-0">Refreshing this collection for you.</p>
             </div>
             }
+
+            @if (isProductsLoading && (productsData?.products?.results?.length || 0) > 0) {
+            <div class="products-loading-overlay" aria-live="polite">
+                <div class="products-loading-overlay__card">
+                    <div class="products-loading-bar"></div>
+                    <p class="products-loading-title m-0">Updating products</p>
+                    <p class="products-loading-copy m-0">Applying your latest selection.</p>
+                </div>
+            </div>
+            }
+            </div>
         </div>
     </div>
+
+    <!-- Mobile fixed action bar -->
+    <div class="mobile-fixed-actions">
+        <button class="mobile-fixed-btn" (click)="openSortDrawer()">Sort By: {{ sortByLabel }}</button>
+        <button class="mobile-fixed-btn" (click)="openFilterDrawer()">
+            Filters
+            @if (selectedFilterCount > 0) {
+            <span class="mobile-fixed-badge">{{ selectedFilterCount }}</span>
+            }
+        </button>
+    </div>
+
+    <!-- Mobile Filters Drawer -->
+    <nz-drawer [nzVisible]="isFilterDrawerVisible" nzPlacement="bottom" [nzHeight]="'82vh'" [nzClosable]="true"
+        [nzTitle]="'Filters'" (nzOnClose)="closeFilterDrawer()">
+        <ng-container *nzDrawerContent>
+            <div class="drawer-filter-content">
+                <div class="filter-header">
+                    <div class="filter-heading-group">
+                        <h2 class="filter-title">Filters</h2>
+                        <p class="filter-subtitle m-0">Narrow products by concern, type, and ingredients.</p>
+                    </div>
+                    <div class="filter-actions">
+                        @if (draftSelectedFilterCount > 0) {
+                        <span class="selected-filter-count">{{ draftSelectedFilterCount }} active</span>
+                        <button class="clear-all-btn" (click)="clearDraftFilters()">Clear all</button>
+                        }
+                    </div>
+                </div>
+
+                <div class="filter-panels">
+                    <nz-collapse [nzBordered]="false" [nzExpandIconPosition]="'end'">
+                        @for (panel of filterPanels; track panel.key) {
+                        @if (panel.items && panel.items.length > 0) {
+                        <nz-collapse-panel [nzHeader]="panel.title" [nzActive]="true">
+                            <div class="filter-list">
+                                @for (item of panel.items; track item.name) {
+                                <div class="filter-item">
+                                    <label nz-checkbox [ngModel]="isDraftFilterSelected(panel.key, item.name)"
+                                        (ngModelChange)="onDraftFilterChange(panel.key, item.name, $event)"
+                                        [nzDisabled]="!item.applicable">
+                                        <span class="filter-text">{{ item.name }}</span>
+                                    </label>
+                                    @if (getItemCount(panel.key, item.name) > 0) {
+                                    <span class="item-count">{{ getItemCount(panel.key, item.name) }}</span>
+                                    }
+                                </div>
+                                }
+                            </div>
+                        </nz-collapse-panel>
+                        }
+                        }
+                    </nz-collapse>
+                </div>
+                <div class="drawer-filter-actions">
+                    <button class="drawer-filter-cancel" (click)="closeFilterDrawer()">Cancel</button>
+                    <button class="drawer-filter-apply" (click)="applyFilterChanges()">Apply</button>
+                </div>
+            </div>
+        </ng-container>
+    </nz-drawer>
+
+    <!-- Mobile Sort Drawer -->
+    <nz-drawer [nzVisible]="isSortDrawerVisible" nzPlacement="bottom" [nzHeight]="'44vh'" [nzClosable]="true"
+        [nzTitle]="'Sort By'" (nzOnClose)="closeSortDrawer()">
+        <ng-container *nzDrawerContent>
+            <div class="mobile-sort-list">
+                <button class="mobile-sort-item" [class.active]="sortBy==='az'" (click)="applySortFromDrawer('az')">
+                    Alphabetically, A-Z
+                </button>
+                <button class="mobile-sort-item" [class.active]="sortBy==='za'" (click)="applySortFromDrawer('za')">
+                    Alphabetically, Z-A
+                </button>
+                <button class="mobile-sort-item" [class.active]="sortBy==='price-low'"
+                    (click)="applySortFromDrawer('price-low')">
+                    Price, low to high
+                </button>
+                <button class="mobile-sort-item" [class.active]="sortBy==='price-high'"
+                    (click)="applySortFromDrawer('price-high')">
+                    Price, high to low
+                </button>
+            </div>
+        </ng-container>
+    </nz-drawer>
 </div>

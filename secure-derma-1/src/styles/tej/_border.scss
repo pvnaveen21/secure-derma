@@ -1,0 +1,171 @@
+@use "sass:meta";
+
+// Border variables (customizable)
+$border-width: 1px;
+$border-widths: (
+  0: 0,
+  1: 1px,
+  2: 2px,
+  3: 3px,
+  4: 4px,
+  5: 5px
+);
+$border-color: #dee2e6; // Default border color
+$border-radius: 0.375rem; // Default border radius (similar to Bootstrap)
+
+// Border styles
+$border-styles: (
+  solid: solid,
+  dashed: dashed,
+  dotted: dotted,
+  double: double,
+  none: none
+);
+
+// Colors for border utilities (extend as needed)
+$border-colors: (
+  "primary": var(--ant-primary-color),
+  "secondary": var(--ant-secondary-color),
+  "success": var(--ant-success-color),
+  "danger": var(--ant-error-color),
+  "warning": var(--ant-warning-color),
+  "info": var(--ant-info-color),
+  "light": #f8f9fa,
+  "dark": #212529,
+  "body": $border-color,
+  "transparent": 'transparent'
+);
+
+
+// Border base
+.border {
+  border: $border-width solid $border-color;
+}
+
+// Border style utilities
+@each $style, $value in $border-styles {
+  .border-#{$style} {
+    border-style: $value;
+  }
+}
+
+// Border width utilities
+@each $size, $value in $border-widths {
+  .border-#{$size} {
+    border-width: $value !important;
+  }
+}
+
+// Border color utilities
+@each $color, $value in $border-colors {
+  .border-#{$color} {
+    border-color: $value !important;
+  }
+}
+
+// Border side utilities
+$sides: (
+  top: top,
+  bottom: bottom,
+  start: left,
+  end: right,
+  x: (left, right),
+  y: (top, bottom)
+);
+
+@each $side, $property in $sides {
+  @if meta.type-of($property) == list {
+    .border-#{$side} {
+      @each $prop in $property {
+        border-#{$prop}: $border-width solid $border-color;
+      }
+    }
+    // Side-specific widths
+    @each $size, $value in $border-widths {
+      .border-#{$side}-#{$size} {
+        @each $prop in $property {
+          border-#{$prop}-width: $value;
+        }
+      }
+    }
+  } @else {
+    .border-#{$side} {
+      border-#{$property}: $border-width solid $border-color;
+    }
+    // Side-specific widths
+    @each $size, $value in $border-widths {
+      .border-#{$side}-#{$size} {
+        border-#{$property}-width: $value;
+      }
+    }
+  }
+}
+
+// Border radius utilities
+$border-radii: (
+  "": $border-radius,
+  sm: 0.25rem,
+  lg: 0.5rem,
+  xl: 0.75rem,
+  "2xl": 1rem,
+  circle: 50%,
+  pill: 50rem,
+  none: 0
+);
+
+@each $size, $value in $border-radii {
+  @if $size == "" {
+    .rounded {
+      border-radius: $value;
+    }
+  } @else {
+    .rounded-#{$size} {
+      border-radius: $value !important;
+    }
+  }
+}
+
+// Side-specific border radius
+$radius-sides: (
+  top: (top-left, top-right),
+  bottom: (bottom-left, bottom-right),
+  start: (top-left, bottom-left),
+  end: (top-right, bottom-right)
+);
+
+@each $side, $properties in $radius-sides {
+  @each $size, $value in $border-radii {
+    @if $size == "" {
+      .rounded-#{$side} {
+        @each $prop in $properties {
+          border-#{$prop}-radius: $value;
+        }
+      }
+    } @else {
+      .rounded-#{$side}-#{$size} {
+        @each $prop in $properties {
+          border-#{$prop}-radius: $value;
+        }
+      }
+    }
+  }
+}
+
+// Remove borders
+.border-0 {
+  border: 0;
+}
+
+@each $side, $property in $sides {
+  @if meta.type-of($property) == list {
+    .border-#{$side}-0 {
+      @each $prop in $property {
+        border-#{$prop}-width: 0;
+      }
+    }
+  } @else {
+    .border-#{$side}-0 {
+      border-#{$property}-width: 0;
+    }
+  }
+}

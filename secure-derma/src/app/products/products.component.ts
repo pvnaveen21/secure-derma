@@ -1,5 +1,5 @@
-import { isPlatformBrowser, NgClass } from '@angular/common';
-import { ChangeDetectorRef, Component, HostListener, Inject, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser, NgClass, NgIf } from '@angular/common';
+import { Component, HostListener, Inject, PLATFORM_ID } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
 import { NzRateModule } from 'ng-zorro-antd/rate';
@@ -9,9 +9,8 @@ import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzDrawerModule } from 'ng-zorro-antd/drawer';
 import { NzDividerModule } from 'ng-zorro-antd/divider';
 import { NzInputModule } from 'ng-zorro-antd/input';
-import { NzCollapseModule } from 'ng-zorro-antd/collapse';
 import { distinctUntilChanged, map } from 'rxjs';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { HorizontalScrollComponent } from '../shared/horizontal-scroll/horizontal-scroll.component';
 import { Icons } from '../shared/icons';
 import { Assets } from '../shared/assets';
@@ -22,6 +21,7 @@ import { ProductService } from '../services/product.service';
     LucideAngularModule,
     FormsModule,
     NzRateModule,
+    NgIf,
     NgClass,
     HorizontalScrollComponent,
     NzProgressModule,
@@ -29,19 +29,20 @@ import { ProductService } from '../services/product.service';
     NzDrawerModule,
     NzDividerModule,
     NzInputModule,
-    NzCollapseModule,
-
+    RouterLink,
   ],
   templateUrl: './products.component.html',
   styleUrl: './products.component.scss'
 })
 export class ProductsComponent {
+  readonly reviewPreviewCharacterLimit = 220;
+  expandedReviews = new Set<number>();
   icons = Icons
   assets = Assets
   selectedGramId: any = 0
   selectedImgId: any = 0
-  currentImageIndex: any = ''
-  mainViewImage: any = this.assets.secura.aq1
+  currentImageIndex: any = 0
+  mainViewImage: any = ''
   categories: any = [{ image: this.assets.secura.aq1 }, { image: this.assets.secura.aq2 }, { image: this.assets.secura.aq1 }, { image: this.assets.secura.aq2 }, { image: this.assets.secura.aq1 }, { image: this.assets.secura.aq2 },]
   reviewsData: any = [
     {
@@ -188,11 +189,63 @@ export class ProductsComponent {
   productDetailsMain: any = []
   currentPriceData: any = []
   sideImages: any = []
+  productInfoSections: {
+    key: string;
+    title: string;
+    eyebrow: string;
+    summary: string;
+    content: string;
+    items: string[];
+  }[] = [];
+  activeProductInfoKey = 'description';
+  get breadcrumbCollectionSlug() {
+    const routeCollection = this.route.snapshot.queryParamMap.get('collection');
+
+    if (routeCollection) {
+      return routeCollection;
+    }
+
+    const candidate = this.productData?.product_type
+      || this.productData?.category?.category_name
+      || this.productData?.collection?.collection_name
+      || '';
+
+    return typeof candidate === 'string' ? this.slugify(candidate) : '';
+  }
+
+  get breadcrumbCollectionLabel() {
+    const routeCollection = this.route.snapshot.queryParamMap.get('collection');
+
+    if (routeCollection) {
+      return routeCollection
+        .split('-')
+        .filter(Boolean)
+        .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+        .join(' ');
+    }
+
+    const candidate = this.productData?.product_type
+      || this.productData?.category?.category_name
+      || this.productData?.collection?.collection_name
+      || '';
+
+    return typeof candidate === 'string' ? candidate : '';
+  }
+
+  get breadcrumbCollectionLink() {
+    if (!this.breadcrumbCollectionSlug) {
+      return ['/'];
+    }
+
+    return ['/collections', this.breadcrumbCollectionSlug];
+  }
+
   getProductDetail() {
     this.productService.getProducetDetail(this.selectedProduectValue).subscribe({
       next: (response: any) => {
-        console.log("PRO DETAIL", response);
         this.productData = response?.product;
+        this.buildProductInfoSections();
+        this.prepareRatingSummary();
 
         // Build side images array
         this.sideImages = response?.product?.gallery_images ? [...response?.product.gallery_images] : [];
@@ -202,6 +255,12 @@ export class ProductsComponent {
         if (response?.product?.thumbnail_image) {
           this.sideImages.unshift(response?.product?.thumbnail_image);
         }
+        this.sideImages = this.sideImages.filter((image: any, index: number, images: any[]) => {
+          return Boolean(image) && images.indexOf(image) === index;
+        });
+        this.selectedImgId = 0;
+        this.currentImageIndex = 0;
+        this.mainViewImage = this.sideImages[0] || response?.product?.thumbnail_image || '';
 
         this.productDetailsMain = response?.product?.product_details;
 
@@ -232,12 +291,8 @@ export class ProductsComponent {
 
           this.selectGram(this.selectedGramId);
         });
-
-        console.log(this.productData.review_count);
       }
     });
-    this.prepareRatingSummary();
-
   }
   ratingSummary: {
     star: number;
@@ -245,7 +300,7 @@ export class ProductsComponent {
     percent: number;
   }[] = [];
   prepareRatingSummary() {
-    const totalReviews = this.productData?.reviews?.total_count || 0;
+    const totalReviews = this.totalReviewCount;
 
     // initialize 5 → 1
     const ratingMap:any = {
@@ -257,10 +312,9 @@ export class ProductsComponent {
     };
 
     // count ratings
-    console.log(this.productData?.reviews?.data);
-    
-    this.productData?.reviews?.data?.forEach((review: any) => {
-      ratingMap[review.rating]++;
+    this.customerReviews.forEach((review: any) => {
+      const roundedRating = Math.min(5, Math.max(1, Math.round(this.getReviewRating(review))));
+      ratingMap[roundedRating]++;
     });
 
     // build summary
@@ -271,8 +325,38 @@ export class ProductsComponent {
         ? Math.round((ratingMap[star] / totalReviews) * 100)
         : 0
     }));
-    console.log(this.ratingSummary);
-    
+  }
+
+  get customerReviews() {
+    const apiReviews = this.productData?.reviews?.data;
+    return Array.isArray(apiReviews) ? apiReviews : [];
+  }
+
+  get totalReviewCount() {
+    return this.productData?.reviews?.total_count || this.productData?.review_count || this.customerReviews.length || 0;
+  }
+
+  get verifiedReviewCount() {
+    return this.customerReviews.filter((review: any) => this.isVerifiedReview(review)).length;
+  }
+
+  get recommendationPercent() {
+    if (!this.customerReviews.length) {
+      return 0;
+    }
+
+    const positiveReviews = this.customerReviews.filter((review: any) => this.getReviewRating(review) >= 4).length;
+    return Math.round((positiveReviews / this.customerReviews.length) * 100);
+  }
+
+  get ratingLabel() {
+    const rating = Number(this.productData?.avg_rating || 0);
+
+    if (rating >= 4.5) return 'Excellent overall';
+    if (rating >= 4) return 'Very well rated';
+    if (rating >= 3.5) return 'Generally liked';
+    if (rating >= 3) return 'Mixed feedback';
+    return 'Needs improvement';
   }
 
 
@@ -300,6 +384,10 @@ export class ProductsComponent {
   isImageChanging = false;  // Flag to trigger the animation
 
   selectImg(image: any, type: any) {
+    if (!image) {
+      return;
+    }
+
     if (this.currentImageIndex != type) {
       this.currentImageIndex = type
       // Clear previous timeout to prevent multiple triggers
@@ -323,42 +411,289 @@ export class ProductsComponent {
         this.isImageChanging = false;
         this.timeoutRef = null; // Clear timeout reference
       }, 400); // 400ms to match the animation duration
+    } else {
+      this.selectedImgId = type;
+      this.mainViewImage = image;
     }
   }
 
-  panels = [
-    {
-      active: true,
-      name: 'Product Description',
-      disabled: false
-    },
-    {
-      active: false,
-      disabled: false,
-      name: 'Key Benfits'
-    },
-    {
-      active: false,
-      disabled: false,
-      name: 'How to Use'
-    },
-    {
-      active: false,
-      disabled: false,
-      name: 'Key Ingredients'
-    },
-    // {
-    //   active: false,
-    //   disabled: true,
-    //   name: 'This is panel header 3'
-    // }
-  ];
-  expandIconPosition: 'start' | 'end' = 'end';
+  buildProductInfoSections() {
+    const description = this.normalizeSectionContent([
+      this.getNestedValue(this.productData, 'product_description'),
+      this.getNestedValue(this.productData, 'description'),
+      this.getNestedValue(this.productData, 'details.description'),
+      this.getNestedValue(this.productData, 'product_details.description'),
+    ]);
+
+    const benefits = this.normalizeSectionContent([
+      this.getNestedValue(this.productData, 'key_benefits'),
+      this.getNestedValue(this.productData, 'benefits'),
+      this.getNestedValue(this.productData, 'product_benefits'),
+      this.getNestedValue(this.productData, 'details.key_benefits'),
+    ]);
+
+    const howToUse = this.normalizeSectionContent([
+      this.getNestedValue(this.productData, 'how_to_use'),
+      this.getNestedValue(this.productData, 'usage_instructions'),
+      this.getNestedValue(this.productData, 'directions'),
+      this.getNestedValue(this.productData, 'details.how_to_use'),
+    ]);
+
+    const ingredients = this.normalizeSectionContent([
+      this.getNestedValue(this.productData, 'key_ingredients'),
+      this.getNestedValue(this.productData, 'ingredients'),
+      this.getNestedValue(this.productData, 'active_ingredients'),
+      this.getNestedValue(this.productData, 'details.ingredients'),
+    ]);
+
+    this.productInfoSections = [
+      {
+        key: 'description',
+        title: 'Product Description',
+        eyebrow: 'Overview',
+        summary: description.summary || 'What this product is made for and where it fits in a routine.',
+        content: description.content,
+        items: description.items
+      },
+      {
+        key: 'benefits',
+        title: 'Key Benefits',
+        eyebrow: 'Results',
+        summary: benefits.summary || 'The main support this product is designed to provide.',
+        content: benefits.content,
+        items: benefits.items
+      },
+      {
+        key: 'how-to-use',
+        title: 'How to Use',
+        eyebrow: 'Application',
+        summary: howToUse.summary || 'Usage guidance for frequency, order, and application.',
+        content: howToUse.content,
+        items: howToUse.items
+      },
+      {
+        key: 'ingredients',
+        title: 'Key Ingredients',
+        eyebrow: 'Formula',
+        summary: ingredients.summary || 'Highlighted actives and supporting formula components.',
+        content: ingredients.content,
+        items: ingredients.items
+      }
+    ];
+
+    if (!this.productInfoSections.some((section) => section.key === this.activeProductInfoKey)) {
+      this.activeProductInfoKey = this.productInfoSections[0]?.key || 'description';
+    }
+  }
+
+  normalizeSectionContent(values: any[]) {
+    const value = values.find((item) => {
+      if (Array.isArray(item)) {
+        return item.length > 0;
+      }
+
+      return item !== null && item !== undefined && `${item}`.trim() !== '';
+    });
+
+    if (Array.isArray(value)) {
+      const items = value
+        .map((item) => this.cleanText(item))
+        .filter(Boolean);
+
+      return {
+        summary: items[0] || '',
+        content: '',
+        items
+      };
+    }
+
+    const cleaned = this.cleanText(value);
+    const items = this.extractList(cleaned);
+
+    return {
+      summary: cleaned,
+      content: items.length > 1 ? '' : cleaned,
+      items: items.length > 1 ? items : []
+    };
+  }
+
+  extractList(value: string) {
+    if (!value) {
+      return [];
+    }
+
+    const lineSplit = value
+      .split(/\r?\n+/)
+      .map((item) => item.replace(/^[-*•\d.\s]+/, '').trim())
+      .filter(Boolean);
+
+    if (lineSplit.length > 1) {
+      return lineSplit;
+    }
+
+    const commaSplit = value
+      .split(/,\s+/)
+      .map((item) => item.trim())
+      .filter((item) => item.length > 2);
+
+    return commaSplit.length > 2 ? commaSplit : [];
+  }
+
+  cleanText(value: any) {
+    if (value === null || value === undefined) {
+      return '';
+    }
+
+    return String(value)
+      .replace(/<br\s*\/?>/gi, '\n')
+      .replace(/<\/p>/gi, '\n')
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/&nbsp;/g, ' ')
+      .replace(/\s+\n/g, '\n')
+      .replace(/\n\s+/g, '\n')
+      .replace(/[ \t]{2,}/g, ' ')
+      .trim();
+  }
+
+  getNestedValue(source: any, path: string) {
+    return path.split('.').reduce((acc, key) => acc?.[key], source);
+  }
+
+  getReviewRating(review: any) {
+    const value = Number(
+      review?.rating ??
+      review?.avg_rating ??
+      this.getNestedValue(review, 'rating.value') ??
+      0
+    );
+
+    return Number.isFinite(value) ? Math.min(5, Math.max(0, value)) : 0;
+  }
+
+  getReviewTitle(review: any) {
+    return this.cleanText(
+      review?.title ??
+      review?.headline ??
+      review?.review_title ??
+      ''
+    );
+  }
+
+  getReviewDescription(review: any) {
+    return this.cleanText(
+      review?.description ??
+      review?.comment ??
+      review?.review ??
+      review?.review_text ??
+      review?.content ??
+      review?.body ??
+      review?.text ??
+      'No written review provided.'
+    );
+  }
+
+  isReviewExpanded(index: number) {
+    return this.expandedReviews.has(index);
+  }
+
+  toggleReviewExpanded(index: number) {
+    if (this.isReviewExpanded(index)) {
+      this.expandedReviews.delete(index);
+      return;
+    }
+
+    this.expandedReviews.add(index);
+  }
+
+  shouldShowReviewToggle(review: any) {
+    return this.getReviewDescription(review).length > this.reviewPreviewCharacterLimit;
+  }
+
+  getReviewAuthor(review: any) {
+    return this.cleanText(
+      review?.reviewer_name ??
+      review?.userName ??
+      review?.user_name ??
+      review?.customer_name ??
+      review?.name ??
+      this.getNestedValue(review, 'user.name') ??
+      'Verified Customer'
+    );
+  }
+
+  isVerifiedReview(review: any) {
+    return Boolean(
+      review?.isVerifiedBuyer ??
+      review?.is_verified_buyer ??
+      review?.is_verified ??
+      review?.verified
+    );
+  }
+
+  getReviewLocation(review: any) {
+    return this.cleanText(
+      review?.from ??
+      review?.location ??
+      review?.city ??
+      review?.reviewer_city ??
+      ''
+    );
+  }
+
+  getReviewDateLabel(review: any) {
+    const rawValue =
+      review?.review_date ??
+      review?.date ??
+      review?.created_at ??
+      review?.createdAt;
+
+    if (!rawValue) {
+      return '';
+    }
+
+    const date = new Date(rawValue);
+    if (Number.isNaN(date.getTime())) {
+      return this.cleanText(rawValue);
+    }
+
+    return date.toLocaleDateString('en-IN', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric'
+    });
+  }
+
+  getReviewImages(review: any) {
+    const sourceImages = review?.images;
+
+    if (!Array.isArray(sourceImages)) {
+      return [];
+    }
+
+    return sourceImages
+      .map((image: any) => {
+        if (typeof image === 'string') {
+          return image;
+        }
+
+        return image?.image ?? image?.url ?? image?.src ?? '';
+      })
+      .filter((image: string) => Boolean(image));
+  }
+
+  get activeProductInfoSection() {
+    return this.productInfoSections.find((section) => section.key === this.activeProductInfoKey) || this.productInfoSections[0];
+  }
+
+  setActiveProductInfo(key: string) {
+    this.activeProductInfoKey = this.activeProductInfoKey === key ? '' : key;
+  }
+
   isScrolled = false;
   @HostListener('window:scroll', [])
   onWindowScroll() {
     const scrollPosition = window.scrollY;  // Get the vertical scroll position
-    if (scrollPosition > 360) {  // Show buttons after 200px of scroll
+    if (scrollPosition > 360) {
       this.isScrolled = true;
     } else {
       this.isScrolled = false;
@@ -376,6 +711,14 @@ export class ProductsComponent {
     this.visible = false;
   }
 
+  slugify(value: string): string {
+    const normalizedValue = typeof value === 'string' ? value : String(value ?? '');
+
+    return normalizedValue
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+  }
 
 }
-

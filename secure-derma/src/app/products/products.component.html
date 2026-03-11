@@ -1,8 +1,17 @@
 <!--  -->
 <div class="secure-home-container">
+    <nav class="product-breadcrumb" aria-label="Breadcrumb">
+        <a routerLink="/" class="product-breadcrumb-link">Home</a>
+        @if (breadcrumbCollectionLabel) {
+        <span class="product-breadcrumb-separator">/</span>
+        <a [routerLink]="breadcrumbCollectionLink" class="product-breadcrumb-link">{{ breadcrumbCollectionLabel }}</a>
+        }
+        <span class="product-breadcrumb-separator">/</span>
+        <span class="product-breadcrumb-current">{{ productData?.product_name || 'Product Details' }}</span>
+    </nav>
 
     <div class="pro-detail-view mt-5">
-        <div>
+        <div style="width: 100%;overflow: auto;">
             <div class="product-img-container">
                 <div>
                     <app-horizontal-scroll [data]="sideImages" scrollDirection="vertical">
@@ -19,39 +28,10 @@
                 </div>
                 <div class="">
                     <div class="view-img-main border">
-                        @if(productData?.thumbnail_image){
-                        <img [src]="productData?.thumbnail_image" alt="" class="slide-img"
-                            [ngClass]="{'slide-animation': isImageChanging}" />
+                        @if(mainViewImage){
+                        <img [src]="mainViewImage" [alt]="productData?.product_name || 'Product image'"
+                            class="slide-img" [ngClass]="{'slide-animation': isImageChanging}" />
                         }
-                    </div>
-                    <div class="secura-prof mt-1">
-                        <div
-                            class="secura-prof-border border rounded-sm d-flex justify-content-center align-items-center py-2">
-                            <div>
-                                <img class="secura-prof-img d-flex justify-content-center"
-                                    src="https://www.clinikally.com/cdn/shop/files/shield.png?v=1711537188&width=300"
-                                    alt="">
-                                <h5>100% Original</h5>
-                            </div>
-                        </div>
-                        <div
-                            class="secura-prof-border border rounded-sm d-flex justify-content-center align-items-center py-2">
-                            <div>
-                                <img class="secura-prof-img d-flex justify-content-center"
-                                    src="https://www.clinikally.com/cdn/shop/files/Lowest_price_Icon_fddb029e-c955-49c5-9edc-4dd5cffdf0c0.png?v=1712757993&width=300"
-                                    alt="">
-                                <h5>Lowest Price</h5>
-                            </div>
-                        </div>
-                        <div
-                            class="secura-prof-border border rounded-sm d-flex justify-content-center align-items-center py-2">
-                            <div>
-                                <img class="secura-prof-img d-flex justify-content-center"
-                                    src="https://www.clinikally.com/cdn/shop/files/FreeShipping_icon_51f0da0c-8848-48c3-acf6-2ae61cd93177.png?v=1712757905&width=300"
-                                    alt="">
-                                <h5>Free Shipping</h5>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -59,73 +39,127 @@
 
 
         <div>
-            <p class="company_name ">{{productData?.brand?.brand_name}}</p>
-            <p class=" product_name mb-2">{{productData?.product_name}}</p>
+            <div class="product-summary-head">
+                <p class="company_name mb-2">{{productData?.brand?.brand_name}}</p>
+                <p class="product_name mb-0">{{productData?.product_name}}</p>
+            </div>
             <div class="star-rating-main mb-1">
                 @if(productData?.avg_rating){
                 <nz-rate [ngModel]="productData?.avg_rating" nzAllowHalf nzDisabled class="pro-small-rate"></nz-rate>
-                <div>
-                    <span class="ms-2 mb-0 rating-value">{{productData?.avg_rating}}/<span
-                            class="muted-clr">5</span></span>
-                </div>
-                <div class="overall-review ms-2">({{productData?.reviews.total_count}})</div>
-                <div class="ms-2 ">
-                    <span class="rating-dot me-1"></span>
-                    <span class="rating-text ">Rate this product</span>
-                </div>
+                <span class="rating-value">{{productData?.avg_rating}}/<span class="muted-clr">5</span></span>
+                <span class="overall-review">{{productData?.reviews.total_count}} reviews</span>
+                <span class="rating-separator"></span>
+                <button type="button" class="rating-action-btn">
+                    <span class="rating-dot"></span>
+                    <span class="rating-text">Rate this product</span>
+                </button>
                 }
-
-
             </div>
             <!-- <nz-divider></nz-divider> -->
             @if(productDetailsMain){
             <div class="main-price-details mb-2">
-                <div class="mt-2 price-detail">
-
-                    <div>
-                        <span>M.R.P</span>
+                <div class="price-detail">
+                    <div class="price-main-row">
+                        <div class="pro-price">
+                            <lucide-angular [img]="icons.product.rupee" class="d-flex sell-price-icon"></lucide-angular>
+                            {{currentPriceData.selling_price}}
+                        </div>
+                        <div class="offer_percentage">{{currentPriceData.discount_price}}% off</div>
                     </div>
-                    <div class="org-price">
-                        <lucide-angular [img]="icons.product.rupee" class="d-flex og-price-icon"></lucide-angular>
-                        {{currentPriceData.original_price}}
+                    <div class="price-support-row">
+                        <div class="price-meta">
+                            <span class="mrp-label">M.R.P</span>
+                        </div>
+                        <div class="org-price">
+                            <lucide-angular [img]="icons.product.rupee" class="d-flex og-price-icon"></lucide-angular>
+                            {{currentPriceData.original_price}}
+                        </div>
                     </div>
-                    <div class="pro-price text-success">
-                        <lucide-angular [img]="icons.product.rupee" class="d-flex sell-price-icon"></lucide-angular>
-                        {{currentPriceData.selling_price}}
-                    </div>
-                    <div class="offer_percentage">{{currentPriceData.discount_price}}% off</div>
                 </div>
-                <div class="muted-clr inc-text mt-1">(Inclusive Of All Taxes)</div>
+                <div class="inc-text mt-2">
+                    <span class="price-tax-dot"></span>
+                    Inclusive of all taxes
+                </div>
             </div>
 
 
 
 
-            <div class="varient_size_main px-2 py-1 mt-4">
-                <p class="muted-clr fw-bold mb-2 c_variants_text">CHOOSE VARIANTS</p>
+            <div class="varient_size_main mt-4">
+                <p class="muted-clr fw-bold mb-0 c_variants_text">CHOOSE VARIANTS</p>
 
-                <p class="select_size fw-bold mt-3">Select Size</p>
-                <div class="pro-size mb-3">
-                    @for(data of productDetailsMain;track $index ;let i = $index){
-                    <div class="  grams px-1 clickable wight-type"
-                        [ngClass]="{'selected-gram': selectedGramId == data.id}" (click)="selectGram(data.id)">
-                        @if(data.combo != '1'){
-                        {{data.combo}}
-                        <lucide-angular [img]="icons.product.close" class="d-flex combo-icon"></lucide-angular>
+                <div class="variant-header">
+                    <div>
+                        <p class="select_size fw-bold mb-1">Select Size</p>
+                        @if(currentPriceData?.product_weight){
+                        <p class="selected-variant-caption mb-0">
+                            Selected variant
+                            <span>{{currentPriceData.product_weight}} {{currentPriceData.weight_type}}</span>
+                        </p>
                         }
-                        {{data.product_weight}} {{data.weight_type}}
+                    </div>
+                    @if(currentPriceData?.selling_price){
+                    <div class="variant-header-price">
+                        <span class="variant-header-price-label">Selected price</span>
+                        <span class="variant-header-price-value">₹ {{currentPriceData.selling_price}}</span>
                     </div>
                     }
-                    <!-- <div class="  grams px-1 clickable wight-type" [ngClass]="{'selected-gram': selectedGram == 100}"
-                        (click)="selectGram(100)">100 gm
-                        <span class="save-more">Save more</span>
-                    </div> -->
+                </div>
 
+                <div class="pro-size">
+                    @for(data of productDetailsMain;track $index ;let i = $index){
+                    <div class="grams clickable wight-type" [ngClass]="{'selected-gram': selectedGramId == data.id}"
+                        (click)="selectGram(data.id)" (keydown.enter)="selectGram(data.id)"
+                        (keydown.space)="selectGram(data.id); $event.preventDefault()"
+                        [attr.aria-pressed]="selectedGramId == data.id" role="button" tabindex="0"
+                        [style.--variant-index]="i">
+                        <div class="variant-selection-indicator"
+                            [ngClass]="{'variant-selection-indicator-active': selectedGramId == data.id}">
+                            @if(selectedGramId == data.id){
+                            <span class="variant-selection-dot"></span>
+                            }
+                        </div>
+                        <div class="variant-card-top">
+                            <div class="variant-size-line">
+                                <span class="variant-weight">{{data.product_weight}} {{data.weight_type}}</span>
+                                @if(data.combo != '1'){
+                                <span class="variant-pack-badge">
+                                    {{data.combo}} Pack
+                                </span>
+                                }
+                            </div>
+                            @if(selectedGramId == data.id){
+                            <span class="variant-selected-label">Selected</span>
+                            }
+                        </div>
+
+                        <div class="variant-price-row">
+                            <span class="variant-sell-price">₹ {{data.selling_price}}</span>
+                            @if(data.original_price && data.original_price != data.selling_price){
+                            <span class="variant-original-price">₹ {{data.original_price}}</span>
+                            }
+                        </div>
+
+                        @if(data.discount_price){
+                        <div class="variant-save-row">
+                            <span class="variant-save-chip">Save {{data.discount_price}}%</span>
+                            @if(selectedGramId == data.id){
+                            <span class="variant-current-chip">Currently selected</span>
+                            }
+                        </div>
+                        }
+                        @else if (selectedGramId == data.id) {
+                        <div class="variant-save-row">
+                            <span class="variant-current-chip">Currently selected</span>
+                        </div>
+                        }
+                    </div>
+                    }
                 </div>
             </div>
             }
 
-            <div class="mt-5">
+            <div class="purchase-panel mt-5">
                 <div class="both-btn-container">
                     <div class="btn-container">
                         <button class=" secure-btn  w-100 add-to-cart-btn ">Add
@@ -135,25 +169,61 @@
                         <button class="secure-btn  w-100 buy-now-btn ">Buy Now</button>
                     </div>
                 </div>
+                <div class="product-assurance">
+                    <div class="product-assurance-card">
+                        <div class="product-assurance-icon">
+                            <lucide-angular [img]="icons.product.badge"></lucide-angular>
+                        </div>
+                        <div class="product-assurance-copy">
+                            <h5>Authentic Stock</h5>
+                            <p>Sourced through verified supply channels</p>
+                        </div>
+                    </div>
+                    <div class="product-assurance-card">
+                        <div class="product-assurance-icon">
+                            <lucide-angular [img]="icons.product.rupee"></lucide-angular>
+                        </div>
+                        <div class="product-assurance-copy">
+                            <h5>Clear Pricing</h5>
+                            <p>No hidden charges beyond the listed total</p>
+                        </div>
+                    </div>
+                    <div class="product-assurance-card">
+                        <div class="product-assurance-icon">
+                            <lucide-angular [img]="icons.product.truck"></lucide-angular>
+                        </div>
+                        <div class="product-assurance-copy">
+                            <h5>Shipping Updates</h5>
+                            <p>Tracked dispatch on eligible orders</p>
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            <div class="mt-4 border p-3 rounded-xl">
+            <div class="mt-4 location-container">
                 <div class="location-header">
-                    <div class="flex-gap">
-                        <h4 class=" ">Delivery Options</h4>
-                        <p class=" icon-flex location-box clickable" (click)="open()">
-                            <lucide-angular [img]="icons.product.map" class="d-flex com-icon-size"></lucide-angular>
-                            638301
-                        </p>
+                    <div class="location-title-block">
+                        <h4 class="mb-0">Delivery Options</h4>
+                        <p class="location-subtitle mb-0">Check shipping support for your pincode</p>
                     </div>
-                    <p class=" icon-flex clickable" (click)="open()">
+                    <p class=" icon-flex clickable location-change-action" (click)="open()">
                         Change
                         <lucide-angular [img]="icons.product.next" class="d-flex com-icon-size"></lucide-angular>
                     </p>
                 </div>
 
-                <div>
-                    <p class=" delivery-date mt-3 mb-0">
+                <div class="location-box clickable" (click)="open()">
+                    <div class="location-box-icon">
+                        <lucide-angular [img]="icons.product.map" class="d-flex com-icon-size"></lucide-angular>
+                    </div>
+                    <div class="location-box-copy">
+                        <span class="location-box-label">Deliver to</span>
+                        <span class="location-box-value">638301</span>
+                    </div>
+                </div>
+
+                <div class="location-status">
+                    <p class=" delivery-date mb-0">
                         <lucide-angular [img]="icons.product.truck" class="d-flex com-icon-size"></lucide-angular>
                         <span class="free-del">Free Delivery</span> between Sun, 16 Nov - Sun, 16 Nov
                     </p>
@@ -161,26 +231,61 @@
 
             </div>
 
-            <div class="mt-4">
-                <nz-collapse [nzExpandIconPosition]="expandIconPosition">
-                    @for (panel of panels; track panel) {
-                    <nz-collapse-panel [nzHeader]="nzHeader" [nzActive]="panel.active" [nzDisabled]="panel.disabled">
-                        <p style="margin:0;">
-                            A dog is a type of domesticated animal. Known for its loyalty and faithfulness, it can be
-                            found as a welcome
-                            guest in many households across the world.
-                        </p>
-                        <ng-template #nzHeader>
-                            <div class="custom-header">
-                                <span class="fw-bold">{{ panel.name }}</span>
-                            </div>
-                        </ng-template>
-                    </nz-collapse-panel>
-                    }
-                </nz-collapse>
-            </div>
+            @if (productInfoSections.length) {
+            <div class="product-info-shell mt-4">
+                <div class="product-info-header">
+                    <span class="product-info-header-eyebrow">Product Guide</span>
+                    <h3 class="product-info-header-title mb-0">Everything you need before you buy</h3>
+                </div>
 
-            <div class="customer-plus mt-4">
+                <div class="product-info-nav" aria-label="Product information">
+                    @for (section of productInfoSections; track section.key; let i = $index) {
+                    <section class="product-info-tab"
+                        [ngClass]="{'product-info-tab-active': activeProductInfoKey === section.key}"
+                        [attr.id]="'product-info-section-' + section.key">
+                        <button type="button" class="product-info-trigger" (click)="setActiveProductInfo(section.key)"
+                            [attr.aria-expanded]="activeProductInfoKey === section.key"
+                            [attr.aria-controls]="'product-info-panel-' + section.key">
+                            <span class="product-info-tab-badge">0{{ i + 1 }}</span>
+                            <span class="product-info-tab-copy">
+                                <span class="product-info-tab-title">{{ section.title }}</span>
+                            </span>
+                            <span class="product-info-tab-action">{{ activeProductInfoKey === section.key ? 'Hide' :
+                                'View' }}</span>
+                        </button>
+
+                        <div class="product-info-panel-wrap"
+                            [ngClass]="{'product-info-panel-wrap-open': activeProductInfoKey === section.key}"
+                            [attr.aria-hidden]="activeProductInfoKey !== section.key">
+                            <div class="product-info-panel" [attr.id]="'product-info-panel-' + section.key">
+                                <div class="product-info-panel-head">
+                                    <span class="product-info-eyebrow">{{ section.eyebrow }}</span>
+                                </div>
+
+                                @if (section.items.length) {
+                                <div class="product-info-list">
+                                    @for (item of section.items; track item) {
+                                    <div class="product-info-list-item">
+                                        <span class="product-info-list-dot"></span>
+                                        <p class="mb-0">{{ item }}</p>
+                                    </div>
+                                    }
+                                </div>
+                                }
+                                @else {
+                                <p class="product-info-body mb-0">
+                                    {{ section.content || section.summary }}
+                                </p>
+                                }
+                            </div>
+                        </div>
+                    </section>
+                    }
+                </div>
+            </div>
+            }
+
+            <!-- <div class="customer-plus mt-4">
                 <div class="auth-pro rounded-sm  d-flex justify-content-center align-items-center gap-7" nz-popover
                     nzType="primary" [nzPopoverContent]="authenticProductsTpl" nzPopoverPlacement="bottom"
                     nzPopoverTrigger="hover">
@@ -203,7 +308,6 @@
                     Easy Returns
                 </div>
 
-                <!-- Popover Template -->
                 <ng-template #returnPolicyTpl>
                     <div class="popover-content-box">
                         Returns are accepted for unopened products in case of defects,
@@ -213,125 +317,135 @@
                     </div>
                 </ng-template>
 
-            </div>
+            </div> -->
 
             <!-- rating -->
-            <div class="customer-rating border rounded-lg px-3 py-1 mt-4">
-                <h3 class=" ">Rate this product</h3>
-                <div><nz-rate [ngModel]="0" nzAllowHalf class="pro-rate"></nz-rate></div>
+            <div class="customer-rating mt-4">
+                <div class="customer-rating-copy">
+                    <p class="customer-rating-eyebrow mb-0">Your rating</p>
+                    <h3 class="customer-rating-title mb-0">Rate this product</h3>
+                    <p class="customer-rating-subtitle mb-0">Share a quick star rating based on your experience.</p>
+                </div>
+                <div class="customer-rating-input">
+                    <nz-rate [ngModel]="0" nzAllowHalf class="pro-rate"></nz-rate>
+                </div>
             </div>
         </div>
     </div>
 
-@if (productData?.review_count) {
-<div class="review-main-conatiner">
-    <div class="review-left">
-
-        <div>
-            <h4>Ratings</h4>
-            <p class="muted-clr">From {{ productData?.review_count }} customers</p>
-        </div>
-
-        <div class="review-conatiner">
-
-            <!-- Overall Rating -->
+    <section *ngIf="totalReviewCount" class="ratings-section mt-5">
+        <div class="ratings-section-head">
             <div>
-                <div class="rating-container">
-                    <div class="over-all-ratingValue">
-                        {{ productData?.avg_rating }}
-                    </div>
-                    <div class="slash muted-clr">/</div>
-                    <div class="over-all-rating muted-clr">5</div>
-                </div>
-
-                <nz-rate [ngModel]="productData?.avg_rating" nzDisabled nzAllowHalf>
-                </nz-rate>
-
-                <p class="text-primary fw-semibold text-center">Good</p>
+                <span class="ratings-section-eyebrow">Ratings</span>
+                <h3 class="ratings-section-title mb-0">What customers are saying</h3>
             </div>
-
-            <div class="ver-line"></div>
-
-            <div class="progress-main-container">
-
-                @for (item of ratingSummary; track item.star) {
-                <div class="rating-star-list">
-
-                    <div class="fw-bold">{{ item.star }}</div>
-
-                    <nz-rate [ngModel]="1" [nzCount]="1" nzDisabled class="rating-star-icon">
-                    </nz-rate>
-
-                    <nz-progress [nzPercent]="item.percent" nzStatus="active" class="progress-review"
-                        [nzShowInfo]="false">
-                    </nz-progress>
-
-                    <div>{{ item.count }}</div>
-                </div>
-                }
-
-            </div>
+            <p class="ratings-section-meta mb-0">
+                {{ totalReviewCount }} ratings{{ customerReviews.length ? ' · ' + customerReviews.length + ' reviews' :
+                '' }}
+            </p>
         </div>
-    </div>
 
-    <div class="review-right"></div>
-</div>
-
-    <!-- review list -->
-    <div class="pb-5">
-        <div class="review-border mt-5 " style="margin-bottom: 80px;">
-            <div class="main-filter-container p-3 ">
-                <div class="filter-left-container">
-                    <p class=" fw-bold">Filter By</p>
-
-                    <p class="review-with-img border rounded-lg p-2  ">Reviews with image</p>
+        <div class="ratings-grid">
+            <section class="ratings-overview-card">
+                <div class="ratings-score-row">
+                    <div class="ratings-score">{{ productData?.avg_rating || 0 }}</div>
+                    <div class="ratings-score-scale">/ 5</div>
                 </div>
+                <nz-rate [ngModel]="productData?.avg_rating" nzDisabled nzAllowHalf
+                    class="ratings-overview-stars"></nz-rate>
+                <p class="ratings-score-label mb-0">{{ ratingLabel }}</p>
+
+                <!-- <div class="ratings-stat-chips">
+                <span class="ratings-stat-chip">{{ recommendationPercent }}% recommend</span>
+                <span class="ratings-stat-chip">{{ verifiedReviewCount }} verified buyers</span>
+            </div> -->
+            </section>
+
+            <section class="ratings-breakdown-card">
+                <div class="ratings-breakdown-head">
+                    <h4 class="mb-0">Rating breakdown</h4>
+                    <p class="mb-0">Live review distribution from the API</p>
+                </div>
+
+                <div class="ratings-breakdown-list">
+                    @for (item of ratingSummary; track item.star) {
+                    <div class="ratings-breakdown-row">
+                        <div class="ratings-breakdown-label">
+                            <span>{{ item.star }}</span>
+                            <nz-rate [ngModel]="1" [nzCount]="1" nzDisabled class="rating-star-icon"></nz-rate>
+                        </div>
+                        <div class="ratings-progress-track">
+                            <div class="ratings-progress-fill" [style.width.%]="item.percent"></div>
+                        </div>
+                        <div class="ratings-breakdown-count">{{ item.count }}</div>
+                    </div>
+                    }
+                </div>
+            </section>
+        </div>
+
+        <div *ngIf="customerReviews.length" class="reviews-section pb-5">
+            <div class="reviews-section-head">
                 <div>
-                    <p class="text-danger fw-semibold ">Reset Filters</p>
+                    <h4 class="mb-0">Customer reviews</h4>
+                    <p class="reviews-section-subtitle mb-0">Latest feedback synced from the product API.</p>
                 </div>
             </div>
 
-            <div class=" pt-3 px-3  grid-review">
+            <div class="grid-review mt-4">
+                @for (item of customerReviews; track $index) {
+                <article class="review-card">
+                    <div class="review-card-head">
+                        <div class="review-card-rating">
+                            <nz-rate [ngModel]="getReviewRating(item)" nzAllowHalf nzDisabled></nz-rate>
+                            <span class="review-card-rating-value">{{ getReviewRating(item) }}/5</span>
+                        </div>
+                    </div>
 
-                @for (item of reviewsData; track $index) {
-                <div class="p-3 review-view rounded-xl">
+                    <p *ngIf="getReviewTitle(item)" class="review-card-title mb-0">{{ getReviewTitle(item) }}</p>
 
-                    <nz-rate [ngModel]="item.rating" nzAllowHalf></nz-rate>
+                    <div class="review-card-copy">
+                        <p class="review-card-body mb-0" [class.review-card-body-expanded]="isReviewExpanded($index)">
+                            {{ getReviewDescription(item) }}
+                        </p>
 
-                    <p class="fw-bold mt-2 mb-0">"{{ item.title }}"</p>
+                        <button *ngIf="shouldShowReviewToggle(item)" type="button" class="review-card-toggle"
+                            (click)="toggleReviewExpanded($index)">
+                            {{ isReviewExpanded($index) ? 'Read less' : 'Read more' }}
+                        </button>
+                    </div>
 
-                    <p class="mt-2">{{ item.description }}</p>
+                    <div *ngIf="getReviewImages(item).length" class="review-card-images">
+                        @for (image of getReviewImages(item); track image) {
+                        <a class="review-card-image-link" [href]="image" target="_blank" rel="noopener noreferrer">
+                            <img class="review-card-image" [src]="image"
+                                [alt]="getReviewAuthor(item) + ' review image'" />
+                        </a>
+                        }
+                    </div>
 
-                    <div class="review-user-main mt-2">
-                        <div class="d-flex align-items-center gap-4">
-                            <p class="mb-0">{{ item.userName }}</p>
-
-                            @if (item.isVerifiedBuyer) {
-                            <lucide-angular [img]="icons.product.badge" class="d-flex badgeIcon" [size]="18">
-                            </lucide-angular>
-                            }
+                    <div class="review-card-footer">
+                        <div class="review-card-author-block">
+                            <div class="review-card-author-row">
+                                <p class="review-card-author mb-0">{{ getReviewAuthor(item) }}</p>
+                                <span *ngIf="!isVerifiedReview(item)" class="review-card-author-verified">
+                                    <lucide-angular [img]="icons.product.badge" class="review-card-author-verified-icon"
+                                        [size]="15"></lucide-angular>
+                                    Verified buyer
+                                </span>
+                            </div>
+                            <p *ngIf="getReviewLocation(item)" class="review-card-location mb-0">From {{
+                                getReviewLocation(item) }}</p>
                         </div>
 
-                        <p class="review-user-ver-line mb-0"></p>
-                        <p class="ver-buyer mb-0">
-                            @if (item.isVerifiedBuyer) { Verified buyer }
-                            @else { Not verified }
+                        <p *ngIf="getReviewDateLabel(item)" class="review-card-date mb-0">{{ getReviewDateLabel(item) }}
                         </p>
                     </div>
-
-                    <div class="review-from mt-3">
-                        <p class="muted-clr">From {{ item.from }}</p>
-                        <p class="muted-clr">{{ item.date }}</p>
-                    </div>
-
-                </div>
+                </article>
                 }
-
             </div>
-
         </div>
-    </div>
-}
+    </section>
 
 </div>
 
@@ -386,7 +500,7 @@
             <p class="muted-clr mb-1">Enter Pincode</p>
             <div class="d-flex gap-5">
                 <input nz-input placeholder="eg:560122" class="flex-grow-1" />
-                <button class="tej-btn btn-xl btn-primary w-100 rounded-sm " style="width: 120px;">Check</button>
+                <button class="tej-btn btn-xl btn-primary w-100 rounded-sm " style="width: 12rem;">Check</button>
             </div>
 
             <div class="mt-2">

@@ -1,16 +1,16 @@
 @import '../../node_modules/ng-zorro-antd/ng-zorro-antd';
 @import "./themes/default";
 
-@primary-color:rgb(84, 51, 176);
-@secondary-color: #f5f5f5;
+@primary-color: #1a5944;
+@secondary-color: #eaf2ef;
 
 :root {
   --ant-primary-color: @primary-color; // Override primary color
   --ant-secondary-color: @secondary-color; // Override secondary color
   --tej-grey-color: @grey-color;
-  --tej-bg-primary: #F8F8F8;
-  --tej-bg-secondary: #FFFFFF;
-  --tej-body-bg: #FFFFFF;
+  --tej-bg-primary: #f4f8f6;
+  --tej-bg-secondary: #ffffff;
+  --tej-body-bg: #ffffff;
   --ant-primary-color-hover: darken(@primary-color, 10%); // Optional: Darker hover state
   --ant-primary-color-active: darken(@primary-color, 15%); // Optional: Active state
   --ant-primary-color-outline: fade(@primary-color, 20%); // Optional: Focus outline
@@ -20,12 +20,101 @@
   --change-password-bg: #D2E4FF;
   --tej-border-color: #0B0A0A14;
   --success-color: #19B84F;
-  --success-bg-color: #E8F8ED; 
+  --success-bg-color: #E8F8ED;
   --danger-color: #FF343A;
   --danger-bg-color: rgba(255, 52, 58, 0.2);
   --warning-color: #FF832B;
   --warning-bg-color: rgba(255, 131, 43, 0.1);
   --brand-color-background: fade(@primary-color, 10%);
+
+  // Theme tokens
+  --background: #f7faf8;
+  --surface: #edf3f1;
+  --text-primary: #162431;
+  --text-secondary: #4e5d68;
+  --card-bg: #ffffff;
+  --header-bg: #ffffff;
+  --dropdown-bg: #ffffff;
+  --input-bg: #f2f5f4;
+  --hover-bg: #eaf2ef;
+  --divider-color: #dfe8e4;
+  --border-color: #dbe7e2;
+
+  --section-bg: #f9fcfb;
+  --testimonial-card-bg: #f6f9fd;
+  --feature-box-bg: #f8fbfa;
+  --portal-bg: #f7faf8;
+  --text-heading: #0f1f2f;
+  --text-body: #273a49;
+  --text-subtle: #64748b;
+  --text-muted: #8c8c8c;
+  --brand-primary: #1a5944;
+  --brand-primary-strong: #134334;
+  --brand-secondary: #26735a;
+  --newsletter-bg-start: #f4f8f7;
+  --newsletter-bg-end: #e8f0ec;
+  --footer-bg: #0f2630;
+  --footer-text: #d7e4ec;
+  --footer-muted: #95aebe;
+  --footer-accent: #7fd1b7;
+  --product-img-bg: #f5f5f5;
+  --delivery-box-bg: #e8e7e7;
+  --selected-bg: #000000;
+  --selected-text: #ffffff;
+  --badge-new-bg: #ffffff;
+  --badge-new-border: #d9d9d9;
+  --tag-bg: #fafafa;
+  --filter-border: #f0f0f0;
+  --variant-panel-bg: linear-gradient(145deg, #ffffff 0%, #f4f8f6 100%);
+  --variant-panel-border: #d7e4de;
+  --variant-panel-shadow: rgba(15, 23, 42, 0.05);
+  --variant-floating-label-bg: #ffffff;
+  --variant-header-card-bg: linear-gradient(135deg, #eef5f2 0%, #ffffff 100%);
+  --variant-header-card-border: #d8e5df;
+  --variant-header-label: #62707a;
+  --variant-caption: #5f6f78;
+  --variant-caption-pill-bg: #ecf4f0;
+  --variant-card-bg: linear-gradient(180deg, #ffffff 0%, #f7faf9 100%);
+  --variant-card-border: #d4dfda;
+  --variant-card-hover-border: #8fbba9;
+  --variant-card-hover-shadow: rgba(15, 23, 42, 0.08);
+  --variant-card-selected-bg: linear-gradient(180deg, #eff6f2 0%, #e4f0ea 100%);
+  --variant-card-selected-border: #1a5944;
+  --variant-card-selected-shadow: rgba(15, 23, 42, 0.1);
+  --variant-card-selected-outline: rgba(26, 89, 68, 0.22);
+  --variant-divider: #e2ebe7;
+  --variant-indicator-bg: #ffffff;
+  --variant-indicator-border: #c8d4cf;
+  --variant-indicator-active-bg: #e7f1ec;
+  --variant-indicator-active-border: #1a5944;
+  --variant-badge-bg: #edf5f1;
+  --variant-badge-text: #1a5944;
+  --variant-selected-badge-bg: #1a5944;
+  --variant-selected-badge-text: #ffffff;
+  --variant-muted-price: #86939b;
+  --variant-save-bg: #e7f6ec;
+  --variant-save-text: #14703f;
+  --variant-save-border: #b8e0c7;
+  --variant-current-bg: #edf5f1;
+  --variant-current-text: #1a5944;
+  --variant-current-border: #c9ddd4;
+  --product-summary-bg: linear-gradient(180deg, #ffffff 0%, #f7faf8 100%);
+  --product-summary-border: #d9e5df;
+  --product-summary-shadow: rgba(15, 23, 42, 0.05);
+  --product-brand-bg: #edf5f1;
+  --product-brand-text: #1a5944;
+  --product-title-text: #11212c;
+  --price-panel-bg: linear-gradient(180deg, #ffffff 0%, #f4f8f6 100%);
+  --price-panel-border: #d7e4de;
+  --price-label-bg: #edf5f1;
+  --price-label-text: #1a5944;
+  --price-meta-text: #5f6f78;
+  --price-original-text: #7e8d95;
+  --price-current-text: #1a5944;
+  --price-strike: #8fa19a;
+  --price-discount-bg: #1a5944;
+  --price-discount-text: #ffffff;
+  --price-tax-text: #667781;
 }
 
 

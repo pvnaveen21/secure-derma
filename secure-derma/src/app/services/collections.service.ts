@@ -26,7 +26,7 @@ export class CollectionsService extends InterfaceService {
     );
   }
 
-  getProductsList(type: any, filters?: any): Observable<any> {
+  getProductsList(type: any, filters?: any, pagination?: { limit?: number; offset?: number }): Observable<any> {
     let params = new HttpParams();
 
     // Add the main filter type
@@ -39,6 +39,13 @@ export class CollectionsService extends InterfaceService {
           params = params.append(key, filters[key]);
         }
       });
+    }
+
+    if (pagination?.limit) {
+      params = params.set('limit', String(pagination.limit));
+    }
+    if (pagination?.offset !== undefined) {
+      params = params.set('offset', String(pagination.offset));
     }
 
     // The final URL will be like: /filter-products/?filter=hair&hair_concern=dandruff,hair-fall

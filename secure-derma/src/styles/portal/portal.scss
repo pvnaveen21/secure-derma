@@ -6,9 +6,9 @@
 @use "imports_container" as *;
 
 .icon-circle-container {
-  --size: 48px;
-  border: 1px solid var(--border-color);
-  backdrop-filter: blur(23.2375px);
+  --size: 4.8rem;
+  border: 0.1rem solid var(--border-color);
+  backdrop-filter: blur(2.3237rem);
   cursor: pointer;
   border-radius: 50rem;
 
