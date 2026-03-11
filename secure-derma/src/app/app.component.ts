@@ -47,7 +47,6 @@ export class AppComponent {
   //   if (width >= 960) {
   //     let rootFontSize = width / 90;
   //     rootFontSize = Math.min(Math.max(rootFontSize, minFontSize), maxFontSize);
-  //     document.documentElement.style.fontSize = `${rootFontSize}px`;
   //   }
   // }
 }

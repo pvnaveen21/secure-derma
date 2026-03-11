@@ -8,11 +8,11 @@
   background-position: center;
 
   .login-content {
-    width: 622px;
-    height: 620px;
+    width: 62.2rem;
+    height: 62rem;
 
     .content {
-      padding: 20px;
+      padding: 2rem;
     }
 
 
@@ -29,33 +29,33 @@
 
     .top-star-icon {
       position: absolute;
-      top: 70px;
+      top: 7rem;
       left: 0;
     }
 
     .login-form-container {
-      width: 400px;
-      height: 540px;
+      width: 40rem;
+      height: 54rem;
       background-color: white;
     }
 
     .bottom-star-icon {
       position: absolute;
-      bottom: 70px;
+      bottom: 7rem;
       right: 0;
     }
   }
 
   .password-input {
     padding: 0.21875rem 0 !important;
-    font-size: 16px !important;
+    font-size: 1.6rem !important;
   }
 
   .tej-btn {
     background-position: center;
     background-size: cover;
     background-repeat: no-repeat;
-    height: 45px;
+    height: 4.5rem;
     border: none;
   }
 }

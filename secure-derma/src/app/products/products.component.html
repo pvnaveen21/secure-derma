@@ -1,8 +1,17 @@
 <!--  -->
 <div class="secure-home-container">
+    <nav class="product-breadcrumb" aria-label="Breadcrumb">
+        <a routerLink="/" class="product-breadcrumb-link">Home</a>
+        @if (breadcrumbCollectionLabel) {
+        <span class="product-breadcrumb-separator">/</span>
+        <a [routerLink]="breadcrumbCollectionLink" class="product-breadcrumb-link">{{ breadcrumbCollectionLabel }}</a>
+        }
+        <span class="product-breadcrumb-separator">/</span>
+        <span class="product-breadcrumb-current">{{ productData?.product_name || 'Product Details' }}</span>
+    </nav>
 
     <div class="pro-detail-view mt-5">
-        <div>
+        <div style="width: 100%;overflow: auto;">
             <div class="product-img-container">
                 <div>
                     <app-horizontal-scroll [data]="sideImages" scrollDirection="vertical">
@@ -20,8 +29,8 @@
                 <div class="">
                     <div class="view-img-main border">
                         @if(mainViewImage){
-                        <img [src]="mainViewImage" [alt]="productData?.product_name || 'Product image'" class="slide-img"
-                            [ngClass]="{'slide-animation': isImageChanging}" />
+                        <img [src]="mainViewImage" [alt]="productData?.product_name || 'Product image'"
+                            class="slide-img" [ngClass]="{'slide-animation': isImageChanging}" />
                         }
                     </div>
                 </div>
@@ -52,8 +61,8 @@
                 <div class="price-detail">
                     <div class="price-main-row">
                         <div class="pro-price">
-                        <lucide-angular [img]="icons.product.rupee" class="d-flex sell-price-icon"></lucide-angular>
-                        {{currentPriceData.selling_price}}
+                            <lucide-angular [img]="icons.product.rupee" class="d-flex sell-price-icon"></lucide-angular>
+                            {{currentPriceData.selling_price}}
                         </div>
                         <div class="offer_percentage">{{currentPriceData.discount_price}}% off</div>
                     </div>
@@ -99,13 +108,13 @@
 
                 <div class="pro-size">
                     @for(data of productDetailsMain;track $index ;let i = $index){
-                    <div class="grams clickable wight-type"
-                        [ngClass]="{'selected-gram': selectedGramId == data.id}" (click)="selectGram(data.id)"
-                        (keydown.enter)="selectGram(data.id)"
+                    <div class="grams clickable wight-type" [ngClass]="{'selected-gram': selectedGramId == data.id}"
+                        (click)="selectGram(data.id)" (keydown.enter)="selectGram(data.id)"
                         (keydown.space)="selectGram(data.id); $event.preventDefault()"
                         [attr.aria-pressed]="selectedGramId == data.id" role="button" tabindex="0"
                         [style.--variant-index]="i">
-                        <div class="variant-selection-indicator" [ngClass]="{'variant-selection-indicator-active': selectedGramId == data.id}">
+                        <div class="variant-selection-indicator"
+                            [ngClass]="{'variant-selection-indicator-active': selectedGramId == data.id}">
                             @if(selectedGramId == data.id){
                             <span class="variant-selection-dot"></span>
                             }
@@ -231,25 +240,21 @@
 
                 <div class="product-info-nav" aria-label="Product information">
                     @for (section of productInfoSections; track section.key; let i = $index) {
-                    <section
-                        class="product-info-tab"
+                    <section class="product-info-tab"
                         [ngClass]="{'product-info-tab-active': activeProductInfoKey === section.key}"
                         [attr.id]="'product-info-section-' + section.key">
-                        <button
-                            type="button"
-                            class="product-info-trigger"
-                            (click)="setActiveProductInfo(section.key)"
+                        <button type="button" class="product-info-trigger" (click)="setActiveProductInfo(section.key)"
                             [attr.aria-expanded]="activeProductInfoKey === section.key"
                             [attr.aria-controls]="'product-info-panel-' + section.key">
                             <span class="product-info-tab-badge">0{{ i + 1 }}</span>
                             <span class="product-info-tab-copy">
                                 <span class="product-info-tab-title">{{ section.title }}</span>
                             </span>
-                            <span class="product-info-tab-action">{{ activeProductInfoKey === section.key ? 'Hide' : 'View' }}</span>
+                            <span class="product-info-tab-action">{{ activeProductInfoKey === section.key ? 'Hide' :
+                                'View' }}</span>
                         </button>
 
-                        <div
-                            class="product-info-panel-wrap"
+                        <div class="product-info-panel-wrap"
                             [ngClass]="{'product-info-panel-wrap-open': activeProductInfoKey === section.key}"
                             [attr.aria-hidden]="activeProductInfoKey !== section.key">
                             <div class="product-info-panel" [attr.id]="'product-info-panel-' + section.key">
@@ -328,117 +333,119 @@
         </div>
     </div>
 
-<section *ngIf="totalReviewCount" class="ratings-section mt-5">
-    <div class="ratings-section-head">
-        <div>
-            <span class="ratings-section-eyebrow">Ratings</span>
-            <h3 class="ratings-section-title mb-0">What customers are saying</h3>
-        </div>
-        <p class="ratings-section-meta mb-0">
-            {{ totalReviewCount }} ratings{{ customerReviews.length ? ' · ' + customerReviews.length + ' reviews' : '' }}
-        </p>
-    </div>
-
-    <div class="ratings-grid">
-        <section class="ratings-overview-card">
-            <div class="ratings-score-row">
-                <div class="ratings-score">{{ productData?.avg_rating || 0 }}</div>
-                <div class="ratings-score-scale">/ 5</div>
+    <section *ngIf="totalReviewCount" class="ratings-section mt-5">
+        <div class="ratings-section-head">
+            <div>
+                <span class="ratings-section-eyebrow">Ratings</span>
+                <h3 class="ratings-section-title mb-0">What customers are saying</h3>
             </div>
-            <nz-rate [ngModel]="productData?.avg_rating" nzDisabled nzAllowHalf class="ratings-overview-stars"></nz-rate>
-            <p class="ratings-score-label mb-0">{{ ratingLabel }}</p>
+            <p class="ratings-section-meta mb-0">
+                {{ totalReviewCount }} ratings{{ customerReviews.length ? ' · ' + customerReviews.length + ' reviews' :
+                '' }}
+            </p>
+        </div>
 
-            <!-- <div class="ratings-stat-chips">
+        <div class="ratings-grid">
+            <section class="ratings-overview-card">
+                <div class="ratings-score-row">
+                    <div class="ratings-score">{{ productData?.avg_rating || 0 }}</div>
+                    <div class="ratings-score-scale">/ 5</div>
+                </div>
+                <nz-rate [ngModel]="productData?.avg_rating" nzDisabled nzAllowHalf
+                    class="ratings-overview-stars"></nz-rate>
+                <p class="ratings-score-label mb-0">{{ ratingLabel }}</p>
+
+                <!-- <div class="ratings-stat-chips">
                 <span class="ratings-stat-chip">{{ recommendationPercent }}% recommend</span>
                 <span class="ratings-stat-chip">{{ verifiedReviewCount }} verified buyers</span>
             </div> -->
-        </section>
+            </section>
 
-        <section class="ratings-breakdown-card">
-            <div class="ratings-breakdown-head">
-                <h4 class="mb-0">Rating breakdown</h4>
-                <p class="mb-0">Live review distribution from the API</p>
-            </div>
-
-            <div class="ratings-breakdown-list">
-                @for (item of ratingSummary; track item.star) {
-                <div class="ratings-breakdown-row">
-                    <div class="ratings-breakdown-label">
-                        <span>{{ item.star }}</span>
-                        <nz-rate [ngModel]="1" [nzCount]="1" nzDisabled class="rating-star-icon"></nz-rate>
-                    </div>
-                    <div class="ratings-progress-track">
-                        <div class="ratings-progress-fill" [style.width.%]="item.percent"></div>
-                    </div>
-                    <div class="ratings-breakdown-count">{{ item.count }}</div>
-                </div>
-                }
-            </div>
-        </section>
-    </div>
-
-    <div *ngIf="customerReviews.length" class="reviews-section pb-5">
-        <div class="reviews-section-head">
-            <div>
-                <h4 class="mb-0">Customer reviews</h4>
-                <p class="reviews-section-subtitle mb-0">Latest feedback synced from the product API.</p>
-            </div>
-        </div>
-
-        <div class="grid-review mt-4">
-            @for (item of customerReviews; track $index) {
-            <article class="review-card">
-                <div class="review-card-head">
-                    <div class="review-card-rating">
-                        <nz-rate [ngModel]="getReviewRating(item)" nzAllowHalf nzDisabled></nz-rate>
-                        <span class="review-card-rating-value">{{ getReviewRating(item) }}/5</span>
-                    </div>
+            <section class="ratings-breakdown-card">
+                <div class="ratings-breakdown-head">
+                    <h4 class="mb-0">Rating breakdown</h4>
+                    <p class="mb-0">Live review distribution from the API</p>
                 </div>
 
-                <p *ngIf="getReviewTitle(item)" class="review-card-title mb-0">{{ getReviewTitle(item) }}</p>
-
-                <div class="review-card-copy">
-                    <p class="review-card-body mb-0" [class.review-card-body-expanded]="isReviewExpanded($index)">
-                        {{ getReviewDescription(item) }}
-                    </p>
-
-                    <button
-                        *ngIf="shouldShowReviewToggle(item)"
-                        type="button"
-                        class="review-card-toggle"
-                        (click)="toggleReviewExpanded($index)"
-                    >
-                        {{ isReviewExpanded($index) ? 'Read less' : 'Read more' }}
-                    </button>
-                </div>
-
-                <div *ngIf="getReviewImages(item).length" class="review-card-images">
-                    @for (image of getReviewImages(item); track image) {
-                    <a class="review-card-image-link" [href]="image" target="_blank" rel="noopener noreferrer">
-                        <img class="review-card-image" [src]="image" [alt]="getReviewAuthor(item) + ' review image'" />
-                    </a>
+                <div class="ratings-breakdown-list">
+                    @for (item of ratingSummary; track item.star) {
+                    <div class="ratings-breakdown-row">
+                        <div class="ratings-breakdown-label">
+                            <span>{{ item.star }}</span>
+                            <nz-rate [ngModel]="1" [nzCount]="1" nzDisabled class="rating-star-icon"></nz-rate>
+                        </div>
+                        <div class="ratings-progress-track">
+                            <div class="ratings-progress-fill" [style.width.%]="item.percent"></div>
+                        </div>
+                        <div class="ratings-breakdown-count">{{ item.count }}</div>
+                    </div>
                     }
                 </div>
+            </section>
+        </div>
 
-                <div class="review-card-footer">
-                    <div class="review-card-author-block">
-                        <div class="review-card-author-row">
-                            <p class="review-card-author mb-0">{{ getReviewAuthor(item) }}</p>
-                            <span *ngIf="!isVerifiedReview(item)" class="review-card-author-verified">
-                                <lucide-angular [img]="icons.product.badge" class="review-card-author-verified-icon" [size]="15"></lucide-angular>
-                                Verified buyer
-                            </span>
+        <div *ngIf="customerReviews.length" class="reviews-section pb-5">
+            <div class="reviews-section-head">
+                <div>
+                    <h4 class="mb-0">Customer reviews</h4>
+                    <p class="reviews-section-subtitle mb-0">Latest feedback synced from the product API.</p>
+                </div>
+            </div>
+
+            <div class="grid-review mt-4">
+                @for (item of customerReviews; track $index) {
+                <article class="review-card">
+                    <div class="review-card-head">
+                        <div class="review-card-rating">
+                            <nz-rate [ngModel]="getReviewRating(item)" nzAllowHalf nzDisabled></nz-rate>
+                            <span class="review-card-rating-value">{{ getReviewRating(item) }}/5</span>
                         </div>
-                        <p *ngIf="getReviewLocation(item)" class="review-card-location mb-0">From {{ getReviewLocation(item) }}</p>
                     </div>
 
-                    <p *ngIf="getReviewDateLabel(item)" class="review-card-date mb-0">{{ getReviewDateLabel(item) }}</p>
-                </div>
-            </article>
-            }
+                    <p *ngIf="getReviewTitle(item)" class="review-card-title mb-0">{{ getReviewTitle(item) }}</p>
+
+                    <div class="review-card-copy">
+                        <p class="review-card-body mb-0" [class.review-card-body-expanded]="isReviewExpanded($index)">
+                            {{ getReviewDescription(item) }}
+                        </p>
+
+                        <button *ngIf="shouldShowReviewToggle(item)" type="button" class="review-card-toggle"
+                            (click)="toggleReviewExpanded($index)">
+                            {{ isReviewExpanded($index) ? 'Read less' : 'Read more' }}
+                        </button>
+                    </div>
+
+                    <div *ngIf="getReviewImages(item).length" class="review-card-images">
+                        @for (image of getReviewImages(item); track image) {
+                        <a class="review-card-image-link" [href]="image" target="_blank" rel="noopener noreferrer">
+                            <img class="review-card-image" [src]="image"
+                                [alt]="getReviewAuthor(item) + ' review image'" />
+                        </a>
+                        }
+                    </div>
+
+                    <div class="review-card-footer">
+                        <div class="review-card-author-block">
+                            <div class="review-card-author-row">
+                                <p class="review-card-author mb-0">{{ getReviewAuthor(item) }}</p>
+                                <span *ngIf="!isVerifiedReview(item)" class="review-card-author-verified">
+                                    <lucide-angular [img]="icons.product.badge" class="review-card-author-verified-icon"
+                                        [size]="15"></lucide-angular>
+                                    Verified buyer
+                                </span>
+                            </div>
+                            <p *ngIf="getReviewLocation(item)" class="review-card-location mb-0">From {{
+                                getReviewLocation(item) }}</p>
+                        </div>
+
+                        <p *ngIf="getReviewDateLabel(item)" class="review-card-date mb-0">{{ getReviewDateLabel(item) }}
+                        </p>
+                    </div>
+                </article>
+                }
+            </div>
         </div>
-    </div>
-</section>
+    </section>
 
 </div>
 
@@ -493,7 +500,7 @@
             <p class="muted-clr mb-1">Enter Pincode</p>
             <div class="d-flex gap-5">
                 <input nz-input placeholder="eg:560122" class="flex-grow-1" />
-                <button class="tej-btn btn-xl btn-primary w-100 rounded-sm " style="width: 120px;">Check</button>
+                <button class="tej-btn btn-xl btn-primary w-100 rounded-sm " style="width: 12rem;">Check</button>
             </div>
 
             <div class="mt-2">

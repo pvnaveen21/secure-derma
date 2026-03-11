@@ -132,10 +132,16 @@ export class CollectionsComponent implements OnInit {
         this.bannerType = slug;
 
         if (isPlatformBrowser(this.platformId)) {
-          window.scrollTo({
-            top: 0,
-            behavior: 'smooth'
-          });
+          const shouldScrollToTop = Boolean(history.state?.scrollToTop);
+
+          if (shouldScrollToTop) {
+            requestAnimationFrame(() => {
+              window.scrollTo({
+                top: 0,
+                behavior: 'auto'
+              });
+            });
+          }
         }
 
         // Reset filters on route change
@@ -552,7 +558,11 @@ export class CollectionsComponent implements OnInit {
   }
 
   productView(value: any) {
-    this.router.navigate([`./products/${this.slugify(value)}`]);
+    this.router.navigate([`./products/${this.slugify(value)}`], {
+      queryParams: {
+        collection: this.bannerType
+      }
+    });
   }
 
   // product.component.ts

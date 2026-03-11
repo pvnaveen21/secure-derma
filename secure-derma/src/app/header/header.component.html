@@ -451,7 +451,7 @@
 <!-- src/app/components/cart-drawer/cart-drawer.component.html -->
 <nz-drawer [nzClosable]="true" [nzVisible]="cartDrawerVisible" [nzPlacement]="cartDrawerPlacement" [nzMask]="true"
     [nzMaskClosable]="true" [nzTitle]="drawerTitle" [nzFooter]="cartItems.length > 0 ? drawerFooter : ''" nzWrapClassName="cart-drawer-shell"
-    (nzOnClose)="closeCartDrawer()" nzWidth="28rem">
+    (nzOnClose)="closeCartDrawer()" [nzWidth]="cartDrawerWidth" [nzHeight]="cartDrawerHeight">
     <!-- Drawer Title Template -->
     <ng-template #drawerTitle>
         <div class="drawer-header">

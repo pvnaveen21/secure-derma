@@ -1,21 +1,21 @@
 // banners
 
 .banner-wrapper {
-    margin-top: 0.5rem; // 8px
+    margin-top: 0.5rem; // 0.8rem
 
-    @media only screen and (max-width:768px) {
+    @media only screen and (max-width:76.8rem) {
         padding-inline: 1rem;
     }
 }
 
 .banner-carousel {
-    height: 21.0625rem; // 385px
-    border-radius: 0.625rem; // 10px
+    height: 21.0625rem; // 38.5rem
+    border-radius: 0.625rem; // 1rem
     overflow: hidden;
     position: relative;
     z-index: 1;
 
-    @media only screen and (max-width:768px) {
+    @media only screen and (max-width:76.8rem) {
         height: 10.0625rem;
     }
 
@@ -52,7 +52,7 @@
 ::ng-deep .ant-carousel .slick-dots-bottom {
     bottom: 1rem !important;
 
-    @media only screen and (max-width:768px) {
+    @media only screen and (max-width:76.8rem) {
         bottom: 0rem !important;
     }
 }
@@ -206,7 +206,7 @@
     font-size: 0.7rem;
     text-transform: uppercase;
     letter-spacing: 0.03rem;
-    border-radius: 999px;
+    border-radius: 99.9rem;
     padding: 0.15rem 0.5rem;
     color: var(--brand-primary);
     background: color-mix(in srgb, var(--brand-primary) 12%, var(--card-bg));
@@ -228,7 +228,7 @@
 
     &:hover {
         background: color-mix(in srgb, #ff4d4f 18%, transparent);
-        transform: translateY(-1px);
+        transform: translateY(-0.1rem);
     }
 }
 
@@ -267,7 +267,7 @@
     }
 
     ::ng-deep .ant-collapse-content-box {
-        max-height: 300px !important;
+        max-height: 30rem !important;
         overflow-y: auto !important;
         scrollbar-width: thin !important;
         padding: 0.35rem 0 0.85rem 0 !important;
@@ -302,7 +302,7 @@
 
     &:hover {
         background: color-mix(in srgb, var(--hover-bg) 74%, var(--card-bg));
-        transform: translateX(2px);
+        transform: translateX(0.2rem);
     }
 
     label {
@@ -376,7 +376,7 @@
     font-size: 0.72rem;
     font-weight: 600;
     padding: 0.05rem 0.35rem;
-    border-radius: 999px;
+    border-radius: 99.9rem;
     background: color-mix(in srgb, var(--hover-bg) 85%, var(--card-bg));
     line-height: 1.2;
     flex-shrink: 0;
@@ -387,7 +387,7 @@
 @keyframes filterItemFadeIn {
     from {
         opacity: 0;
-        transform: translateY(5px);
+        transform: translateY(0.5rem);
     }
 
     to {
@@ -399,7 +399,7 @@
 @keyframes filterSectionReveal {
     from {
         opacity: 0;
-        transform: translateY(-4px);
+        transform: translateY(-0.4rem);
     }
 
     to {
@@ -460,7 +460,7 @@
 
     &:hover {
         background: color-mix(in srgb, #ff4d4f 18%, transparent);
-        transform: translateY(-1px);
+        transform: translateY(-0.1rem);
     }
 }
 
@@ -630,7 +630,7 @@
     width: 100%;
     height: 0.22rem;
     overflow: hidden;
-    border-radius: 999px;
+    border-radius: 99.9rem;
     background: color-mix(in srgb, var(--brand-primary) 10%, transparent);
 
     &::after {
@@ -865,7 +865,7 @@
     display: inline-flex;
     align-items: center;
     padding: 0.25rem 0.6rem;
-    border-radius: 999px;
+    border-radius: 99.9rem;
     font-size: 0.72rem;
     font-weight: 700;
     letter-spacing: 0.02rem;
@@ -989,7 +989,7 @@
     transition: transform 0.2s ease, background-color 0.2s ease;
 
     &:hover {
-        transform: translateY(-1px);
+        transform: translateY(-0.1rem);
         background-color: color-mix(in srgb, var(--hover-bg) 72%, var(--card-bg));
     }
 
@@ -1039,7 +1039,7 @@
     height: 5.5rem;
     display: grid;
     place-items: center;
-    border-radius: 999px;
+    border-radius: 99.9rem;
     background: color-mix(in srgb, var(--brand-primary) 12%, #ffffff 88%);
     animation: empty-state-float 2.8s ease-in-out infinite;
 }
@@ -1084,7 +1084,7 @@
 .clear-filters-btn {
     min-width: 10rem;
     border: none;
-    border-radius: 999px;
+    border-radius: 99.9rem;
     padding: 0.8rem 1.2rem;
     background: var(--brand-primary);
     color: #ffffff;
@@ -1193,7 +1193,7 @@
         position: fixed;
         left: 0.75rem;
         right: 0.75rem;
-        bottom: calc(0.7rem + env(safe-area-inset-bottom, 0px));
+        bottom: calc(0.7rem + env(safe-area-inset-bottom, 0rem));
         z-index: 40;
         display: grid;
         grid-template-columns: 1fr 1fr;
@@ -1219,7 +1219,7 @@
 .mobile-fixed-badge {
     min-width: 1.2rem;
     height: 1.2rem;
-    border-radius: 999px;
+    border-radius: 99.9rem;
     display: inline-flex;
     align-items: center;
     justify-content: center;

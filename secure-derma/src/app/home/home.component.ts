@@ -359,7 +359,11 @@ export class HomeComponent {
       .replace(/\s+/g, '-');
   }
   producetNavigation(value: any) {
-    this.router.navigate([`./collections/${this.slugify(value)}`])
+    this.router.navigate([`./collections/${this.slugify(value)}`], {
+      state: {
+        scrollToTop: true
+      }
+    })
   }
 
   producetView(value:any){

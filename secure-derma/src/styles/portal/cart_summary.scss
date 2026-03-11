@@ -1,14 +1,14 @@
 .cart-body-content {
     .ant-dropdown-menu {
-        border-radius: 10px !important;
+        border-radius: 1rem !important;
     }
 
     .ant-dropdown-menu {
-        padding: 0px;
+        padding: 0rem;
     }
 
     .ant-dropdown-menu-item {
-        padding: 8px 25px;
+        padding: 0.8rem 2.5rem;
     }
 
     .ant-collapse-content {
@@ -26,7 +26,7 @@
     }
 
     .childer-panel .ant-collapse-header {
-        border-bottom: 1px solid rgb(245, 240, 240) !important;
+        border-bottom: 0.1rem solid rgb(245, 240, 240) !important;
     }
 
     .ant-table-thead>tr>th {
@@ -34,15 +34,15 @@
     }
 
     .ant-collapse-content .childer-panel {
-        margin: 10px !important;
+        margin: 1rem !important;
     }
 
     .ant-collapse-content>.ant-collapse-content-box {
-        padding: 0px 0px 0px 0px !important;
+        padding: 0rem 0rem 0rem 0rem !important;
     }
 
     .ant-collapse>.ant-collapse-item {
-        margin-bottom: 10px !important;
+        margin-bottom: 1rem !important;
     }
 
     .ant-table-thead>tr>th:not(:last-child):not(.ant-table-selection-column):not(.ant-table-row-expand-icon-cell):not([colspan])::before {
@@ -60,7 +60,7 @@
 
 .custom-modal-style {
     .ant-modal-content {
-        border-radius: 15px !important;
+        border-radius: 1.5rem !important;
     }
 }
 
@@ -70,13 +70,13 @@
     .ant-select-selector {
         background-color: var(--tej-bg-primary) !important;
         border: none !important;
-        border-radius: 20px !important;
-        min-width: 90px !important;
+        border-radius: 2rem !important;
+        min-width: 9rem !important;
     }
 }
 
 .ant-menu-title-content {
     display: flex !important;
     align-items: center;
-    gap: 12px;
+    gap: 1.2rem;
 }
