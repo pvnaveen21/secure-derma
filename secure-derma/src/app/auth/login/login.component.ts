@@ -7,7 +7,6 @@ import { NzCheckboxModule } from 'ng-zorro-antd/checkbox';
 import { NzIconModule } from 'ng-zorro-antd/icon';
 import { NzFlexDirective } from 'ng-zorro-antd/flex';
 import { NzInputOtpComponent } from 'ng-zorro-antd/input';
-import { NzTypographyComponent } from 'ng-zorro-antd/typography';
 
 @Component({
   selector: 'app-login',
@@ -18,7 +17,7 @@ import { NzTypographyComponent } from 'ng-zorro-antd/typography';
     NzButtonModule,
     NzCheckboxModule,
     NzIconModule,
-    NzFlexDirective, NzTypographyComponent, NzInputOtpComponent
+    NzFlexDirective, NzInputOtpComponent
   ],
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss'
