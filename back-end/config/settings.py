@@ -10,7 +10,9 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
+import os
 from pathlib import Path
+
 from .confiq import *
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -21,12 +23,16 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-oma_(v&4e1!@je7)0frn6og8mp^4+^1u-7oth^0oi@76ki$!5_'
+SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-oma_(v&4e1!@je7)0frn6og8mp^4+^1u-7oth^0oi@76ki$!5_')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv('DJANGO_DEBUG', 'false').lower() == 'true'
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    host.strip()
+    for host in os.getenv('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+    if host.strip()
+]
 APPS =[
     'user',
     'brand',
@@ -47,6 +53,14 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:4200",
     "http://127.0.0.1:4200",
 ]
+extra_cors_origins = [
+    origin.strip()
+    for origin in os.getenv('CORS_ALLOWED_ORIGINS', '').split(',')
+    if origin.strip()
+]
+if extra_cors_origins:
+    CORS_ALLOWED_ORIGINS = [*CORS_ALLOWED_ORIGINS, *extra_cors_origins]
+
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
@@ -139,6 +153,13 @@ REST_FRAMEWORK = {
 }
 
 STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+if not DEBUG:
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
 
 # AUTH_USER_MODEL = 'user.User'
 AUTH_USER_MODEL = "user.User"
