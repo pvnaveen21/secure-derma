@@ -10,7 +10,7 @@ import { NzDrawerModule } from 'ng-zorro-antd/drawer';
 import { NzDividerModule } from 'ng-zorro-antd/divider';
 import { NzInputModule } from 'ng-zorro-antd/input';
 import { distinctUntilChanged, map } from 'rxjs';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { HorizontalScrollComponent } from '../shared/horizontal-scroll/horizontal-scroll.component';
 import { Icons } from '../shared/icons';
 import { Assets } from '../shared/assets';
@@ -29,6 +29,7 @@ import { ProductService } from '../services/product.service';
     NzDrawerModule,
     NzDividerModule,
     NzInputModule,
+    RouterLink,
   ],
   templateUrl: './products.component.html',
   styleUrl: './products.component.scss'
@@ -197,6 +198,48 @@ export class ProductsComponent {
     items: string[];
   }[] = [];
   activeProductInfoKey = 'description';
+  get breadcrumbCollectionSlug() {
+    const routeCollection = this.route.snapshot.queryParamMap.get('collection');
+
+    if (routeCollection) {
+      return routeCollection;
+    }
+
+    const candidate = this.productData?.product_type
+      || this.productData?.category?.category_name
+      || this.productData?.collection?.collection_name
+      || '';
+
+    return typeof candidate === 'string' ? this.slugify(candidate) : '';
+  }
+
+  get breadcrumbCollectionLabel() {
+    const routeCollection = this.route.snapshot.queryParamMap.get('collection');
+
+    if (routeCollection) {
+      return routeCollection
+        .split('-')
+        .filter(Boolean)
+        .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+        .join(' ');
+    }
+
+    const candidate = this.productData?.product_type
+      || this.productData?.category?.category_name
+      || this.productData?.collection?.collection_name
+      || '';
+
+    return typeof candidate === 'string' ? candidate : '';
+  }
+
+  get breadcrumbCollectionLink() {
+    if (!this.breadcrumbCollectionSlug) {
+      return ['/'];
+    }
+
+    return ['/collections', this.breadcrumbCollectionSlug];
+  }
+
   getProductDetail() {
     this.productService.getProducetDetail(this.selectedProduectValue).subscribe({
       next: (response: any) => {
@@ -650,7 +693,7 @@ export class ProductsComponent {
   @HostListener('window:scroll', [])
   onWindowScroll() {
     const scrollPosition = window.scrollY;  // Get the vertical scroll position
-    if (scrollPosition > 360) {  // Show buttons after 200px of scroll
+    if (scrollPosition > 360) {
       this.isScrolled = true;
     } else {
       this.isScrolled = false;
@@ -668,5 +711,14 @@ export class ProductsComponent {
     this.visible = false;
   }
 
+  slugify(value: string): string {
+    const normalizedValue = typeof value === 'string' ? value : String(value ?? '');
+
+    return normalizedValue
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+  }
 
 }

@@ -1,13 +1,13 @@
 .varient-main {
-    border-top: 1px dashed gray;
-    border-bottom: 1px dashed gray;
+    border-top: 0.1rem dashed gray;
+    border-bottom: 0.1rem dashed gray;
 }
 
 .view-img-main {
     width: 100%;
     height: 26rem;
     background-color: var(--card-bg);
-    border-radius: 5px;
+    border-radius: 0.5rem;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -25,6 +25,34 @@
 .secure-home-container {
     max-width: 75rem;
     margin: auto;
+}
+
+.product-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    flex-wrap: wrap;
+    padding-top: 1.1rem;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+}
+
+.product-breadcrumb-link {
+    color: var(--text-secondary);
+    text-decoration: none;
+}
+
+.product-breadcrumb-link:hover {
+    color: var(--brand-primary);
+}
+
+.product-breadcrumb-separator {
+    color: color-mix(in srgb, var(--text-secondary) 70%, transparent);
+}
+
+.product-breadcrumb-current {
+    color: var(--text-primary);
+    font-weight: 600;
 }
 
 .pro-detail-view {
@@ -50,7 +78,7 @@
 .company_name::after {
     content: "";
     width: 2rem;
-    height: 1px;
+    height: 0.1rem;
     margin-left: 0.55rem;
     background: color-mix(in srgb, var(--product-brand-text) 24%, transparent);
 }
@@ -82,7 +110,7 @@
 }
 
 .rating-separator {
-    width: 1px;
+    width: 0.1rem;
     height: 0.9rem;
     background: color-mix(in srgb, var(--text-secondary) 24%, transparent);
 }
@@ -107,8 +135,8 @@
 .rating-main {
     display: flex;
     align-items: center;
-    gap: 3px;
-    line-height: 10px !important;
+    gap: 0.3rem;
+    line-height: 1rem !important;
 }
 
 .rating-dot {
@@ -147,7 +175,7 @@
     border-radius: 0.5rem;
     line-height: 1;
     letter-spacing: 0.03em;
-    border: 1px solid color-mix(in srgb, var(--price-current-text) 18%, transparent);
+    border: 0.1rem solid color-mix(in srgb, var(--price-current-text) 18%, transparent);
 }
 
 .org-price {
@@ -166,7 +194,7 @@
     left: 0;
     right: 0;
     top: 50%;
-    height: 1.2px;
+    height: 0.12rem;
     background: var(--price-strike);
     transform: translateY(-50%);
 }
@@ -181,7 +209,7 @@
 .main-price-details {
     margin-top: 0.85rem;
     padding: 0.85rem 0 0.25rem;
-    border-top: 1px solid color-mix(in srgb, var(--price-panel-border) 82%, transparent);
+    border-top: 0.1rem solid color-mix(in srgb, var(--price-panel-border) 82%, transparent);
 }
 
 .price-main-row {
@@ -212,12 +240,12 @@
 }
 
 .varient_size_main {
-    border: 1px solid var(--variant-panel-border);
+    border: 0.1rem solid var(--variant-panel-border);
     position: relative;
     border-radius: 1.2rem;
     padding: 1.4rem 1.1rem 1.1rem;
     background: var(--variant-panel-bg);
-    box-shadow: 0 20px 45px var(--variant-panel-shadow);
+    box-shadow: 0 2rem 4.5rem var(--variant-panel-shadow);
 }
 
 .varient_size_main::after {
@@ -240,8 +268,8 @@
     padding-inline: 0.7rem;
     font-size: 0.75rem;
     letter-spacing: 0.12em;
-    border-radius: 999px;
-    border: 1px solid var(--variant-panel-border);
+    border-radius: 99.9rem;
+    border: 0.1rem solid var(--variant-panel-border);
 }
 
 .variant-header {
@@ -254,11 +282,11 @@
 }
 
 .variant-header-price {
-    min-width: 110px;
+    min-width: 11rem;
     padding: 0.7rem 0.85rem;
     border-radius: 1rem;
     background: var(--variant-header-card-bg);
-    border: 1px solid var(--variant-header-card-border);
+    border: 0.1rem solid var(--variant-header-card-border);
     text-align: right;
 }
 
@@ -297,13 +325,13 @@
     font-weight: 600;
     margin-left: 0;
     padding: 0.2rem 0.55rem;
-    border-radius: 999px;
+    border-radius: 99.9rem;
     background-color: var(--variant-caption-pill-bg);
 }
 
 .pro-size {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
     gap: 0.75rem;
 }
 
@@ -311,7 +339,7 @@
     padding: 0.95rem;
     position: relative;
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(1rem);
     animation: variantCardReveal 420ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
     animation-delay: calc(var(--variant-index, 0) * 60ms + 60ms);
 }
@@ -339,10 +367,10 @@
     border-color: var(--variant-card-selected-border);
     background: var(--variant-card-selected-bg);
     color: var(--text-primary);
-    box-shadow: 0 14px 28px var(--variant-card-selected-shadow);
-    transform: translateY(-3px) scale(1.01);
-    outline: 2px solid var(--variant-card-selected-outline);
-    outline-offset: 2px;
+    box-shadow: 0 1.4rem 2.8rem var(--variant-card-selected-shadow);
+    transform: translateY(-0.3rem) scale(1.01);
+    outline: 0.2rem solid var(--variant-card-selected-outline);
+    outline-offset: 0.2rem;
 }
 
 .inc-text {
@@ -356,7 +384,7 @@
 .price-tax-dot {
     width: 0.45rem;
     height: 0.45rem;
-    border-radius: 999px;
+    border-radius: 99.9rem;
     background: color-mix(in srgb, var(--price-current-text) 72%, transparent);
     display: inline-block;
 }
@@ -365,35 +393,35 @@
     border-radius: 1.1rem;
     font-weight: 600;
     font-size: 0.8rem;
-    border: 1px solid var(--variant-card-border);
+    border: 0.1rem solid var(--variant-card-border);
     display: flex;
     flex-direction: column;
     align-items: stretch;
     justify-content: space-between;
-    min-height: 128px;
+    min-height: 12.8rem;
     background: var(--variant-card-bg);
     transition: border-color 220ms ease, transform 260ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 260ms cubic-bezier(0.22, 1, 0.36, 1), background-color 220ms ease;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22);
+    box-shadow: inset 0 0.1rem 0 rgba(255, 255, 255, 0.22);
     cursor: pointer;
     isolation: isolate;
 }
 
 .wight-type:hover {
     border-color: var(--variant-card-hover-border);
-    transform: translateY(-4px);
-    box-shadow: 0 16px 28px var(--variant-card-hover-shadow);
+    transform: translateY(-0.4rem);
+    box-shadow: 0 1.6rem 2.8rem var(--variant-card-hover-shadow);
 }
 
 .wight-type:focus-visible {
-    outline: 2px solid var(--variant-card-selected-outline);
-    outline-offset: 3px;
+    outline: 0.2rem solid var(--variant-card-selected-outline);
+    outline-offset: 0.3rem;
 }
 
 .variant-selection-indicator {
     width: 1.15rem;
     height: 1.15rem;
-    border-radius: 999px;
-    border: 1.5px solid var(--variant-indicator-border);
+    border-radius: 99.9rem;
+    border: 0.15rem solid var(--variant-indicator-border);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -412,7 +440,7 @@
 .variant-selection-dot {
     width: 0.5rem;
     height: 0.5rem;
-    border-radius: 999px;
+    border-radius: 99.9rem;
     background-color: var(--variant-indicator-active-border);
     display: inline-block;
     animation: variantDotPop 240ms ease-out both;
@@ -424,7 +452,7 @@
     justify-content: space-between;
     gap: 0.75rem;
     padding-bottom: 0.75rem;
-    border-bottom: 1px solid var(--variant-divider);
+    border-bottom: 0.1rem solid var(--variant-divider);
 }
 
 .variant-size-line {
@@ -444,7 +472,7 @@
     display: inline-flex;
     align-items: center;
     padding: 0.22rem 0.5rem;
-    border-radius: 999px;
+    border-radius: 99.9rem;
     background-color: var(--variant-badge-bg);
     color: var(--variant-badge-text);
     font-size: 0.72rem;
@@ -458,7 +486,7 @@
     align-items: center;
     justify-content: center;
     padding: 0.28rem 0.55rem;
-    border-radius: 999px;
+    border-radius: 99.9rem;
     background-color: var(--variant-selected-badge-bg);
     color: var(--variant-selected-badge-text);
     font-size: 0.72rem;
@@ -506,7 +534,7 @@
     color: var(--variant-save-text);
     font-size: 0.76rem;
     font-weight: 700;
-    border: 1px solid var(--variant-save-border);
+    border: 0.1rem solid var(--variant-save-border);
     transition: transform 220ms ease, box-shadow 220ms ease;
 }
 
@@ -519,7 +547,7 @@
     color: var(--variant-current-text);
     font-size: 0.76rem;
     font-weight: 700;
-    border: 1px solid var(--variant-current-border);
+    border: 0.1rem solid var(--variant-current-border);
     animation: variantBadgeSlide 220ms ease-out both;
 }
 
@@ -527,12 +555,12 @@
 .selected-gram .variant-pack-badge,
 .wight-type:hover .variant-save-chip,
 .selected-gram .variant-save-chip {
-    transform: translateY(-1px);
+    transform: translateY(-0.1rem);
 }
 
 .wight-type:hover .variant-sell-price,
 .selected-gram .variant-sell-price {
-    transform: translateY(-1px);
+    transform: translateY(-0.1rem);
 }
 
 .save-more {
@@ -541,7 +569,7 @@
     font-size: 0.6rem;
     font-weight: bold;
     padding-inline: 0.4rem;
-    padding-block: 2px;
+    padding-block: 0.2rem;
     white-space: nowrap;
     border-radius: 0.4rem;
     position: absolute;
@@ -553,7 +581,7 @@
 @keyframes variantSectionRise {
     from {
         opacity: 0;
-        transform: translateY(8px);
+        transform: translateY(0.8rem);
     }
 
     to {
@@ -565,7 +593,7 @@
 @keyframes variantCardReveal {
     from {
         opacity: 0;
-        transform: translateY(10px) scale(0.985);
+        transform: translateY(1rem) scale(0.985);
     }
 
     to {
@@ -589,7 +617,7 @@
 @keyframes variantBadgeSlide {
     from {
         opacity: 0;
-        transform: translateY(4px);
+        transform: translateY(0.4rem);
     }
 
     to {
@@ -599,6 +627,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+
     .variant-header,
     .grams,
     .variant-selection-dot,
@@ -620,7 +649,7 @@
     }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 76.8rem) {
     .varient_size_main {
         padding: 1.2rem 0.9rem 0.9rem;
     }
@@ -639,7 +668,7 @@
     }
 
     .wight-type {
-        min-height: 110px;
+        min-height: 11rem;
     }
 
     .variant-card-top {
@@ -673,7 +702,7 @@
 
 .location-container {
     padding: 1rem 1.05rem;
-    border: 1px solid color-mix(in srgb, var(--border-color) 86%, transparent);
+    border: 0.1rem solid color-mix(in srgb, var(--border-color) 86%, transparent);
     border-radius: 1rem;
     background: linear-gradient(180deg,
             color-mix(in srgb, var(--card-bg) 94%, var(--brand-primary) 6%),
@@ -699,7 +728,7 @@
     padding: 0.8rem 0.85rem;
     border-radius: 0.9rem;
     background: color-mix(in srgb, var(--delivery-box-bg) 78%, var(--card-bg));
-    border: 1px solid color-mix(in srgb, var(--brand-primary) 10%, transparent);
+    border: 0.1rem solid color-mix(in srgb, var(--brand-primary) 10%, transparent);
     color: var(--text-primary);
 }
 
@@ -709,7 +738,7 @@
     justify-content: center;
     width: 2rem;
     height: 2rem;
-    border-radius: 999px;
+    border-radius: 99.9rem;
     background: color-mix(in srgb, var(--brand-primary) 12%, transparent);
     color: var(--brand-primary);
     flex-shrink: 0;
@@ -767,7 +796,7 @@
 
 .product-info-shell {
     padding: 1rem;
-    border: 1px solid color-mix(in srgb, var(--border-color) 88%, transparent);
+    border: 0.1rem solid color-mix(in srgb, var(--border-color) 88%, transparent);
     border-radius: 1.2rem;
     background: var(--card-bg);
     display: grid;
@@ -799,7 +828,7 @@
 }
 
 .product-info-tab {
-    border: 1px solid color-mix(in srgb, var(--border-color) 88%, transparent);
+    border: 0.1rem solid color-mix(in srgb, var(--border-color) 88%, transparent);
     border-radius: 0.95rem;
     background: color-mix(in srgb, var(--card-bg) 98%, var(--brand-primary) 2%);
     transition: border-color 180ms ease, box-shadow 180ms ease, background-color 180ms ease;
@@ -809,7 +838,7 @@
 .product-info-tab-active {
     border-color: color-mix(in srgb, var(--brand-primary) 20%, var(--border-color));
     background: color-mix(in srgb, var(--card-bg) 95%, var(--brand-primary) 5%);
-    box-shadow: 0 8px 18px color-mix(in srgb, var(--brand-primary) 6%, transparent);
+    box-shadow: 0 0.8rem 1.8rem color-mix(in srgb, var(--brand-primary) 6%, transparent);
 }
 
 .product-info-trigger {
@@ -831,7 +860,7 @@
     justify-content: center;
     width: 2rem;
     height: 2rem;
-    border-radius: 999px;
+    border-radius: 99.9rem;
     background: color-mix(in srgb, var(--brand-primary) 12%, transparent);
     color: var(--brand-primary);
     font-size: 0.7rem;
@@ -918,7 +947,7 @@
     gap: 0.75rem;
     align-items: flex-start;
     padding: 0.7rem 0;
-    border-bottom: 1px solid color-mix(in srgb, var(--border-color) 70%, transparent);
+    border-bottom: 0.1rem solid color-mix(in srgb, var(--border-color) 70%, transparent);
     animation: productInfoItemRise 320ms ease both;
 }
 
@@ -939,7 +968,7 @@
 @keyframes productInfoPanelIn {
     from {
         opacity: 0;
-        transform: translateY(10px);
+        transform: translateY(1rem);
     }
 
     to {
@@ -951,7 +980,7 @@
 @keyframes productInfoItemRise {
     from {
         opacity: 0;
-        transform: translateY(8px);
+        transform: translateY(0.8rem);
     }
 
     to {
@@ -977,21 +1006,21 @@
     display: flex;
     flex-direction: row;
     width: max-content;
-    //padding-right: 50px;
+    //padding-right: 5rem;
     scroll-behavior: smooth;
-    width: 300px;
+    width: 30rem;
 
     .item {
-        height: 234px;
-        width: 220px;
-        margin-right: 16px;
+        height: 23.4rem;
+        width: 22rem;
+        margin-right: 1.6rem;
         box-sizing: border-box;
-        border-radius: 20px;
+        border-radius: 2rem;
     }
 }
 
 .selected-img {
-    border: 1px solid rgb(174, 173, 173);
+    border: 0.1rem solid rgb(174, 173, 173);
 }
 
 /* Keyframe animation for smooth sliding from left to right */
@@ -1023,7 +1052,7 @@
 }
 
 .pro-rate ::ng-deep .ant-rate-star {
-    font-size: 36px;
+    font-size: 3.6rem;
 }
 
 .customer-rating {
@@ -1033,7 +1062,7 @@
     justify-content: space-between;
     gap: 1rem;
     padding: 1rem 1.1rem;
-    border: 1px solid color-mix(in srgb, var(--border-color) 84%, transparent);
+    border: 0.1rem solid color-mix(in srgb, var(--border-color) 84%, transparent);
     border-radius: 1.1rem;
     background: linear-gradient(135deg, color-mix(in srgb, var(--card-bg) 95%, white 5%), color-mix(in srgb, var(--brand-primary) 6%, var(--card-bg)));
     box-shadow: 0 0.65rem 1.4rem color-mix(in srgb, black 6%, transparent);
@@ -1073,7 +1102,7 @@
     padding: 0.7rem 0.85rem;
     border-radius: 0.95rem;
     background: color-mix(in srgb, var(--card-bg) 90%, white 10%);
-    border: 1px solid color-mix(in srgb, var(--brand-primary) 14%, var(--border-color));
+    border: 0.1rem solid color-mix(in srgb, var(--brand-primary) 14%, var(--border-color));
 }
 
 .w-s-nowrap {
@@ -1085,7 +1114,7 @@
 }
 
 .rating-star-icon ::ng-deep .ant-rate-star {
-    font-size: 14px;
+    font-size: 1.4rem;
 }
 
 .ratings-section {
@@ -1132,7 +1161,7 @@
 .ratings-breakdown-card {
     padding: 1.2rem;
     border-radius: 1.2rem;
-    border: 1px solid color-mix(in srgb, var(--border-color) 86%, transparent);
+    border: 0.1rem solid color-mix(in srgb, var(--border-color) 86%, transparent);
     background: linear-gradient(180deg, color-mix(in srgb, var(--card-bg) 96%, var(--brand-primary) 4%), var(--card-bg));
 }
 
@@ -1176,7 +1205,7 @@
 
 .ratings-stat-chip {
     padding: 0.45rem 0.7rem;
-    border-radius: 999px;
+    border-radius: 99.9rem;
     background: color-mix(in srgb, var(--brand-primary) 10%, transparent);
     color: var(--brand-primary);
     font-size: 0.78rem;
@@ -1218,7 +1247,7 @@
     position: relative;
     height: 0.55rem;
     overflow: hidden;
-    border-radius: 999px;
+    border-radius: 99.9rem;
     background: color-mix(in srgb, var(--border-color) 70%, transparent);
 }
 
@@ -1267,7 +1296,7 @@
     padding: 1rem;
     min-width: 0;
     border-radius: 1rem;
-    border: 1px solid color-mix(in srgb, var(--border-color) 86%, transparent);
+    border: 0.1rem solid color-mix(in srgb, var(--border-color) 86%, transparent);
     background: color-mix(in srgb, var(--card-bg) 98%, var(--brand-primary) 2%);
 }
 
@@ -1348,8 +1377,8 @@
 }
 
 .review-card-toggle:focus-visible {
-    outline: 2px solid color-mix(in srgb, var(--brand-primary) 45%, white);
-    outline-offset: 3px;
+    outline: 0.2rem solid color-mix(in srgb, var(--brand-primary) 45%, white);
+    outline-offset: 0.3rem;
     border-radius: 0.25rem;
 }
 
@@ -1366,20 +1395,20 @@
     height: 4.75rem;
     border-radius: 0.85rem;
     overflow: hidden;
-    border: 1px solid color-mix(in srgb, var(--border-color) 78%, transparent);
+    border: 0.1rem solid color-mix(in srgb, var(--border-color) 78%, transparent);
     background: color-mix(in srgb, var(--card-bg) 94%, black 6%);
     transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .review-card-image-link:hover {
-    transform: translateY(-1px);
+    transform: translateY(-0.1rem);
     border-color: color-mix(in srgb, var(--brand-primary) 30%, var(--border-color));
     box-shadow: 0 0.5rem 1.1rem color-mix(in srgb, black 12%, transparent);
 }
 
 .review-card-image-link:focus-visible {
-    outline: 2px solid color-mix(in srgb, var(--brand-primary) 45%, white);
-    outline-offset: 3px;
+    outline: 0.2rem solid color-mix(in srgb, var(--brand-primary) 45%, white);
+    outline-offset: 0.3rem;
 }
 
 .review-card-image {
@@ -1398,7 +1427,7 @@
     min-width: 0;
     flex-wrap: wrap;
     padding-top: 0.2rem;
-    border-top: 1px solid color-mix(in srgb, var(--border-color) 72%, transparent);
+    border-top: 0.1rem solid color-mix(in srgb, var(--border-color) 72%, transparent);
 }
 
 .review-card-author-block {
@@ -1458,20 +1487,20 @@
 
 .customer-plus {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 20px;
+    grid-template-columns: repeat(auto-fit, minmax(25rem, 1fr));
+    gap: 2rem;
 }
 
 .auth-pro,
 .easy-ret {
     text-align: center;
-    border: 1px solid gray;
+    border: 0.1rem solid gray;
     cursor: pointer;
-    padding-block: 8px;
+    padding-block: 0.8rem;
 }
 
 .bottom-fixed-buttons {
-    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 -0.2rem 1rem rgba(0, 0, 0, 0.1);
     position: fixed;
     bottom: 0;
     left: 0;
@@ -1479,7 +1508,7 @@
     padding: 0.9rem 1rem;
     z-index: 9999;
     background: var(--card-bg);
-    border-top: 1px solid color-mix(in srgb, var(--border-color) 72%, transparent);
+    border-top: 0.1rem solid color-mix(in srgb, var(--border-color) 72%, transparent);
 }
 
 
@@ -1513,7 +1542,7 @@
 }
 
 .f-btn {
-    width: 210px;
+    width: 21rem;
 }
 
 .bottom-fixed-buttons h3 {
@@ -1536,7 +1565,7 @@
 }
 
 .bottom-fixed-buttons .org-price,
-.bottom-fixed-buttons .price-detail > div:last-child {
+.bottom-fixed-buttons .price-detail>div:last-child {
     font-size: 0.86rem;
 }
 
@@ -1559,7 +1588,7 @@
     align-items: center;
     gap: 0.65rem;
     padding: 0.8rem 0.85rem;
-    border: 1px solid color-mix(in srgb, var(--brand-primary) 10%, var(--border-color));
+    border: 0.1rem solid color-mix(in srgb, var(--brand-primary) 10%, var(--border-color));
     border-radius: 0.9rem;
     background: color-mix(in srgb, var(--card-bg) 96%, var(--brand-primary) 4%);
 }
@@ -1571,7 +1600,7 @@
     height: 2.2rem;
     width: 2.2rem;
     flex-shrink: 0;
-    border-radius: 999px;
+    border-radius: 99.9rem;
     background: color-mix(in srgb, var(--brand-primary) 12%, transparent);
     color: var(--brand-primary);
 }
@@ -1597,7 +1626,7 @@
     line-height: 1.25;
 }
 
-@media (max-width: 1100px) {
+@media (max-width: 110rem) {
     .secure-home-container {
         padding-inline: 1rem;
     }
@@ -1625,10 +1654,16 @@
     }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 76.8rem) {
     .secure-home-container {
         padding-inline: 0.85rem;
-        padding-bottom: 6.5rem;
+        padding-bottom: 1.2rem;
+    }
+
+    .product-breadcrumb {
+        padding-top: 0.9rem;
+        font-size: 0.8rem;
+        gap: 0.35rem;
     }
 
     .pro-detail-view {
@@ -1638,15 +1673,33 @@
     .product-img-container {
         flex-direction: column-reverse;
         gap: 0.85rem;
+        width: 100%;
+        min-width: 0;
+        overflow-x: hidden;
+    }
+
+    .product-img-container>div,
+    .product-img-container app-horizontal-scroll {
+        display: block;
+        width: 100%;
+        min-width: 0;
+    }
+
+    ::ng-deep .product-img-container .tej-hr-scroll,
+    ::ng-deep .product-img-container .tej-hr-scroll.vertical {
+        width: 100%;
+        max-width: 100%;
     }
 
     ::ng-deep .product-img-container .tej-hr-scroll.vertical .scroll-body {
         display: block;
+        width: 100%;
+        max-width: 100%;
         height: auto;
         overflow-x: auto;
         overflow-y: hidden;
         white-space: nowrap;
-        padding-bottom: 0.2rem;
+        padding-bottom: 0;
     }
 
     ::ng-deep .product-img-container .tej-hr-scroll.vertical .scroll-icon {
@@ -1654,13 +1707,21 @@
     }
 
     .category-container .d-flex.flex-column {
+        display: flex;
         flex-direction: row !important;
         gap: 0.6rem;
+        width: max-content;
+        min-width: 100%;
     }
 
     .view-img-main {
         height: 20rem;
         border-radius: 0.9rem;
+    }
+
+    .side-select-img {
+        margin-bottom: 0;
+        flex: 0 0 auto;
     }
 
     .product_name {
@@ -1677,7 +1738,7 @@
     }
 
     .both-btn-container {
-        grid-template-columns: 1fr;
+        display: none;
     }
 
     .product-assurance {
@@ -1766,7 +1827,7 @@
     }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 48rem) {
     .secure-home-container {
         padding-inline: 0.75rem;
     }
@@ -1809,27 +1870,27 @@
 }
 
 .popover-content-box {
-    max-width: 250px;
+    max-width: 25rem;
     white-space: normal;
     line-height: 1.4;
 }
 
 .tej-close-icon {
-    width: 35px;
-    height: 35px;
+    width: 3.5rem;
+    height: 3.5rem;
     display: flex;
     align-items: center;
     justify-content: center;
 }
 
 ::ng-deep .ant-drawer-body {
-    padding: 0px !important;
+    padding: 0rem !important;
 }
 
 .side-select-img {
     width: 5.2rem;
     height: 5.2rem;
-    margin-bottom: 10px;
+    margin-bottom: 1rem;
     object-fit: contain;
     background-color: var(--card-bg);
 

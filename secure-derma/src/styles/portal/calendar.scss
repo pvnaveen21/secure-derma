@@ -4,23 +4,23 @@
     }
 
     .ant-picker-calendar-mini .ant-picker-content th {
-        padding-bottom: 10px !important;
+        padding-bottom: 1rem !important;
         color: var(--ant-primary-color);
         font-weight: 500;
-        padding-left: 10px;
+        padding-left: 1rem;
     }
 
     .ant-picker-cell .ant-picker-cell-inner {
         min-width: auto;
-        height: 36px;
+        height: 3.6rem;
         display: flex;
         align-items: center;
         justify-content: center;
-        margin-left: 10px;
+        margin-left: 1rem;
     }
 
     .ant-picker-calendar-mini .ant-picker-content {
-        min-height: 360px !important;
+        min-height: 36rem !important;
     }
 
     .ant-picker-cell-in-view.ant-picker-cell-today .ant-picker-cell-inner::before {

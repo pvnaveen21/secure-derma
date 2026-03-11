@@ -1,7 +1,34 @@
 html {
-    font-size: 62.5%; // 10px base
+    font-size: 62.5%;
     box-sizing: border-box;
     scroll-behavior: smooth;
+    background-color: var(--background);
+}
+
+html.cdk-global-scrollblock {
+    background-color: var(--background);
+}
+
+.cdk-overlay-container,
+.cdk-overlay-connected-position-bounding-box {
+    background: transparent;
+}
+
+.cart-drawer-shell.ant-drawer,
+.cart-drawer-shell .ant-drawer-content-wrapper,
+.cart-drawer-shell .ant-drawer-wrapper-body {
+    background: transparent !important;
+}
+
+.cart-drawer-shell .ant-drawer-mask {
+    background: rgba(15, 23, 42, 0.32) !important;
+}
+
+.cart-drawer-shell .ant-drawer-content,
+.cart-drawer-shell .ant-drawer-header,
+.cart-drawer-shell .ant-drawer-body,
+.cart-drawer-shell .ant-drawer-footer {
+    background: var(--card-bg) !important;
 }
 
 *,
@@ -14,13 +41,13 @@ html {
 
 body {
     font-family: 'Avenir Next', 'Nunito Sans', 'Segoe UI', sans-serif;
-    font-size: 1rem; // 16px
+    font-size: 1rem;
     line-height: 1.5rem;
     background-color: var(--background);
     color: var(--text-primary);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    overflow-x: hidden;
+    // overflow-x: hidden;
     transition: background-color 0.3s ease, color 0.3s ease;
 }
 
@@ -29,13 +56,11 @@ h1 {
     font-family: 'Palatino Linotype', 'Book Antiqua', serif;
 }
 
-// 32px
 h2 {
     font-size: 1.8rem;
     font-family: 'Palatino Linotype', 'Book Antiqua', serif;
 }
 
-// 24px
 h3 {
     font-size: 1.4rem;
     font-family: 'Palatino Linotype', 'Book Antiqua', serif;
@@ -65,8 +90,8 @@ button {
     line-height: 1.6rem;
 }
 
-// @btn-font-size-base: 1rem; // instead of 14px
-// @btn-height-base: 3.2rem; // instead of 32px
+// @btn-font-size-base: 1rem;
+// @btn-height-base: 3.2rem;
 // @font-size-base: 1rem;
 
 

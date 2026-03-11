@@ -72,7 +72,7 @@
 
 .newsletter-input {
     display: flex;
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    border: 0.1rem solid rgba(255, 255, 255, 0.2);
     border-radius: 0.6rem;
     overflow: hidden;
     background: rgba(255, 255, 255, 0.04);
@@ -99,8 +99,8 @@
 .footer__trust {
     margin-top: 1.6rem;
     padding: 1.1rem 0;
-    border-top: 1px solid rgba(255, 255, 255, 0.14);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+    border-top: 0.1rem solid rgba(255, 255, 255, 0.14);
+    border-bottom: 0.1rem solid rgba(255, 255, 255, 0.14);
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 1rem;
@@ -131,7 +131,7 @@
     flex-wrap: wrap;
 }
 
-@media (max-width: 1024px) {
+@media (max-width: 102.4rem) {
     .footer__top {
         grid-template-columns: 1fr 1fr;
     }
@@ -141,9 +141,9 @@
     }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 76.8rem) {
     .footer {
-        padding: 2.2rem 1rem 1.4rem;
+        padding: 2.2rem 1rem 10rem;
     }
 
     .footer__top {

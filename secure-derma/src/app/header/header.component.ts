@@ -433,6 +433,7 @@ export class HeaderComponent {
     this.router.navigate([`./collections/${this.slugify(value)}`])
   }
   openCartDrawer() {
+    this.cartDrawerPlacement = 'right';
     this.cartDrawerVisible = true
   }
   closeCartDrawer() {
@@ -481,6 +482,14 @@ export class HeaderComponent {
 
   private isDesktopView(): boolean {
     return typeof window !== 'undefined' && window.innerWidth > this.mobileBreakpoint;
+  }
+
+  get cartDrawerWidth(): string | number | undefined {
+    return this.isDesktopView() ? '28rem' : '100vw';
+  }
+
+  get cartDrawerHeight(): string | number | undefined {
+    return undefined;
   }
 
   getMobilePanelTitle(panelKey: string): string {

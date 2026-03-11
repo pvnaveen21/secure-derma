@@ -1,10 +1,27 @@
+:host {
+    display: block;
+    min-width: 0;
+}
+
+:host(.horizontal-scroll-host) {
+    width: 100%;
+}
+
+:host(.vertical-scroll-host) {
+    width: auto;
+}
+
 .tej-hr-scroll {
     position: relative;
+    display: block;
+    width: 100%;
+    min-width: 0;
 
     .scroll-body {
         overflow: auto;
         -ms-overflow-style: none;
         scrollbar-width: none;
+        max-width: 100%;
 
         &::-webkit-scrollbar {
             display: none;
@@ -53,6 +70,8 @@
 
     // Vertical Mode
     &.vertical {
+        width: auto;
+
         .prev-icon {
             top: -1.4rem;
             left: 50%;
@@ -67,8 +86,51 @@
 
         .scroll-body {
             display: block;
-            height: 25rem; // customize as needed
+            max-height: 25rem;
             overflow-y: auto;
         }
+    }
+}
+
+@media (max-width: 76.8rem) {
+    :host(.horizontal-scroll-host) .tej-hr-scroll {
+        overflow-x: clip;
+    }
+
+    :host(.horizontal-scroll-host) .tej-hr-scroll .scroll-icon {
+        width: 2.4rem;
+        height: 2.4rem;
+    }
+
+    :host(.horizontal-scroll-host) .tej-hr-scroll:not(.vertical) .prev-icon {
+        left: 0.35rem;
+    }
+
+    :host(.horizontal-scroll-host) .tej-hr-scroll:not(.vertical) .next-icon {
+        right: 0.35rem;
+    }
+
+    :host(.vertical-scroll-host) {
+        width: 100%;
+    }
+
+    :host(.vertical-scroll-host) .tej-hr-scroll,
+    :host(.vertical-scroll-host) .tej-hr-scroll.vertical {
+        width: 100%;
+        max-width: 100%;
+    }
+
+    :host(.vertical-scroll-host) .tej-hr-scroll .scroll-icon {
+        display: none;
+    }
+
+    :host(.vertical-scroll-host) .tej-hr-scroll.vertical .scroll-body {
+        width: 100%;
+        max-width: 100%;
+        max-height: none;
+        height: auto;
+        overflow-x: auto;
+        overflow-y: hidden;
+        white-space: nowrap;
     }
 }

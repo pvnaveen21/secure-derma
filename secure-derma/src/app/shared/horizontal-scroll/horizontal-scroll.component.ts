@@ -1,4 +1,4 @@
-import { Component, ElementRef, Input, ViewChild, AfterViewInit, HostListener } from '@angular/core';
+import { Component, ElementRef, Input, ViewChild, AfterViewInit, HostBinding, HostListener } from '@angular/core';
 import { LucideAngularModule } from 'lucide-angular';
 import { timer } from 'rxjs';
 import { Icons } from '../icons';
@@ -13,6 +13,12 @@ export class HorizontalScrollComponent {
   @ViewChild('scrollBodyContainer') scrollContainer!: ElementRef<any>;
   @Input() data: any[] = [];
   @Input() scrollDirection: 'horizontal' | 'vertical' = 'horizontal';
+  @HostBinding('class.horizontal-scroll-host') get isHorizontalHost() {
+    return this.scrollDirection === 'horizontal';
+  }
+  @HostBinding('class.vertical-scroll-host') get isVerticalHost() {
+    return this.scrollDirection === 'vertical';
+  }
 
   icons = Icons;
   showScrollBtns = false;

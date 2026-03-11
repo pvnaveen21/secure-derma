@@ -21,7 +21,7 @@
         align-items: center;
         gap: 2.5rem;
 
-        @media only screen and (max-width:768px) {
+        @media only screen and (max-width:76.8rem) {
             padding-block: 1rem;
             padding-inline: 1rem;
             justify-content: space-between;
@@ -33,7 +33,7 @@
     position: relative;
     padding: 0 0 0.7rem;
 
-    @media only screen and (max-width:768px) {
+    @media only screen and (max-width:76.8rem) {
         padding: 0 1rem 0.7rem;
     }
 }
@@ -43,7 +43,7 @@
     height: 0.18rem;
     width: 100%;
     overflow: hidden;
-    border-radius: 999px;
+    border-radius: 99.9rem;
     background: color-mix(in srgb, var(--brand-primary) 12%, transparent);
 
     &::after {
@@ -122,7 +122,7 @@
         align-items: center;
     }
 
-    @media only screen and (max-width:768px) {
+    @media only screen and (max-width:76.8rem) {
         display: none;
     }
 }
@@ -144,10 +144,10 @@
 }
 
 .menu-title-main {
-    border-bottom: 1px solid transparent;
+    border-bottom: 0.1rem solid transparent;
 
     &:hover {
-        border-bottom: 1px solid var(--brand-primary);
+        border-bottom: 0.1rem solid var(--brand-primary);
 
         .menu-title {
             color: var(--brand-primary);
@@ -242,7 +242,7 @@
 .skin-dropdown-content {
     box-shadow: rgba(0, 0, 0, 0.24) 0 0.3rem 0.8rem;
     background-color: var(--dropdown-bg);
-    width: calc(100vw - 40px);
+    width: calc(100vw - 4rem);
     max-width: 80rem;
     margin: auto;
     // border-radius: 0.5rem;
@@ -288,7 +288,7 @@
 
 .skin-link:hover {
     color: var(--brand-primary);
-    transform: translateX(4px);
+    transform: translateX(0.4rem);
 }
 
 .skin-featured-card {
@@ -393,7 +393,7 @@
 }
 
 .skin-v2-item:hover {
-    transform: translateX(2px);
+    transform: translateX(0.2rem);
     border-color: color-mix(in srgb, var(--text-primary) 20%, var(--border-color));
     background: color-mix(in srgb, var(--hover-bg) 78%, var(--card-bg));
     color: var(--brand-primary-strong);
@@ -551,14 +551,14 @@
 }
 
 .hair-v2-item:hover {
-    transform: translateX(2px);
+    transform: translateX(0.2rem);
     border-color: color-mix(in srgb, var(--brand-secondary) 55%, var(--border-color));
     background: color-mix(in srgb, var(--brand-secondary) 9%, var(--card-bg));
     color: var(--brand-secondary);
 }
 
 .supplement-v2-item:hover {
-    transform: translateX(2px);
+    transform: translateX(0.2rem);
     border-color: color-mix(in srgb, var(--brand-primary) 55%, var(--border-color));
     background: color-mix(in srgb, var(--brand-primary) 9%, var(--card-bg));
     color: var(--brand-primary-strong);
@@ -635,7 +635,7 @@
     color: color-mix(in srgb, var(--brand-primary) 75%, var(--text-heading));
 }
 
-@media only screen and (max-width: 1200px) {
+@media only screen and (max-width: 120rem) {
     .skin-dropdown-content--skin-v2 {
         grid-template-columns: 1fr 1fr;
     }
@@ -673,7 +673,7 @@
         position: fixed !important;
         left: 50% !important;
         transform: translateX(-50%) !important;
-        top: 60px !important; // Adjust based on your header height
+        top: 6rem !important; // Adjust based on your header height
     }
 }
 
@@ -875,14 +875,14 @@ nz-input-group {
 .mobile-view {
     display: none;
 
-    @media only screen and (max-width:768px) {
+    @media only screen and (max-width:76.8rem) {
         display: block;
     }
 }
 
 .only-web-view {
 
-    @media only screen and (max-width:768px) {
+    @media only screen and (max-width:76.8rem) {
         display: none;
     }
 }
@@ -937,7 +937,7 @@ nz-input-group {
 .brand-list-container {
     min-height: 100%;
     overflow-y: auto;
-    padding-right: 40px;
+    padding-right: 4rem;
     scroll-behavior: smooth;
 }
 
@@ -1006,7 +1006,6 @@ nz-input-group {
     width: 100%;
     background: var(--surface);
     border-radius: 0.25rem;
-    /* 4px / 16 */
 }
 
 .collapse-header {
@@ -1014,7 +1013,6 @@ nz-input-group {
     justify-content: space-between;
     align-items: center;
     padding: 1rem 1.25rem;
-    /* 16px 20px / 16 */
     cursor: pointer;
     user-select: none;
     transition: background-color 0.3s;
@@ -1031,14 +1029,12 @@ nz-input-group {
 
 .header-text {
     font-size: 1rem;
-    /* 16px / 16 */
     font-weight: 400;
     color: var(--text-primary);
 }
 
 .m-icon {
     font-size: 1.5rem;
-    /* 24px / 16 */
     font-weight: 300;
     transition: transform 0.7s;
     line-height: 1;
@@ -1058,7 +1054,6 @@ nz-input-group {
     padding: 0;
     overflow: hidden;
     transform: translateY(-0.625rem);
-    /* -10px / 16 */
     transition: max-height 0.5s cubic-bezier(0.25, 1, 0.5, 1),
         opacity 0.4s ease,
         transform 0.5s cubic-bezier(0.25, 1, 0.5, 1),
@@ -1067,10 +1062,8 @@ nz-input-group {
 
 .collapse-content.active {
     max-height: 62.5rem;
-    /* 1000px / 16 */
     opacity: 1;
     padding: 1rem 0;
-    /* 16px / 16 */
     transform: translateY(0);
 }
 
@@ -1080,14 +1073,12 @@ nz-input-group {
 
 .content-inner {
     padding: 0 1.25rem 1rem 1.25rem;
-    /* 0 20px 16px 20px / 16 */
 }
 
 .content-inner p {
     margin: 0;
     color: #666;
     font-size: 0.875rem;
-    /* 14px / 16 */
     line-height: 1.6;
 }
 
@@ -1150,7 +1141,7 @@ nz-input-group {
     font-size: 0.88rem;
     transition: transform 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
     opacity: 0;
-    transform: translateY(6px);
+    transform: translateY(0.6rem);
 }
 
 .collapse-content.active .mobile-link-item {
@@ -1161,7 +1152,7 @@ nz-input-group {
 .mobile-link-item:hover {
     background: color-mix(in srgb, var(--hover-bg) 75%, var(--card-bg));
     border-color: color-mix(in srgb, var(--brand-primary) 35%, var(--border-color));
-    transform: translateX(3px);
+    transform: translateX(0.3rem);
 }
 
 .mobile-empty-text {
@@ -1194,7 +1185,7 @@ nz-input-group {
 }
 
 .mobile-section-cta:hover {
-    transform: translateY(-1px);
+    transform: translateY(-0.1rem);
     box-shadow: 0 0.45rem 0.85rem color-mix(in srgb, var(--brand-primary) 28%, transparent);
 }
 
@@ -1205,7 +1196,7 @@ nz-input-group {
 @keyframes mobilePanelFadeIn {
     from {
         opacity: 0;
-        transform: translateY(8px);
+        transform: translateY(0.8rem);
     }
 
     to {
@@ -1254,8 +1245,46 @@ nz-input-group {
         font-size: 0.875rem;
         color: var(--text-secondary);
         background: color-mix(in srgb, var(--hover-bg) 76%, var(--card-bg));
-        border-radius: 999px;
+        border-radius: 99.9rem;
         padding: 0.2rem 0.55rem;
+    }
+}
+
+@media only screen and (max-width: 48rem) {
+    ::ng-deep .cart-drawer-shell {
+        .ant-drawer-content-wrapper {
+            max-width: 100vw;
+        }
+
+        .ant-drawer-header,
+        .ant-drawer-body,
+        .ant-drawer-footer {
+            padding-left: 0.85rem;
+            padding-right: 0.85rem;
+        }
+    }
+
+    .drawer-header {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .cart-items-container {
+        .cart-item {
+            display: grid;
+            grid-template-columns: 4rem minmax(0, 1fr);
+            gap: 0.85rem;
+        }
+
+        .item-price {
+            grid-column: 2;
+            text-align: left;
+        }
+
+        .item-details .item-controls {
+            flex-wrap: wrap;
+            align-items: flex-start;
+        }
     }
 }
 
@@ -1276,7 +1305,7 @@ nz-input-group {
         border-radius: 0.8rem;
         margin-bottom: 0.75rem;
         opacity: 0;
-        transform: translateY(8px);
+        transform: translateY(0.8rem);
 
         .item-image {
             width: 4rem;
@@ -1381,7 +1410,7 @@ nz-input-group {
                 font-weight: 700;
                 color: #ffffff;
                 background: color-mix(in srgb, var(--brand-primary) 70%, var(--brand-secondary) 30%);
-                border-radius: 999px;
+                border-radius: 99.9rem;
                 padding: 0.12rem 0.45rem;
                 letter-spacing: 0.01rem;
             }
@@ -1414,7 +1443,7 @@ nz-input-group {
 @keyframes cartItemLanding {
     from {
         opacity: 0;
-        transform: translateY(8px);
+        transform: translateY(0.8rem);
     }
 
     to {
