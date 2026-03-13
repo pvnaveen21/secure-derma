@@ -6,6 +6,7 @@ from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenRefreshView
 from rest_framework_simplejwt.exceptions import TokenError, InvalidToken
+import os
 
 from user.models import User
 
@@ -83,6 +84,39 @@ class AdminTokenRefreshView(TokenRefreshView):
             )
 
 
+class UserTokenRefreshView(TokenRefreshView):
+
+    permission_classes = [AllowAny]
+
+    def post(self, request, *args, **kwargs):
+        refresh_token = request.data.get('refresh')
+
+        if not refresh_token:
+            return Response(
+                {'error': 'Refresh token is required.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            response = super().post(request, *args, **kwargs)
+            return Response({
+                'message': 'Token refreshed successfully.',
+                'access': response.data.get('access'),
+            }, status=status.HTTP_200_OK)
+
+        except TokenError as e:
+            return Response(
+                {'error': 'Invalid or expired refresh token.', 'detail': str(e)},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+
+        except InvalidToken as e:
+            return Response(
+                {'error': 'Invalid token.', 'detail': str(e)},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+
+
 class AdminDetailApiView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -97,10 +131,27 @@ class AdminDetailApiView(APIView):
         }, status=status.HTTP_200_OK)
 
 
-GOOGLE_CLIENT_ID = "366738678025-5bleq673qblpukr2ten3o0qq6oji7hr2.apps.googleusercontent.com"
+class UserDetailApiView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        return Response({
+            'id': user.id,
+            'username': user.username,
+            'email': user.email,
+            'phone': user.phone,
+            'is_staff': user.is_staff,
+            'is_superuser': user.is_superuser,
+            'is_google_login': user.is_google_login,
+        }, status=status.HTTP_200_OK)
+
 from google.oauth2 import id_token
 from google.auth.transport import requests
 from rest_framework.decorators import api_view
+
+GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "").strip()
+
 @api_view(['POST'])
 def google_login(request):
     token = request.data.get("token")

@@ -84,6 +84,12 @@ export const routes: Routes = [
                 // canActivate: [AdminGuard],
 
             },
+            {
+                path: 'orders',
+                loadComponent: () =>
+                    import('@app/portal/orders/orders.component')
+                        .then(c => c.OrdersComponent),
+            },
 
 
         ],

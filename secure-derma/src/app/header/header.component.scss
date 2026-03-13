@@ -635,7 +635,7 @@
     color: color-mix(in srgb, var(--brand-primary) 75%, var(--text-heading));
 }
 
-@media only screen and (max-width: 120rem) {
+@media only screen and (max-width: 75rem) {
     .skin-dropdown-content--skin-v2 {
         grid-template-columns: 1fr 1fr;
     }
@@ -741,6 +741,22 @@
     .cart-icon,
     .user-icon {
         display: flex;
+    }
+
+    .user-icon--menu {
+        align-items: center;
+        justify-content: center;
+        width: 2.4rem;
+        height: 2.4rem;
+        border-radius: 50%;
+        background: var(--surface);
+        cursor: pointer;
+        transition: background 0.2s ease, transform 0.2s ease;
+
+        &:hover {
+            background: var(--hover-bg);
+            transform: scale(1.05);
+        }
     }
 
     .icon-wrapper {

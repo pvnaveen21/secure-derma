@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, inject, Inject, PLATFORM_ID } from '@angular/core';
+import { Component, inject, Inject, OnDestroy, PLATFORM_ID } from '@angular/core';
 import { NzCarouselModule } from 'ng-zorro-antd/carousel';
 import { CommonModule, DOCUMENT, isPlatformBrowser } from '@angular/common';
 import { LucideAngularModule } from 'lucide-angular';
@@ -6,9 +6,11 @@ import { NzInputModule } from 'ng-zorro-antd/input';
 import { FormsModule } from '@angular/forms';
 import { NzRateModule } from 'ng-zorro-antd/rate';
 import { Router } from '@angular/router';
+import { NzMessageService } from 'ng-zorro-antd/message';
 import { Assets } from '../shared/assets';
 import { Icons } from '../shared/icons';
 import { HomeService } from '../services/home.service';
+import { CartService } from '../services/cart.service';
 import { HorizontalScrollComponent } from '../shared/horizontal-scroll/horizontal-scroll.component';
 
 @Component({
@@ -33,6 +35,8 @@ export class HomeComponent {
   constructor(
     private homeService: HomeService,
     private router: Router,
+    private cartService: CartService,
+    private message: NzMessageService,
     @Inject(PLATFORM_ID) private platformId: object,
     @Inject(DOCUMENT) private document: Document
   ) {
@@ -145,6 +149,8 @@ export class HomeComponent {
   concernProducts: any[] = []
   concernProductsLoading = false
   concernTotalCount = 0
+  recentlyAddedProductId: number | null = null
+  private addToCartFeedbackTimeout?: ReturnType<typeof setTimeout>
 
   loadConcernProducts(concern: string) {
     this.selectedConcern = concern
@@ -369,6 +375,75 @@ export class HomeComponent {
   producetView(value:any){
     this.router.navigate([`./products/${this.slugify(value)}`]);
     
+  }
+
+  async addToCart(product: any) {
+    try {
+      const result = await this.cartService.addToCart(this.normalizeProductForCart(product));
+
+      switch (result.status) {
+        case 'added':
+        case 'updated':
+          this.recentlyAddedProductId = product.id;
+          if (this.addToCartFeedbackTimeout) {
+            clearTimeout(this.addToCartFeedbackTimeout);
+          }
+          this.addToCartFeedbackTimeout = setTimeout(() => {
+            if (this.recentlyAddedProductId === product.id) {
+              this.recentlyAddedProductId = null;
+            }
+          }, 2200);
+          this.message.success(
+            result.status === 'added'
+              ? `${product.product_name} added to cart`
+              : `${product.product_name} quantity updated in cart`
+          );
+          break;
+        case 'limit_reached':
+          this.message.info(`${product.product_name} is already at the maximum quantity`);
+          break;
+        case 'missing_details':
+          this.message.error(`Unable to add ${product.product_name} right now`);
+          break;
+      }
+    } catch {
+      this.message.error(`Unable to add ${product.product_name} right now`);
+    }
+  }
+
+  ngOnDestroy() {
+    if (this.addToCartFeedbackTimeout) {
+      clearTimeout(this.addToCartFeedbackTimeout);
+    }
+  }
+
+  private normalizeProductForCart(product: any) {
+    const selectedDetail =
+      product?.details?.[0]
+      ?? product?.product_details?.[0]
+      ?? (product?.price || product?.min_price
+        ? {
+            id: product?.detail_id ?? product?.id,
+            selling_price: Number(product?.price ?? product?.min_price ?? 0),
+            original_price: Number(
+              product?.original_price
+              ?? product?.product_details?.[0]?.original_price
+              ?? product?.price
+              ?? product?.min_price
+              ?? 0
+            ),
+            discount_price: Number(
+              product?.discount_price
+              ?? product?.product_details?.[0]?.discount_price
+              ?? 0
+            )
+          }
+        : null);
+
+    return {
+      ...product,
+      details: selectedDetail ? [selectedDetail] : []
+    };
   }
 
 }

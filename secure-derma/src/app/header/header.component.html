@@ -249,7 +249,7 @@
                     </ng-template>
                 </div>
 
-                <div>
+                <div *ngIf="!isLoggedIn">
                     <button class="secure-btn btn-primary btn-lg signin-btn" (click)="signIn()">Sign in</button>
                 </div>
             </div>
@@ -268,10 +268,16 @@
                         </div>
                     </nz-badge>
                 </div>
-                <div class="user-icon">
+                <div *ngIf="isLoggedIn" nz-dropdown [nzDropdownMenu]="profileMenu" nzTrigger="click"
+                    class="user-icon user-icon--menu">
                     <lucide-angular class="icon-display" [img]="icons.header.user" [size]="25"></lucide-angular>
                 </div>
             </div>
+            <nz-dropdown-menu #profileMenu="nzDropdownMenu">
+                <ul nz-menu>
+                    <li nz-menu-item (click)="logout()">Logout</li>
+                </ul>
+            </nz-dropdown-menu>
         </div>
         @if (isSelectionLoading) {
         <div class="header-selection-loader" aria-live="polite">
@@ -477,7 +483,7 @@
                 </ng-template>
             </nz-empty>
 
-            <ng-container *ngFor="let item of cartItems; let last = last; let i = index">
+            <ng-container *ngFor="let item of cartItems; let last = last; let i = index; trackBy: trackByCartItem">
                 <div class="cart-item" [style.--item-index]="i">
                     <div class="item-image">
                         <img [src]="item.thumbnail" [alt]="item.productName" (error)="onImageError($event)" />
@@ -549,8 +555,9 @@
             </div>
 
             <button nz-button nzType="primary" nzSize="large" nzBlock (click)="proceedToCheckout()"
+                [disabled]="checkoutLoading"
                 class="checkout-btn">
-                Proceed to Checkout
+                {{ checkoutLoading ? 'Starting Payment...' : 'Proceed to Checkout' }}
             </button>
 
             <div class="trust-badges">

@@ -1,6 +1,7 @@
 export const environment = {
   production: true,
   BASEURL_API: 'http://127.0.0.1:8000/api/admin',
+  GOOGLE_CLIENT_ID: '366738678025-5bleq673qblpukr2ten3o0qq6oji7hr2.apps.googleusercontent.com',
   CND_URI: 'https://tej-images.s3.us-south.cloud-object-storage.appdomain.cloud/media',
   BACKEND_MEDIA_URL: 'https://tej.starsystems.in/',
   FIREBASE: {

@@ -1,9 +1,11 @@
-from rest_framework.generics import ListAPIView
-from rest_framework.permissions import AllowAny
-from rest_framework.response import Response
+import hashlib
+import hmac
+import os
+import uuid
+
+import requests
 from django.conf import settings
-
-
+from django.db import transaction
 from banner_images.models import ImageFile
 from brand.models import Brand
 from categorie.models import Categories
@@ -12,12 +14,231 @@ from ingredient.models import Ingredients
 from product.models import Product, ProductDetails, ProductImage, ProductReview
 from product.serializers import ProductListSerializer
 from product_type.models import ProductType
-from django.db.models import Prefetch, Avg, Count, Min ,Q,F
+from django.db.models import Prefetch, Avg, Count, Min, Q, F, Sum
 
 from skin_concern.models import SkinConcerns
-from rest_framework.views import APIView
-from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.generics import ListAPIView
+from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from .models import OrderStatus, PaymentStatus, SecureDermaCartItem, SecureDermaOrder, SecureDermaOrderItem, SecureDermaPayment
+
+
+def _build_media_url(request, image_field):
+    if not image_field:
+        return ""
+    try:
+        return request.build_absolute_uri(image_field.url)
+    except ValueError:
+        return ""
+
+
+def _serialize_cart_items(request, cart_items):
+    results = []
+    total_quantity = 0
+    subtotal = 0
+
+    for item in cart_items:
+        detail = item.product_detail
+        product = item.product
+        line_total = detail.selling_price * item.quantity
+        total_quantity += item.quantity
+        subtotal += line_total
+        results.append(
+            {
+                "id": item.id,
+                "productId": product.id,
+                "productName": product.product_name,
+                "thumbnail": _build_media_url(request, product.thumbnail_image),
+                "price": detail.selling_price,
+                "originalPrice": detail.original_price,
+                "discountPrice": detail.discount_price,
+                "detailId": detail.id,
+                "quantity": item.quantity,
+                "availableStockCount": detail.available_stock_count,
+                "lineTotal": line_total,
+            }
+        )
+
+    return {
+        "items": results,
+        "count": len(results),
+        "total_quantity": total_quantity,
+        "subtotal": subtotal,
+    }
+
+
+def _get_user_cart_queryset(user):
+    return (
+        SecureDermaCartItem.objects
+        .filter(user=user)
+        .select_related("product", "product_detail")
+        .order_by("-created_at")
+    )
+
+
+def _get_cart_detail_map(detail_ids):
+    details = ProductDetails.objects.select_related("product").filter(
+        id__in=detail_ids,
+        is_deleted=False,
+        product__is_deleted=False,
+    )
+    return {detail.id: detail for detail in details}
+
+
+def _normalize_cart_quantity(raw_quantity, default=1):
+    try:
+        quantity = int(raw_quantity if raw_quantity is not None else default)
+    except (TypeError, ValueError):
+        return None
+    if quantity < 1 or quantity > 10:
+        return None
+    return quantity
+
+
+class SecureDermaCartAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        cart_items = list(_get_user_cart_queryset(request.user))
+        return Response(_serialize_cart_items(request, cart_items))
+
+    def delete(self, request, *args, **kwargs):
+        _get_user_cart_queryset(request.user).delete()
+        return Response({"cleared": True, "items": [], "count": 0, "total_quantity": 0, "subtotal": 0})
+
+
+class SecureDermaCartSyncAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        payload_items = request.data.get("items", [])
+        if not isinstance(payload_items, list):
+            return Response({"detail": "Cart items must be a list."}, status=status.HTTP_400_BAD_REQUEST)
+
+        normalized_items = []
+        detail_ids = []
+        for item in payload_items:
+            detail_id = item.get("detailId")
+            quantity = _normalize_cart_quantity(item.get("quantity"), default=1)
+            if detail_id is None or quantity is None:
+                return Response({"detail": "Invalid guest cart payload."}, status=status.HTTP_400_BAD_REQUEST)
+
+            try:
+                detail_id = int(detail_id)
+            except (TypeError, ValueError):
+                return Response({"detail": "Invalid detail id in guest cart payload."}, status=status.HTTP_400_BAD_REQUEST)
+
+            normalized_items.append({"detail_id": detail_id, "quantity": quantity})
+            detail_ids.append(detail_id)
+
+        detail_map = _get_cart_detail_map(detail_ids)
+        existing_items = {
+            item.product_detail_id: item
+            for item in _get_user_cart_queryset(request.user)
+        }
+        skipped_items = []
+
+        with transaction.atomic():
+            for item in normalized_items:
+                detail = detail_map.get(item["detail_id"])
+                if not detail:
+                    skipped_items.append({"detailId": item["detail_id"], "reason": "missing"})
+                    continue
+
+                if detail.available_stock_count < 1:
+                    skipped_items.append({"detailId": item["detail_id"], "reason": "out_of_stock"})
+                    continue
+
+                existing_item = existing_items.get(detail.id)
+                merged_quantity = item["quantity"] + (existing_item.quantity if existing_item else 0)
+                merged_quantity = min(merged_quantity, 10, detail.available_stock_count)
+
+                if existing_item:
+                    existing_item.quantity = merged_quantity
+                    existing_item.save(update_fields=["quantity", "updated_at"])
+                else:
+                    existing_items[detail.id] = SecureDermaCartItem.objects.create(
+                        user=request.user,
+                        product=detail.product,
+                        product_detail=detail,
+                        quantity=merged_quantity,
+                    )
+
+        cart_items = list(_get_user_cart_queryset(request.user))
+        response_data = _serialize_cart_items(request, cart_items)
+        response_data["synced"] = True
+        response_data["skipped_items"] = skipped_items
+        return Response(response_data)
+
+
+class SecureDermaCartItemAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        detail_id = request.data.get("detailId")
+        quantity = _normalize_cart_quantity(request.data.get("quantity"), default=1)
+
+        if detail_id is None or quantity is None:
+            return Response({"detail": "detailId and a quantity between 1 and 10 are required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            detail_id = int(detail_id)
+        except (TypeError, ValueError):
+            return Response({"detail": "Invalid detailId."}, status=status.HTTP_400_BAD_REQUEST)
+
+        detail = _get_cart_detail_map([detail_id]).get(detail_id)
+        if not detail:
+            return Response({"detail": "Product detail not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        if detail.available_stock_count < 1:
+            return Response({"detail": "This item is out of stock."}, status=status.HTTP_409_CONFLICT)
+
+        cart_item = _get_user_cart_queryset(request.user).filter(product_detail_id=detail_id).first()
+        new_quantity = quantity + (cart_item.quantity if cart_item else 0)
+
+        if new_quantity > 10:
+            return Response({"detail": "Quantity cannot exceed 10 for a single cart item."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if detail.available_stock_count < new_quantity:
+            return Response({"detail": "Requested quantity exceeds available stock."}, status=status.HTTP_409_CONFLICT)
+
+        with transaction.atomic():
+            if cart_item:
+                cart_item.quantity = new_quantity
+                cart_item.save(update_fields=["quantity", "updated_at"])
+            else:
+                SecureDermaCartItem.objects.create(
+                    user=request.user,
+                    product=detail.product,
+                    product_detail=detail,
+                    quantity=new_quantity,
+                )
+
+        return Response(_serialize_cart_items(request, list(_get_user_cart_queryset(request.user))))
+
+    def patch(self, request, detail_id, *args, **kwargs):
+        quantity = _normalize_cart_quantity(request.data.get("quantity"))
+        if quantity is None:
+            return Response({"detail": "A quantity between 1 and 10 is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        cart_item = _get_user_cart_queryset(request.user).filter(product_detail_id=detail_id).first()
+        if not cart_item:
+            return Response({"detail": "Cart item not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        if cart_item.product_detail.available_stock_count < quantity:
+            return Response({"detail": "Requested quantity exceeds available stock."}, status=status.HTTP_409_CONFLICT)
+
+        cart_item.quantity = quantity
+        cart_item.save(update_fields=["quantity", "updated_at"])
+        return Response(_serialize_cart_items(request, list(_get_user_cart_queryset(request.user))))
+
+    def delete(self, request, detail_id, *args, **kwargs):
+        deleted, _ = _get_user_cart_queryset(request.user).filter(product_detail_id=detail_id).delete()
+        if not deleted:
+            return Response({"detail": "Cart item not found."}, status=status.HTTP_404_NOT_FOUND)
+        return Response(_serialize_cart_items(request, list(_get_user_cart_queryset(request.user))))
 
 class BrandListAPIView(ListAPIView):
     permission_classes = [AllowAny]
@@ -206,6 +427,499 @@ class ImagesAPIView(ListAPIView):
             'images': images_list,
             'count': len(images_list)
         })
+
+
+class RazorpayCreateOrderAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        razorpay_key_id = os.getenv("RAZORPAY_KEY_ID", "").strip()
+        razorpay_key_secret = os.getenv("RAZORPAY_KEY_SECRET", "").strip()
+
+        if not razorpay_key_id or not razorpay_key_secret:
+            return Response(
+                {"detail": "Razorpay credentials are not configured on the server."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+        cart_items = request.data.get("items", [])
+        if not isinstance(cart_items, list) or not cart_items:
+            return Response(
+                {"detail": "Cart items are required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        normalized_items = []
+        detail_ids = []
+
+        for item in cart_items:
+            detail_id = item.get("detailId")
+            quantity = item.get("quantity", 1)
+
+            if not detail_id:
+                return Response(
+                    {"detail": "Each cart item must include detailId."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            try:
+                detail_id = int(detail_id)
+                quantity = int(quantity)
+            except (TypeError, ValueError):
+                return Response(
+                    {"detail": "Invalid cart item payload."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            if quantity < 1 or quantity > 10:
+                return Response(
+                    {"detail": "Quantity must be between 1 and 10."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            normalized_items.append({"detail_id": detail_id, "quantity": quantity})
+            detail_ids.append(detail_id)
+
+        details = ProductDetails.objects.select_related("product").filter(
+            id__in=detail_ids,
+            is_deleted=False,
+            product__is_deleted=False,
+        )
+        detail_map = {detail.id: detail for detail in details}
+
+        missing_detail_ids = [item["detail_id"] for item in normalized_items if item["detail_id"] not in detail_map]
+        if missing_detail_ids:
+            return Response(
+                {"detail": f"Some cart items are no longer available: {missing_detail_ids}"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        amount_rupees = 0
+        cart_summary = []
+
+        for item in normalized_items:
+            detail = detail_map[item["detail_id"]]
+            quantity = item["quantity"]
+
+            if detail.available_stock_count < quantity:
+                return Response(
+                    {
+                        "detail": (
+                            f"Only {detail.available_stock_count} item(s) left for "
+                            f"{detail.product.product_name}."
+                        )
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            line_total = detail.selling_price * quantity
+            amount_rupees += line_total
+            cart_summary.append(
+                {
+                    "product_id": detail.product_id,
+                    "detail_id": detail.id,
+                    "product_name": detail.product.product_name,
+                    "quantity": quantity,
+                    "unit_price": detail.selling_price,
+                    "line_total": line_total,
+                }
+            )
+
+        if amount_rupees <= 0:
+            return Response(
+                {"detail": "Order amount must be greater than zero."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        amount_paise = amount_rupees * 100
+        receipt = f"securederma_{uuid.uuid4().hex[:20]}"
+
+        customer = request.data.get("customer") or {}
+        notes = {
+            "customer_name": str(customer.get("name", ""))[:255],
+            "customer_email": str(customer.get("email", ""))[:255],
+            "customer_phone": str(customer.get("contact", ""))[:20],
+        }
+
+        response = requests.post(
+            "https://api.razorpay.com/v1/orders",
+            auth=(razorpay_key_id, razorpay_key_secret),
+            json={
+                "amount": amount_paise,
+                "currency": "INR",
+                "receipt": receipt,
+                "notes": notes,
+            },
+            timeout=15,
+        )
+
+        if response.status_code >= 400:
+            return Response(
+                {
+                    "detail": "Failed to create Razorpay order.",
+                    "debug": {
+                        "key_id_prefix": razorpay_key_id[:12],
+                        "key_id_length": len(razorpay_key_id),
+                        "key_secret_present": bool(razorpay_key_secret),
+                        "key_secret_length": len(razorpay_key_secret),
+                    },
+                    "razorpay_error": response.json() if response.content else None,
+                },
+                status=status.HTTP_502_BAD_GATEWAY,
+            )
+
+        razorpay_order = response.json()
+
+        with transaction.atomic():
+            order = SecureDermaOrder.objects.create(
+                user=request.user if getattr(request.user, "is_authenticated", False) else None,
+                order_number=receipt,
+                razorpay_order_id=razorpay_order.get("id"),
+                amount_rupees=amount_rupees,
+                amount_paise=amount_paise,
+                currency=razorpay_order.get("currency", "INR"),
+                status=OrderStatus.PAYMENT_PENDING,
+                customer_name=notes["customer_name"],
+                customer_email=notes["customer_email"],
+                customer_phone=notes["customer_phone"],
+                items_snapshot=cart_summary,
+            )
+
+            SecureDermaOrderItem.objects.bulk_create(
+                [
+                    SecureDermaOrderItem(
+                        order=order,
+                        product_id=item["product_id"],
+                        product_detail_id=item["detail_id"],
+                        product_name=item["product_name"],
+                        quantity=item["quantity"],
+                        unit_price=item["unit_price"],
+                        line_total=item["line_total"],
+                    )
+                    for item in cart_summary
+                ]
+            )
+
+            SecureDermaPayment.objects.create(
+                order=order,
+                razorpay_order_id=razorpay_order.get("id"),
+                status=PaymentStatus.CREATED,
+                payload={
+                    "razorpay_order_create_response": razorpay_order,
+                },
+            )
+
+        return Response(
+            {
+                "key_id": razorpay_key_id,
+                "amount": amount_rupees,
+                "amount_paise": amount_paise,
+                "currency": order.currency,
+                "order_id": order.razorpay_order_id,
+                "receipt": order.order_number,
+                "cart_summary": cart_summary,
+            }
+        )
+
+
+class RazorpayVerifyPaymentAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        razorpay_key_secret = os.getenv("RAZORPAY_KEY_SECRET", "").strip()
+        if not razorpay_key_secret:
+            return Response(
+                {"detail": "Razorpay credentials are not configured on the server."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+        razorpay_order_id = str(request.data.get("razorpay_order_id", "")).strip()
+        razorpay_payment_id = str(request.data.get("razorpay_payment_id", "")).strip()
+        razorpay_signature = str(request.data.get("razorpay_signature", "")).strip()
+
+        if not razorpay_order_id or not razorpay_payment_id or not razorpay_signature:
+            return Response(
+                {"detail": "Missing Razorpay payment verification fields."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        generated_signature = hmac.new(
+            razorpay_key_secret.encode(),
+            f"{razorpay_order_id}|{razorpay_payment_id}".encode(),
+            hashlib.sha256,
+        ).hexdigest()
+
+        is_valid = hmac.compare_digest(generated_signature, razorpay_signature)
+        with transaction.atomic():
+            try:
+                order = (
+                    SecureDermaOrder.objects.select_for_update()
+                    .prefetch_related("items")
+                    .get(razorpay_order_id=razorpay_order_id)
+                )
+            except SecureDermaOrder.DoesNotExist:
+                return Response(
+                    {"detail": "Order not found for the given Razorpay order id."},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+
+            if order.user_id and order.user_id != request.user.id:
+                return Response(
+                    {"detail": "You are not allowed to verify this order."},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+
+            if order.status == OrderStatus.PAID:
+                if order.razorpay_payment_id == razorpay_payment_id:
+                    return Response(
+                        {
+                            "verified": True,
+                            "already_processed": True,
+                            "order_number": order.order_number,
+                            "razorpay_order_id": razorpay_order_id,
+                            "razorpay_payment_id": razorpay_payment_id,
+                        }
+                    )
+                return Response(
+                    {"detail": "This order is already finalized with a different payment id."},
+                    status=status.HTTP_409_CONFLICT,
+                )
+
+            if SecureDermaPayment.objects.filter(
+                razorpay_payment_id=razorpay_payment_id,
+                status=PaymentStatus.VERIFIED,
+            ).exists():
+                return Response(
+                    {"detail": "This Razorpay payment id has already been processed."},
+                    status=status.HTTP_409_CONFLICT,
+                )
+
+            if not is_valid:
+                SecureDermaPayment.objects.create(
+                    order=order,
+                    razorpay_order_id=razorpay_order_id,
+                    razorpay_payment_id=razorpay_payment_id,
+                    razorpay_signature=razorpay_signature,
+                    status=PaymentStatus.FAILED,
+                    payload=request.data,
+                )
+                order.status = OrderStatus.PAYMENT_FAILED
+                order.razorpay_payment_id = razorpay_payment_id
+                order.verification_payload = request.data
+                order.save(update_fields=["status", "razorpay_payment_id", "verification_payload", "updated_at"])
+                return Response(
+                    {"detail": "Payment signature verification failed."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            if not order.stock_deducted:
+                item_detail_ids = [item.product_detail_id for item in order.items.all()]
+                detail_map = {
+                    detail.id: detail
+                    for detail in ProductDetails.objects.select_for_update().filter(id__in=item_detail_ids)
+                }
+
+                for item in order.items.all():
+                    detail = detail_map.get(item.product_detail_id)
+                    if not detail:
+                        return Response(
+                            {"detail": f"Product detail {item.product_detail_id} is missing."},
+                            status=status.HTTP_400_BAD_REQUEST,
+                        )
+                    if detail.available_stock_count < item.quantity:
+                        return Response(
+                            {"detail": f"Insufficient stock to finalize {item.product_name}."},
+                            status=status.HTTP_409_CONFLICT,
+                        )
+
+                for item in order.items.all():
+                    detail = detail_map[item.product_detail_id]
+                    detail.available_stock_count = F("available_stock_count") - item.quantity
+                    detail.save(update_fields=["available_stock_count"])
+
+            SecureDermaPayment.objects.create(
+                order=order,
+                razorpay_order_id=razorpay_order_id,
+                razorpay_payment_id=razorpay_payment_id,
+                razorpay_signature=razorpay_signature,
+                status=PaymentStatus.VERIFIED,
+                payload=request.data,
+            )
+            order.status = OrderStatus.PAID
+            order.razorpay_payment_id = razorpay_payment_id
+            order.stock_deducted = True
+            order.verification_payload = request.data
+            order.save(
+                update_fields=[
+                    "status",
+                    "razorpay_payment_id",
+                    "stock_deducted",
+                    "verification_payload",
+                    "updated_at",
+                ]
+            )
+
+            return Response(
+                {
+                    "verified": True,
+                    "order_number": order.order_number,
+                    "razorpay_order_id": razorpay_order_id,
+                    "razorpay_payment_id": razorpay_payment_id,
+                }
+            )
+
+
+class AdminOrderSummaryAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def get(self, request, *args, **kwargs):
+        paid_orders = SecureDermaOrder.objects.filter(status=OrderStatus.PAID)
+        latest_paid_order = paid_orders.order_by("-updated_at").first()
+
+        summary = paid_orders.aggregate(
+            total_orders=Count("id"),
+            total_revenue=Sum("amount_rupees"),
+            average_order_value=Avg("amount_rupees"),
+        )
+
+        return Response(
+            {
+                "summary": {
+                    "total_orders": summary["total_orders"] or 0,
+                    "total_revenue": summary["total_revenue"] or 0,
+                    "average_order_value": round(summary["average_order_value"] or 0, 2),
+                    "pending_orders": SecureDermaOrder.objects.filter(status=OrderStatus.PAYMENT_PENDING).count(),
+                    "latest_paid_at": latest_paid_order.updated_at if latest_paid_order else None,
+                }
+            }
+        )
+
+
+class AdminOrderListAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def get(self, request, *args, **kwargs):
+        try:
+            limit = max(1, min(int(request.query_params.get("limit", 10)), 100))
+            offset = max(0, int(request.query_params.get("offset", 0)))
+        except ValueError:
+            return Response(
+                {"detail": "Invalid pagination values."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        search_text = request.query_params.get("searchText", "").strip()
+        status_filter = request.query_params.get("status", "").strip()
+
+        queryset = (
+            SecureDermaOrder.objects.select_related("user")
+            .prefetch_related("items", "payments")
+            .order_by("-created_at")
+        )
+
+        if status_filter:
+            queryset = queryset.filter(status=status_filter)
+
+        if search_text:
+            queryset = queryset.filter(
+                Q(order_number__icontains=search_text)
+                | Q(razorpay_order_id__icontains=search_text)
+                | Q(razorpay_payment_id__icontains=search_text)
+                | Q(customer_name__icontains=search_text)
+                | Q(customer_email__icontains=search_text)
+                | Q(customer_phone__icontains=search_text)
+            )
+
+        total_count = queryset.count()
+        orders = queryset[offset: offset + limit]
+
+        results = []
+        for order in orders:
+            item_count = sum(item.quantity for item in order.items.all())
+            results.append(
+                {
+                    "id": order.id,
+                    "order_number": order.order_number,
+                    "status": order.status,
+                    "amount_rupees": order.amount_rupees,
+                    "currency": order.currency,
+                    "customer_name": order.customer_name,
+                    "customer_email": order.customer_email,
+                    "customer_phone": order.customer_phone,
+                    "razorpay_order_id": order.razorpay_order_id,
+                    "razorpay_payment_id": order.razorpay_payment_id,
+                    "item_count": item_count,
+                    "created_at": order.created_at,
+                    "updated_at": order.updated_at,
+                }
+            )
+
+        return Response(
+            {
+                "count": total_count,
+                "results": results,
+                "limit": limit,
+                "offset": offset,
+            }
+        )
+
+
+class AdminOrderDetailAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def get(self, request, pk, *args, **kwargs):
+        try:
+            order = (
+                SecureDermaOrder.objects.select_related("user")
+                .prefetch_related("items", "payments")
+                .get(pk=pk)
+            )
+        except SecureDermaOrder.DoesNotExist:
+            return Response(
+                {"detail": "Order not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        return Response(
+            {
+                "id": order.id,
+                "order_number": order.order_number,
+                "status": order.status,
+                "amount_rupees": order.amount_rupees,
+                "amount_paise": order.amount_paise,
+                "currency": order.currency,
+                "customer_name": order.customer_name,
+                "customer_email": order.customer_email,
+                "customer_phone": order.customer_phone,
+                "razorpay_order_id": order.razorpay_order_id,
+                "razorpay_payment_id": order.razorpay_payment_id,
+                "created_at": order.created_at,
+                "updated_at": order.updated_at,
+                "items": [
+                    {
+                        "id": item.id,
+                        "product_id": item.product_id,
+                        "product_detail_id": item.product_detail_id,
+                        "product_name": item.product_name,
+                        "quantity": item.quantity,
+                        "unit_price": item.unit_price,
+                        "line_total": item.line_total,
+                    }
+                    for item in order.items.all()
+                ],
+                "payments": [
+                    {
+                        "id": payment.id,
+                        "status": payment.status,
+                        "razorpay_order_id": payment.razorpay_order_id,
+                        "razorpay_payment_id": payment.razorpay_payment_id,
+                        "created_at": payment.created_at,
+                        "updated_at": payment.updated_at,
+                    }
+                    for payment in order.payments.all()
+                ],
+            }
+        )
         
 class TrendingProductsFastAPIView(ListAPIView):
     """Ultra-fast API for trending products with product details"""
@@ -862,23 +1576,8 @@ class ProductListWithFiltersAPIView(APIView):
         # =========================
         # SLUG LOGIC
         # =========================
-        query_params = request.GET.copy()
-
-        # remove `filter` key before checking
-        query_params.pop("filter", None)
-        
-        filter_value = request.GET.get("filter", "")
-        if query_params and not Brand.objects.filter(
-                slug__iexact=filter_value
-            ).exists():
-            slug = ""
-        else:
-          slug = filter_value.lower() if filter_value else ""
-
-        print("Slug:", slug)
-        print(Brand.objects.filter(
-            slug__icontains=filter_value
-        ).exists())
+        filter_value = (request.GET.get("filter") or "").strip()
+        slug = filter_value.lower() if filter_value else ""
 
         # =====================================================
         # BASE PRODUCT QUERYSET

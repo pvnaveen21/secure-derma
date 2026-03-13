@@ -13,6 +13,7 @@ import {
   unsetToken
 } from '@app/core/token';
 import { User } from '@app/models/users';
+import { CartService } from '../cart.service';
 
 @Injectable({
   providedIn: 'root'
@@ -31,6 +32,7 @@ export class AuthService extends InterfaceService {
   constructor(
     http: HttpClient,
     private router: Router,
+    private cartService: CartService,
   ) {
     super("/auth", http);
   }
@@ -49,8 +51,8 @@ export class AuthService extends InterfaceService {
           setToken(response.access, ACCESS_TOKEN);
           setToken(response.refresh, REFRESH_TOKEN);
 
-          // Fetch user details
-          this.getUserDetails()
+          this.cartService.syncGuestCartToServer()
+            .then(() => this.getUserDetails())
             .then(user => resolve(user))
             .catch(error => reject(error));
         },
@@ -77,7 +79,10 @@ export class AuthService extends InterfaceService {
               setToken(response['refresh'], REFRESH_TOKEN);
             }
 
-            this.getUserDetails().then(user => resolve(user)).catch(error => reject(error));
+            this.cartService.syncGuestCartToServer()
+              .then(() => this.getUserDetails())
+              .then(user => resolve(user))
+              .catch(error => reject(error));
           },
           error: (error: any) => {
             this.setUser();
@@ -99,7 +104,10 @@ export class AuthService extends InterfaceService {
         next: (response: any) => {
           setToken(response.access, ACCESS_TOKEN);
           setToken(response.refresh, REFRESH_TOKEN);
-          this.getUserDetails().then(user => resolve(user)).catch(error => reject(error));
+          this.cartService.syncGuestCartToServer()
+            .then(() => this.getUserDetails())
+            .then(user => resolve(user))
+            .catch(error => reject(error));
         },
         error: (error) => {
           unsetToken();
@@ -138,7 +146,13 @@ export class AuthService extends InterfaceService {
           if (!dontRefresh) {
             // this.refreshTokenTimer();
           }
-          this.router.navigate(['/'])
+          if (this.redirectUrl) {
+            const redirectUrl = this.redirectUrl;
+            this.redirectUrl = null;
+            this.router.navigateByUrl(redirectUrl);
+          } else {
+            this.router.navigate(['/']);
+          }
           resolve(user);
         },
         error: (error) => {
@@ -194,12 +208,14 @@ export class AuthService extends InterfaceService {
         next: (res: any) => {
           // console.log('result', res)
           unsetToken();
+          void this.cartService.hydrateCart();
           this.router.navigate(['/users/login']).then(res => res).catch(error => {
           });
           // this.logout$.next('close');
         },
         error: (err) => {
           unsetToken();
+          void this.cartService.hydrateCart();
           this.router.navigate(['/users/login']).then(res => res).catch(error => {
           });
           // this.logout$.next('close');
@@ -218,7 +234,10 @@ export class AuthService extends InterfaceService {
           setToken(response.token, ACCESS_TOKEN);
           // this.authService.setLogoutActivityToken();
           // setToken("response.refresh_token", REFRESH_TOKEN);
-          this.getUserDetails().then(user => resolve(user)).catch(error => reject(error));
+          this.cartService.syncGuestCartToServer()
+            .then(() => this.getUserDetails())
+            .then(user => resolve(user))
+            .catch(error => reject(error));
         },
         error: (error) => {
           unsetToken();
