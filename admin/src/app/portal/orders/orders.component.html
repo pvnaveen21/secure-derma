@@ -1,0 +1,226 @@
+<div class="orders-page">
+  <div class="orders-page__header">
+    <div>
+      <p class="orders-page__eyebrow m-0">Order Management</p>
+      <h2 class="orders-page__title m-0">Track paid and pending payments</h2>
+    </div>
+    <button nz-button nzType="primary" (click)="refreshAll()">Refresh</button>
+  </div>
+
+  @if (loadError) {
+    <nz-card class="orders-page__error">
+      <p class="m-0">{{ loadError }}</p>
+    </nz-card>
+  }
+
+  <nz-spin [nzSpinning]="summaryLoading">
+    <div class="orders-page__stats">
+      <nz-card class="orders-stat orders-stat--orders">
+        <p class="orders-stat__label m-0">Paid Orders</p>
+        <h3 class="orders-stat__value m-0">{{ summary.total_orders }}</h3>
+      </nz-card>
+      <nz-card class="orders-stat orders-stat--revenue">
+        <p class="orders-stat__label m-0">Revenue</p>
+        <h3 class="orders-stat__value m-0">{{ formatCurrency(summary.total_revenue) }}</h3>
+      </nz-card>
+      <nz-card class="orders-stat orders-stat--pending">
+        <p class="orders-stat__label m-0">Pending Payments</p>
+        <h3 class="orders-stat__value m-0">{{ summary.pending_orders }}</h3>
+      </nz-card>
+      <nz-card class="orders-stat orders-stat--average">
+        <p class="orders-stat__label m-0">Average Order</p>
+        <h3 class="orders-stat__value m-0">{{ formatCurrency(summary.average_order_value) }}</h3>
+      </nz-card>
+    </div>
+  </nz-spin>
+
+  <nz-card class="orders-page__filters">
+    <div class="orders-filter-bar">
+      <input
+        nz-input
+        placeholder="Search by order number, Razorpay id, customer"
+        [(ngModel)]="searchText"
+        (keyup.enter)="applyFilters()"
+      />
+
+      <nz-select
+        [(ngModel)]="selectedStatus"
+        nzPlaceHolder="Filter by status"
+        class="orders-filter-bar__status"
+      >
+        @for (status of statusOptions; track status.value) {
+          <nz-option [nzLabel]="status.label" [nzValue]="status.value"></nz-option>
+        }
+      </nz-select>
+
+      <button nz-button nzType="primary" (click)="applyFilters()">Apply</button>
+      <button nz-button nzType="default" (click)="resetFilters()">Reset</button>
+    </div>
+  </nz-card>
+
+  <nz-card class="orders-table-card">
+    <nz-spin [nzSpinning]="loading">
+      @if (orders.length) {
+        <nz-table
+          #basicTable
+          [nzData]="orders"
+          [nzFrontPagination]="false"
+          [nzShowPagination]="true"
+          [nzTotal]="total"
+          [nzPageIndex]="pageIndex"
+          [nzPageSize]="pageSize"
+          [nzPageSizeOptions]="[10, 20, 50]"
+          [nzShowSizeChanger]="true"
+          [nzShowQuickJumper]="true"
+          (nzPageIndexChange)="onPageIndexChange($event)"
+          (nzPageSizeChange)="onPageSizeChange($event)"
+          nzSize="middle"
+        >
+          <thead>
+            <tr>
+              <th>Order</th>
+              <th>Customer</th>
+              <th>Status</th>
+              <th>Amount</th>
+              <th>Items</th>
+              <th>Payment</th>
+              <th>Updated</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (order of basicTable.data; track order.id) {
+              <tr>
+                <td>
+                  <div class="order-cell">
+                    <p class="order-cell__main m-0">{{ order.order_number }}</p>
+                    <p class="order-cell__sub m-0">{{ order.razorpay_order_id }}</p>
+                  </div>
+                </td>
+                <td>
+                  <div class="order-cell">
+                    <p class="order-cell__main m-0">{{ order.customer_name || 'Walk-in customer' }}</p>
+                    <p class="order-cell__sub m-0">
+                      {{ order.customer_email || order.customer_phone || 'No contact info' }}
+                    </p>
+                  </div>
+                </td>
+                <td>
+                  <span class="status-pill" [class]="'status-pill status-pill--' + order.status">
+                    {{ order.status }}
+                  </span>
+                </td>
+                <td>{{ formatCurrency(order.amount_rupees) }}</td>
+                <td>{{ order.item_count }}</td>
+                <td>
+                  <div class="order-cell">
+                    <p class="order-cell__main m-0">{{ order.razorpay_payment_id || 'Pending' }}</p>
+                    <p class="order-cell__sub m-0">{{ order.currency }}</p>
+                  </div>
+                </td>
+                <td>{{ order.updated_at | date:'medium' }}</td>
+                <td>
+                  <button nz-button nzType="default" nzSize="small" (click)="viewOrder(order.id)">
+                    View
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </nz-table>
+      } @else {
+        <nz-empty nzNotFoundImage="simple" nzNotFoundContent="No orders found"></nz-empty>
+      }
+    </nz-spin>
+  </nz-card>
+</div>
+
+<nz-modal
+  [(nzVisible)]="detailVisible"
+  (nzOnCancel)="closeDetailModal()"
+  [nzFooter]="null"
+  [nzClosable]="false"
+  [nzMaskClosable]="true"
+  [nzWidth]="820"
+>
+  <ng-container *nzModalContent>
+    <div class="orders-detail-modal">
+      <div class="orders-detail-modal__header">
+        <div>
+          <p class="orders-detail-modal__eyebrow m-0">Order Detail</p>
+          <h3 class="orders-detail-modal__title m-0">
+            {{ selectedOrder?.order_number || 'Loading order...' }}
+          </h3>
+        </div>
+        <button nz-button nzType="default" (click)="closeDetailModal()">Close</button>
+      </div>
+
+      <nz-spin [nzSpinning]="detailLoading">
+        @if (selectedOrder) {
+          <div class="orders-detail-grid">
+            <div class="orders-detail-card">
+              <p class="orders-detail-card__label m-0">Customer</p>
+              <h4 class="orders-detail-card__value m-0">{{ selectedOrder.customer_name || 'Walk-in customer' }}</h4>
+              <p class="orders-detail-card__meta m-0">{{ selectedOrder.customer_email || 'No email' }}</p>
+              <p class="orders-detail-card__meta m-0">{{ selectedOrder.customer_phone || 'No phone' }}</p>
+            </div>
+
+            <div class="orders-detail-card">
+              <p class="orders-detail-card__label m-0">Payment</p>
+              <h4 class="orders-detail-card__value m-0">{{ formatCurrency(selectedOrder.amount_rupees) }}</h4>
+              <p class="orders-detail-card__meta m-0">{{ selectedOrder.razorpay_order_id }}</p>
+              <p class="orders-detail-card__meta m-0">{{ selectedOrder.razorpay_payment_id || 'Pending payment id' }}</p>
+            </div>
+          </div>
+
+          <div class="orders-detail-section">
+            <div class="orders-detail-section__head">
+              <h4 class="m-0">Line Items</h4>
+            </div>
+            <div class="orders-detail-lines">
+              @for (item of selectedOrder.items; track item.id) {
+                <div class="orders-detail-lines__row">
+                  <div>
+                    <p class="orders-detail-lines__name m-0">{{ item.product_name }}</p>
+                    <p class="orders-detail-lines__meta m-0">
+                      Product #{{ item.product_id }} • Variant #{{ item.product_detail_id }}
+                    </p>
+                  </div>
+                  <div class="orders-detail-lines__amount">
+                    <span>{{ item.quantity }} x {{ formatCurrency(item.unit_price) }}</span>
+                    <strong>{{ formatCurrency(item.line_total) }}</strong>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+
+          <div class="orders-detail-section">
+            <div class="orders-detail-section__head">
+              <h4 class="m-0">Payment Timeline</h4>
+            </div>
+            @if (selectedOrder.payments?.length) {
+              <div class="orders-detail-lines">
+                @for (payment of selectedOrder.payments; track payment.id) {
+                  <div class="orders-detail-lines__row">
+                    <div>
+                      <p class="orders-detail-lines__name m-0">{{ payment.status }}</p>
+                      <p class="orders-detail-lines__meta m-0">
+                        {{ payment.razorpay_payment_id || payment.razorpay_order_id }}
+                      </p>
+                    </div>
+                    <div class="orders-detail-lines__amount">
+                      <span>{{ payment.updated_at | date:'medium' }}</span>
+                    </div>
+                  </div>
+                }
+              </div>
+            } @else {
+              <nz-empty nzNotFoundImage="simple" nzNotFoundContent="No payment history"></nz-empty>
+            }
+          </div>
+        }
+      </nz-spin>
+    </div>
+  </ng-container>
+</nz-modal>

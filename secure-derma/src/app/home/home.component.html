@@ -232,8 +232,8 @@
                         <span class="original-price">₹ {{ product.original_price }}</span>
                     </div>
 
-                    <button class="add-to-cart-btn">
-                        Add to Cart
+                    <button class="add-to-cart-btn" (click)="addToCart(product)">
+                        {{ recentlyAddedProductId === product.id ? 'Added to cart' : 'Add to Cart' }}
                     </button>
                 </div>
             </div>
@@ -294,8 +294,8 @@
                         <span class="original-price">₹ {{ product.product_details[0]?.original_price }}</span>
                     </div>
 
-                    <button class="add-to-cart-btn">
-                        Add to Cart
+                    <button class="add-to-cart-btn" (click)="addToCart(product)">
+                        {{ recentlyAddedProductId === product.id ? 'Added to cart' : 'Add to Cart' }}
                     </button>
                     <!-- </div> -->
                 </div>

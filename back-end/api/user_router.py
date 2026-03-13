@@ -1,11 +1,15 @@
 from django.urls import path
 
-from secure_derma.views import BrandListAPIView, CollectionBannerAPIView, ConcernProductsAPIView, HairBannerAPIView, HomeProductTypeAPIView, ImagesAPIView, LandingPageImagesAPIView, ProductDetailAPIView, ProductListWithFiltersAPIView, ProductSideMenuAPIView, RoutineBuilderAPIView, SkinBannerAPIView, SupplementBannerAPIView, TopBrandsAPIView, TrendingProductsFastAPIView
+from secure_derma.views import BrandListAPIView, CollectionBannerAPIView, ConcernProductsAPIView, HairBannerAPIView, HomeProductTypeAPIView, ImagesAPIView, LandingPageImagesAPIView, ProductDetailAPIView, ProductListWithFiltersAPIView, ProductSideMenuAPIView, RazorpayCreateOrderAPIView, RazorpayVerifyPaymentAPIView, RoutineBuilderAPIView, SecureDermaCartAPIView, SecureDermaCartItemAPIView, SecureDermaCartSyncAPIView, SkinBannerAPIView, SupplementBannerAPIView, TopBrandsAPIView, TrendingProductsFastAPIView
 from send_otp.views import SendOTPView, VerifyOTPView
+from user.views import UserDetailApiView, UserTokenRefreshView, google_login
 
 urlpatterns = [
     path("auth/sendotp/", SendOTPView.as_view()),
     path("auth/otp-verify/", VerifyOTPView.as_view()),
+    path("auth/token/refresh/", UserTokenRefreshView.as_view()),
+    path("auth/google/", google_login),
+    path("users/user/me/", UserDetailApiView.as_view()),
     path('brands/', BrandListAPIView.as_view()),
     path('top-brands/',TopBrandsAPIView.as_view()),
     path('product-types/home/', HomeProductTypeAPIView.as_view(), name='home-product-types'),
@@ -18,6 +22,12 @@ urlpatterns = [
     path('collection-banner/', CollectionBannerAPIView.as_view(), name='combined-banner'),
     path('concern-products/', ConcernProductsAPIView.as_view(), name='concern-products'),
     path('routine-builder/', RoutineBuilderAPIView.as_view(), name='routine-builder'),
+    path('cart/', SecureDermaCartAPIView.as_view(), name='secure-derma-cart'),
+    path('cart/sync/', SecureDermaCartSyncAPIView.as_view(), name='secure-derma-cart-sync'),
+    path('cart/items/', SecureDermaCartItemAPIView.as_view(), name='secure-derma-cart-item-create'),
+    path('cart/items/<int:detail_id>/', SecureDermaCartItemAPIView.as_view(), name='secure-derma-cart-item-detail'),
+    path('payments/create-order/', RazorpayCreateOrderAPIView.as_view(), name='razorpay-create-order'),
+    path('payments/verify/', RazorpayVerifyPaymentAPIView.as_view(), name='razorpay-verify-payment'),
     # path('filter-products/', FilterProductsAPIView.as_view(), name='filter-products'),
     path('filter-products/', ProductListWithFiltersAPIView.as_view(), name='filter-products'),
     path("products/<slug:slug>/", ProductDetailAPIView.as_view(), name="product-detail"),

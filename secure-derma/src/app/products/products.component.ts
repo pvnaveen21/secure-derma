@@ -9,12 +9,16 @@ import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzDrawerModule } from 'ng-zorro-antd/drawer';
 import { NzDividerModule } from 'ng-zorro-antd/divider';
 import { NzInputModule } from 'ng-zorro-antd/input';
-import { distinctUntilChanged, map } from 'rxjs';
+import { NzMessageService } from 'ng-zorro-antd/message';
+import { distinctUntilChanged, firstValueFrom, map } from 'rxjs';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { HorizontalScrollComponent } from '../shared/horizontal-scroll/horizontal-scroll.component';
 import { Icons } from '../shared/icons';
 import { Assets } from '../shared/assets';
 import { ProductService } from '../services/product.service';
+import { CartService } from '../services/cart.service';
+import { PaymentService } from '../services/payment.service';
+import { AuthService } from '../services/auth/auth.service';
 @Component({
   selector: 'app-products',
   imports: [
@@ -35,6 +39,7 @@ import { ProductService } from '../services/product.service';
   styleUrl: './products.component.scss'
 })
 export class ProductsComponent {
+  private readonly productLoginIntentKey = 'secure_derma_resume_product_buy_now';
   readonly reviewPreviewCharacterLimit = 220;
   expandedReviews = new Set<number>();
   icons = Icons
@@ -150,6 +155,10 @@ export class ProductsComponent {
     private productService: ProductService,
     private route: ActivatedRoute,
     private router: Router,
+    private cartService: CartService,
+    private paymentService: PaymentService,
+    private authService: AuthService,
+    private message: NzMessageService,
     @Inject(PLATFORM_ID) private platformId: Object
     // private cdr: ChangeDetectorRef,
   ) { }
@@ -198,6 +207,8 @@ export class ProductsComponent {
     items: string[];
   }[] = [];
   activeProductInfoKey = 'description';
+  addToCartLoading = false;
+  buyNowLoading = false;
   get breadcrumbCollectionSlug() {
     const routeCollection = this.route.snapshot.queryParamMap.get('collection');
 
@@ -371,6 +382,130 @@ export class ProductsComponent {
     this.currentPriceData = getProductData
     this.updateUrlWithVariant(value);
 
+  }
+
+  async addSelectedProductToCart(): Promise<void> {
+    const normalizedProduct = this.getSelectedProductForCart();
+    if (!normalizedProduct) {
+      this.message.error('Select a valid variant before adding to cart.');
+      return;
+    }
+
+    if (this.addToCartLoading) {
+      return;
+    }
+
+    this.addToCartLoading = true;
+
+    try {
+      const result = await this.cartService.addToCart(normalizedProduct);
+
+      switch (result.status) {
+        case 'added':
+          this.message.success(`${this.productData?.product_name || 'Item'} added to cart`);
+          break;
+        case 'updated':
+          this.message.success(`${this.productData?.product_name || 'Item'} quantity updated in cart`);
+          break;
+        case 'limit_reached':
+          this.message.info(`${this.productData?.product_name || 'Item'} is already at the maximum quantity`);
+          break;
+        default:
+          this.message.error(`Unable to add ${this.productData?.product_name || 'this item'} right now`);
+      }
+    } catch {
+      this.message.error(`Unable to add ${this.productData?.product_name || 'this item'} right now`);
+    } finally {
+      this.addToCartLoading = false;
+    }
+  }
+
+  async buySelectedProductNow(): Promise<void> {
+    const selectedDetail = this.getSelectedDetail();
+    if (!selectedDetail?.id || !this.productData?.id) {
+      this.message.error('Select a valid variant before continuing.');
+      return;
+    }
+
+    if (!this.authService.isLoggedIn()) {
+      this.message.warning('Please login to continue payment.');
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(this.productLoginIntentKey, '1');
+      }
+      this.authService.redirectUrl = this.router.url;
+      this.router.navigate(['/account/login']);
+      return;
+    }
+
+    if (this.buyNowLoading) {
+      return;
+    }
+
+    this.buyNowLoading = true;
+
+    try {
+      await this.paymentService.loadRazorpayScript();
+
+      if (!window.Razorpay) {
+        throw new Error('Razorpay SDK is unavailable.');
+      }
+
+      const order = await firstValueFrom(
+        this.paymentService.createRazorpayOrder([
+          {
+            productId: this.productData.id,
+            detailId: selectedDetail.id,
+            quantity: 1
+          }
+        ])
+      );
+
+      const razorpay = new window.Razorpay({
+        key: order.key_id,
+        amount: order.amount_paise,
+        currency: order.currency,
+        name: 'Secure Derma',
+        description: this.productData?.product_name || 'Product order',
+        order_id: order.order_id,
+        theme: {
+          color: '#1a5944'
+        },
+        handler: async (response: {
+          razorpay_order_id: string;
+          razorpay_payment_id: string;
+          razorpay_signature: string;
+        }) => {
+          try {
+            await firstValueFrom(this.paymentService.verifyRazorpayPayment(response));
+            this.message.success('Payment completed successfully.');
+          } catch (error) {
+            console.error('Payment verification failed:', error);
+            this.message.error('Payment received, but verification failed. Please contact support.');
+          } finally {
+            this.buyNowLoading = false;
+            if (typeof window !== 'undefined') {
+              localStorage.removeItem(this.productLoginIntentKey);
+            }
+          }
+        },
+        modal: {
+          ondismiss: () => {
+            this.buyNowLoading = false;
+          }
+        }
+      });
+
+      razorpay.on('payment.failed', () => {
+        this.buyNowLoading = false;
+        this.message.error('Payment failed. Please try again.');
+      });
+
+      razorpay.open();
+    } catch (error) {
+      console.error('Checkout failed:', error);
+      this.buyNowLoading = false;
+      this.message.error('Unable to start payment right now.');
+    }
   }
   updateUrlWithVariant(variantId: any) {
     this.router.navigate([], {
@@ -702,13 +837,89 @@ export class ProductsComponent {
 
   visible = false;
   drawerPlacement: any = 'right'
+  locationPincode = '638301';
+  locationCity = 'Chennai';
+  locationError = '';
+
+  @HostListener('window:resize')
+  onWindowResize() {
+    this.updateDrawerPlacement();
+  }
+
+  ngAfterViewInit() {
+    this.updateDrawerPlacement();
+  }
 
   open(): void {
+    this.updateDrawerPlacement();
     this.visible = true;
   }
 
   close(): void {
     this.visible = false;
+    this.locationError = '';
+  }
+
+  onPincodeInput(event?: Event) {
+    const input = event?.target as HTMLInputElement | undefined;
+    const normalized = (input?.value ?? this.locationPincode).replace(/\D/g, '').slice(0, 6);
+    this.locationPincode = normalized;
+    if (input && input.value !== normalized) {
+      input.value = normalized;
+    }
+    if (this.locationError) {
+      this.locationError = '';
+    }
+  }
+
+  checkLocation() {
+    if (this.locationPincode.length !== 6) {
+      this.locationError = 'Enter a valid 6-digit pincode.';
+      return;
+    }
+
+    this.locationError = '';
+    this.locationCity = this.locationPincode === '638301' ? 'Chennai' : 'Serviceable area';
+  }
+
+  useCurrentLocation() {
+    this.locationPincode = '638301';
+    this.locationCity = 'Chennai';
+    this.locationError = '';
+  }
+
+  confirmLocation() {
+    this.checkLocation();
+    if (this.locationError) {
+      return;
+    }
+
+    this.message.success(`Delivery location updated to ${this.locationCity}.`);
+    this.close();
+  }
+
+  private updateDrawerPlacement() {
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
+
+    this.drawerPlacement = window.innerWidth < 768 ? 'bottom' : 'right';
+  }
+
+  private getSelectedDetail() {
+    return this.productDetailsMain?.find((item: any) => item.id == this.selectedGramId) ?? this.currentPriceData ?? null;
+  }
+
+  private getSelectedProductForCart() {
+    const selectedDetail = this.getSelectedDetail();
+    if (!selectedDetail) {
+      return null;
+    }
+
+    return {
+      ...this.productData,
+      details: [selectedDetail]
+    };
   }
 
   slugify(value: string): string {

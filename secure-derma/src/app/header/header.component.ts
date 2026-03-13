@@ -9,7 +9,7 @@ import { FormsModule } from '@angular/forms';
 import { NzDrawerModule } from 'ng-zorro-antd/drawer';
 import { CommonModule, NgClass } from '@angular/common';
 import { NzCarouselModule } from 'ng-zorro-antd/carousel';
-import { Subject, Subscription, debounceTime, distinctUntilChanged, map } from 'rxjs';
+import { Subject, Subscription, debounceTime, distinctUntilChanged, firstValueFrom, map } from 'rxjs';
 import { HeaderService } from '../services/header.service';
 import { Assets } from '../shared/assets';
 import { Icons } from '../shared/icons';
@@ -18,7 +18,11 @@ import { NzEmptyModule } from 'ng-zorro-antd/empty';
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzInputNumberModule } from 'ng-zorro-antd/input-number';
 import { NzIconModule } from 'ng-zorro-antd/icon';
+import { NzMenuModule } from 'ng-zorro-antd/menu';
+import { NzMessageService } from 'ng-zorro-antd/message';
 import { SettingsService } from '../services/settings/settings.service';
+import { PaymentService } from '../services/payment.service';
+import { AuthService } from '../services/auth/auth.service';
 interface MobilePanelItem {
   label: string;
   value: string;
@@ -55,12 +59,14 @@ interface Panel {
     NzButtonModule,
     NzInputNumberModule,
     NzIconModule,
+    NzMenuModule,
   ],
   templateUrl: './header.component.html',
   styleUrl: './header.component.scss'
 })
 export class HeaderComponent {
   private readonly mobileBreakpoint = 768;
+  private readonly resumeCheckoutStorageKey = 'secure_derma_resume_checkout';
   @ViewChild('brandListContainer') brandListContainer!: ElementRef;
   @ViewChild('mobileBrandListContainer') mobileBrandListContainer?: ElementRef;
   @ViewChild(NzDropDownDirective) dropdown!: NzDropDownDirective;
@@ -104,12 +110,16 @@ export class HeaderComponent {
 
   drawerReady = true;
   visible = false;
+  checkoutLoading = false;
 
   constructor(
     private router: Router,
     private headerService: HeaderService,
     private cdr: ChangeDetectorRef,
-    private settingsService: SettingsService
+    private settingsService: SettingsService,
+    private paymentService: PaymentService,
+    private message: NzMessageService,
+    private authService: AuthService
   ) {
     // Initialize the search subscription
     this.searchSub = this.searchSubject
@@ -154,14 +164,23 @@ export class HeaderComponent {
         this.hideSelectionLoader();
       }
     });
+
+    if (typeof window !== 'undefined' && localStorage.getItem(this.resumeCheckoutStorageKey) === '1') {
+      localStorage.removeItem(this.resumeCheckoutStorageKey);
+      this.openCartDrawer();
+    }
   }
 
   updateQuantity(productId: number, change: number): void {
-    this.cartService.updateQuantity(productId, change);
+    void this.cartService.updateQuantity(productId, change).catch(() => {
+      this.message.error('Unable to update cart right now.');
+    });
   }
 
   removeItem(productId: number): void {
-    this.cartService.removeItem(productId);
+    void this.cartService.removeItem(productId).catch(() => {
+      this.message.error('Unable to remove this item right now.');
+    });
   }
 
   get subtotal(): number {
@@ -180,10 +199,16 @@ export class HeaderComponent {
     return this.cartService.totalQuantity;
   }
 
+  get isLoggedIn(): boolean {
+    return !!this.authService.isLoggedIn();
+  }
+
+  logout(): void {
+    this.authService.logout();
+  }
+
   proceedToCheckout(): void {
-    // Navigate to checkout page
-    console.log('Proceeding to checkout with items:', this.cartItems);
-    // this.router.navigate(['/checkout']);
+    void this.startRazorpayCheckout();
   }
 
 
@@ -452,7 +477,13 @@ export class HeaderComponent {
 
   onQuantityChange(item: CartItem, newQuantity: number): void {
     const change = newQuantity - item.quantity;
-    this.cartService.updateQuantity(item.productId, change);
+    void this.cartService.updateQuantity(item.productId, change).catch(() => {
+      this.message.error('Unable to update cart right now.');
+    });
+  }
+
+  trackByCartItem(index: number, item: CartItem): number {
+    return item.detailId ?? item.productId;
   }
 
   getDiscountPercent(item: CartItem): number {
@@ -618,4 +649,97 @@ export class HeaderComponent {
     }, remaining);
   }
 
+  private async startRazorpayCheckout(): Promise<void> {
+    if (!this.cartItems.length) {
+      this.message.warning('Your cart is empty.');
+      return;
+    }
+
+    if (!this.authService.isLoggedIn()) {
+      this.message.warning('Please login to continue payment.');
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(this.resumeCheckoutStorageKey, '1');
+      }
+      this.authService.redirectUrl = '/';
+      this.closeCartDrawer();
+      this.router.navigate(['/account/login']);
+      return;
+    }
+
+    if (this.checkoutLoading) {
+      return;
+    }
+
+    this.checkoutLoading = true;
+
+    try {
+      await this.paymentService.loadRazorpayScript();
+
+      if (!window.Razorpay) {
+        throw new Error('Razorpay SDK is unavailable.');
+      }
+
+      const order = await firstValueFrom(
+        this.paymentService.createRazorpayOrder(
+          this.cartItems.map((item) => ({
+            productId: item.productId,
+            detailId: item.detailId,
+            quantity: item.quantity
+          })),
+          this.getCheckoutCustomer()
+        )
+      );
+
+      const razorpay = new window.Razorpay({
+        key: order.key_id,
+        amount: order.amount_paise,
+        currency: order.currency,
+        name: 'Secure Derma',
+        description: `Order for ${this.totalItems} item(s)`,
+        order_id: order.order_id,
+        prefill: this.getCheckoutCustomer(),
+        theme: {
+          color: '#1a5944'
+        },
+        handler: async (response: {
+          razorpay_order_id: string;
+          razorpay_payment_id: string;
+          razorpay_signature: string;
+        }) => {
+          try {
+            await firstValueFrom(this.paymentService.verifyRazorpayPayment(response));
+            await this.cartService.clearCart();
+            this.closeCartDrawer();
+            this.message.success('Payment completed successfully.');
+          } catch (error) {
+            console.error('Payment verification failed:', error);
+            this.message.error('Payment received, but verification failed. Please contact support.');
+          } finally {
+            this.checkoutLoading = false;
+          }
+        },
+        modal: {
+          ondismiss: () => {
+            this.checkoutLoading = false;
+          }
+        }
+      });
+
+      razorpay.on('payment.failed', () => {
+        this.checkoutLoading = false;
+        this.message.error('Payment failed. Please try again.');
+      });
+
+      razorpay.open();
+    } catch (error) {
+      console.error('Checkout failed:', error);
+      this.checkoutLoading = false;
+      const errorMessage = typeof error === 'string' ? error : 'Unable to start payment right now.';
+      this.message.error(errorMessage);
+    }
+  }
+
+  private getCheckoutCustomer(): { name?: string; email?: string; contact?: string } {
+    return {};
+  }
 }

@@ -566,33 +566,37 @@ export class CollectionsComponent implements OnInit {
   }
 
   // product.component.ts
-  addToCart(product: any) {
-    const result = this.cartService.addToCart(product);
+  async addToCart(product: any) {
+    try {
+      const result = await this.cartService.addToCart(product);
 
-    switch (result.status) {
-      case 'added':
-      case 'updated':
-        this.recentlyAddedProductId = product.id;
-        if (this.addToCartFeedbackTimeout) {
-          clearTimeout(this.addToCartFeedbackTimeout);
-        }
-        this.addToCartFeedbackTimeout = setTimeout(() => {
-          if (this.recentlyAddedProductId === product.id) {
-            this.recentlyAddedProductId = null;
+      switch (result.status) {
+        case 'added':
+        case 'updated':
+          this.recentlyAddedProductId = product.id;
+          if (this.addToCartFeedbackTimeout) {
+            clearTimeout(this.addToCartFeedbackTimeout);
           }
-        }, 2200);
-        this.message.success(
-          result.status === 'added'
-            ? `${product.product_name} added to cart`
-            : `${product.product_name} quantity updated in cart`
-        );
-        break;
-      case 'limit_reached':
-        this.message.info(`${product.product_name} is already at the maximum quantity`);
-        break;
-      case 'missing_details':
-        this.message.error(`Unable to add ${product.product_name} right now`);
-        break;
+          this.addToCartFeedbackTimeout = setTimeout(() => {
+            if (this.recentlyAddedProductId === product.id) {
+              this.recentlyAddedProductId = null;
+            }
+          }, 2200);
+          this.message.success(
+            result.status === 'added'
+              ? `${product.product_name} added to cart`
+              : `${product.product_name} quantity updated in cart`
+          );
+          break;
+        case 'limit_reached':
+          this.message.info(`${product.product_name} is already at the maximum quantity`);
+          break;
+        case 'missing_details':
+          this.message.error(`Unable to add ${product.product_name} right now`);
+          break;
+      }
+    } catch {
+      this.message.error(`Unable to add ${product.product_name} right now`);
     }
   }
 
