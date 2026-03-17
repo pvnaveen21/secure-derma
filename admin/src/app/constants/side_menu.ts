@@ -81,6 +81,13 @@ export const SideMenu: { [key: string]: any[] } = {
             currentUrl: ['review'],
             permissions: [1]
         },
+        {
+            title: 'Orders',
+            icon: icons.sideMenu.package,
+            routerLink: '/orders',
+            currentUrl: ['orders'],
+            permissions: [1]
+        },
         // {
         //     title: 'Executives',
         //     icon: icons.sideMenu.userCheck,
@@ -101,14 +108,6 @@ export const SideMenu: { [key: string]: any[] } = {
         //     routerLink: '/retailers',
         //     currentUrl: ['retailers'],
         //     permissions: [1]
-        // },
-        // {
-        //     title: 'Orders',
-        //     icon: icons.sideMenu.package,
-        //     routerLink: '/orders',
-        //     currentUrl: ['orders'],
-        //     permissions: [1]
-
         // },
         // {
         //     title: 'Share',

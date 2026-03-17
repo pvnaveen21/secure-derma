@@ -18,7 +18,11 @@ import { NzEmptyModule } from 'ng-zorro-antd/empty';
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzInputNumberModule } from 'ng-zorro-antd/input-number';
 import { NzIconModule } from 'ng-zorro-antd/icon';
+import { NzMenuModule } from 'ng-zorro-antd/menu';
+import { NzMessageService } from 'ng-zorro-antd/message';
 import { SettingsService } from '../services/settings/settings.service';
+import { PaymentService } from '../services/payment.service';
+import { AuthService } from '../services/auth/auth.service';
 interface MobilePanelItem {
   label: string;
   value: string;
@@ -38,6 +42,23 @@ interface Panel {
   routeValue: string;
   routeType: 'skin' | 'hair' | 'supplements';
 }
+
+interface SearchSuggestionItem {
+  label: string;
+  subtitle?: string;
+  type: 'product' | 'brand' | 'category' | 'related';
+  routeValue: string;
+  routeType?: 'all' | 'skin' | 'hair' | 'supplements' | 'product';
+  image?: string | null;
+  price?: number | null;
+  originalPrice?: number | null;
+}
+
+interface SearchSuggestionGroup {
+  title: string;
+  type: SearchSuggestionItem['type'];
+  items: SearchSuggestionItem[];
+}
 @Component({
   selector: 'app-header',
   imports: [
@@ -55,17 +76,22 @@ interface Panel {
     NzButtonModule,
     NzInputNumberModule,
     NzIconModule,
+    NzMenuModule,
   ],
   templateUrl: './header.component.html',
   styleUrl: './header.component.scss'
 })
 export class HeaderComponent {
   private readonly mobileBreakpoint = 768;
+  private readonly resumeCheckoutStorageKey = 'secure_derma_resume_checkout';
   @ViewChild('brandListContainer') brandListContainer!: ElementRef;
   @ViewChild('mobileBrandListContainer') mobileBrandListContainer?: ElementRef;
+  @ViewChild('desktopSearchShell') desktopSearchShell?: ElementRef;
+  @ViewChild('mobileSearchShell') mobileSearchShell?: ElementRef;
   @ViewChild(NzDropDownDirective) dropdown!: NzDropDownDirective;
   // Add a search property for two-way binding
   searchTerm: string = '';
+  globalSearchTerm = '';
 
   isDropdownVisible: any = true;
   assets = Assets;
@@ -93,10 +119,17 @@ export class HeaderComponent {
   // Search-related properties
   private searchSubject = new Subject<string>();
   private searchSub!: Subscription;
+  private globalSearchSubject = new Subject<string>();
+  private globalSearchSub!: Subscription;
 
   allBrands: any = {};
   allBrandKey: any[] = [];
+  allBrandEntries: Array<{ id?: number; brand_name: string; brand_image?: string }> = [];
   loading: boolean = false;
+  suggestionLoading = false;
+  showSearchSuggestions = false;
+  searchSuggestionGroups: SearchSuggestionGroup[] = [];
+  isHeaderSearchFocused = false;
   isSelectionLoading = false;
   pendingSelectionLabel = '';
   private selectionLoaderStartedAt = 0;
@@ -104,12 +137,16 @@ export class HeaderComponent {
 
   drawerReady = true;
   visible = false;
+  checkoutLoading = false;
 
   constructor(
     private router: Router,
     private headerService: HeaderService,
     private cdr: ChangeDetectorRef,
-    private settingsService: SettingsService
+    private settingsService: SettingsService,
+    private paymentService: PaymentService,
+    private message: NzMessageService,
+    private authService: AuthService
   ) {
     // Initialize the search subscription
     this.searchSub = this.searchSubject
@@ -119,6 +156,15 @@ export class HeaderComponent {
       )
       .subscribe((searchTerm: string) => {
         this.performBrandSearch(searchTerm);
+      });
+
+    this.globalSearchSub = this.globalSearchSubject
+      .pipe(
+        debounceTime(220),
+        distinctUntilChanged()
+      )
+      .subscribe((searchTerm: string) => {
+        this.performHeaderSearch(searchTerm);
       });
   }
 
@@ -154,18 +200,45 @@ export class HeaderComponent {
         this.hideSelectionLoader();
       }
     });
+
+    if (typeof window !== 'undefined' && localStorage.getItem(this.resumeCheckoutStorageKey) === '1') {
+      localStorage.removeItem(this.resumeCheckoutStorageKey);
+      this.router.navigate(['/checkout']);
+    }
   }
 
-  updateQuantity(productId: number, change: number): void {
-    this.cartService.updateQuantity(productId, change);
+  updateQuantity(itemKey: number, change: number): void {
+    void this.cartService.updateQuantity(itemKey, change).catch(() => {
+      this.message.error('Unable to update cart right now.');
+    });
   }
 
-  removeItem(productId: number): void {
-    this.cartService.removeItem(productId);
+  removeItem(itemKey: number): void {
+    void this.cartService.removeItem(itemKey).catch(() => {
+      this.message.error('Unable to remove this item right now.');
+    });
   }
 
   get subtotal(): number {
     return this.cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  }
+
+  get originalSubtotal(): number {
+    return this.cartItems.reduce((sum, item) => {
+      const originalPrice = item.originalPrice ?? item.price;
+      return sum + (originalPrice * item.quantity);
+    }, 0);
+  }
+
+  get totalSavings(): number {
+    return this.cartItems.reduce((sum, item) => {
+      const originalPrice = item.originalPrice ?? item.price;
+      if (!originalPrice || originalPrice <= item.price) {
+        return sum;
+      }
+
+      return sum + ((originalPrice - item.price) * item.quantity);
+    }, 0);
   }
 
   get shipping(): number {
@@ -180,10 +253,56 @@ export class HeaderComponent {
     return this.cartService.totalQuantity;
   }
 
+  get isLoggedIn(): boolean {
+    return !!this.authService.isLoggedIn();
+  }
+
+  logout(): void {
+    this.authService.logout();
+  }
+
+  openMyAccount(): void {
+    void this.router.navigate(['/account']);
+  }
+
   proceedToCheckout(): void {
-    // Navigate to checkout page
-    console.log('Proceeding to checkout with items:', this.cartItems);
-    // this.router.navigate(['/checkout']);
+    if (!this.cartItems.length) {
+      this.message.warning('Your cart is empty.');
+      return;
+    }
+
+    this.paymentService.saveCheckoutSession({
+      source: 'cart',
+      items: this.cartItems
+        .filter((item) => item.detailId)
+        .map((item) => ({
+          productId: item.productId,
+          detailId: item.detailId,
+          quantity: item.quantity,
+          productName: item.productName,
+          thumbnail: item.thumbnail,
+          productWeight: item.productWeight,
+          weightType: item.weightType,
+          qualityLabel: item.qualityLabel,
+          unitPrice: item.price,
+          originalPrice: item.originalPrice,
+          lineTotal: item.lineTotal || item.price * item.quantity,
+        }))
+    });
+
+    if (!this.authService.isLoggedIn()) {
+      this.message.warning('Please login to continue checkout.');
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(this.resumeCheckoutStorageKey, '1');
+      }
+      this.authService.redirectUrl = '/checkout';
+      this.closeCartDrawer();
+      this.router.navigate(['/account/login']);
+      return;
+    }
+
+    this.closeCartDrawer();
+    this.router.navigate(['/checkout']);
   }
 
 
@@ -192,6 +311,9 @@ export class HeaderComponent {
     // Clean up subscription to prevent memory leaks
     if (this.searchSub) {
       this.searchSub.unsubscribe();
+    }
+    if (this.globalSearchSub) {
+      this.globalSearchSub.unsubscribe();
     }
     if (this.subscription) {
       this.subscription.unsubscribe();
@@ -209,6 +331,71 @@ export class HeaderComponent {
   onSearchChange(value: any) {
     this.searchTerm = value;
     this.searchSubject.next(value.trim()); // Trim whitespace
+  }
+
+  onGlobalSearchChange(value: string) {
+    this.globalSearchTerm = value;
+    const trimmedValue = value.trim();
+    if (!trimmedValue) {
+      this.showSearchSuggestions = false;
+      this.suggestionLoading = false;
+      this.searchSuggestionGroups = [];
+      return;
+    }
+
+    this.showSearchSuggestions = true;
+    this.suggestionLoading = true;
+    this.globalSearchSubject.next(trimmedValue);
+  }
+
+  onGlobalSearchFocus() {
+    this.isHeaderSearchFocused = true;
+    if (this.globalSearchTerm.trim()) {
+      this.showSearchSuggestions = true;
+    }
+  }
+
+  clearGlobalSearch() {
+    this.globalSearchTerm = '';
+    this.showSearchSuggestions = false;
+    this.suggestionLoading = false;
+    this.searchSuggestionGroups = [];
+    this.isHeaderSearchFocused = false;
+  }
+
+  closeSearchSuggestions() {
+    this.showSearchSuggestions = false;
+  }
+
+  submitGlobalSearch() {
+    const firstSuggestion = this.searchSuggestionGroups
+      .flatMap((group) => group.items)[0];
+
+    if (firstSuggestion) {
+      this.navigateToSuggestion(firstSuggestion);
+      return;
+    }
+
+    if (this.globalSearchTerm.trim()) {
+      const searchValue = this.globalSearchTerm.trim();
+      this.clearGlobalSearch();
+      this.producetNavigation(searchValue, 'all');
+    }
+  }
+
+  navigateToSuggestion(suggestion: SearchSuggestionItem) {
+    this.clearGlobalSearch();
+
+    if (suggestion.routeType === 'product') {
+      const productSlug = suggestion.routeValue || this.slugify(suggestion.label);
+      if (!productSlug) {
+        return;
+      }
+      this.router.navigate([`./products/${productSlug}`]);
+      return;
+    }
+
+    this.producetNavigation(suggestion.routeValue, suggestion.routeType ?? 'all');
   }
 
   // Perform the actual search
@@ -234,6 +421,125 @@ export class HeaderComponent {
       }
     });
   }
+
+  private performHeaderSearch(searchTerm: string) {
+    if (!searchTerm) {
+      this.suggestionLoading = false;
+      this.searchSuggestionGroups = [];
+      return;
+    }
+
+    const query = searchTerm.toLowerCase();
+    const brandSuggestions = this.buildBrandSuggestions(query);
+    const categorySuggestions = this.buildCategorySuggestions(query);
+    const relatedSuggestions = this.buildRelatedSuggestions(query);
+
+    this.headerService.searchProducts(searchTerm, 6).subscribe({
+      next: (response: any) => {
+        const productSuggestions = (response?.products?.results || [])
+          .slice(0, 6)
+          .map((product: any): SearchSuggestionItem => {
+            const firstDetail = Array.isArray(product.product_details) ? product.product_details[0] : null;
+            return {
+              label: product.product_name,
+              subtitle: product.brand_name || product.category_name || product.product_type_name,
+              type: 'product',
+              routeValue: product.slug || product.product_slug || this.slugify(product.product_name || ''),
+              routeType: 'product',
+              image: product.thumbnail_image_url || product.thumbnail_image || null,
+              price: firstDetail?.selling_price ?? null,
+              originalPrice: firstDetail?.original_price ?? null,
+            };
+          });
+
+        this.searchSuggestionGroups = [
+          this.createSuggestionGroup('Products', 'product', productSuggestions),
+          this.createSuggestionGroup('Brands', 'brand', brandSuggestions),
+          this.createSuggestionGroup('Categories', 'category', categorySuggestions),
+          this.createSuggestionGroup('Related Results', 'related', relatedSuggestions),
+        ].filter((group): group is SearchSuggestionGroup => !!group);
+
+        this.suggestionLoading = false;
+        this.showSearchSuggestions = true;
+      },
+      error: () => {
+        this.searchSuggestionGroups = [
+          this.createSuggestionGroup('Brands', 'brand', brandSuggestions),
+          this.createSuggestionGroup('Categories', 'category', categorySuggestions),
+          this.createSuggestionGroup('Related Results', 'related', relatedSuggestions),
+        ].filter((group): group is SearchSuggestionGroup => !!group);
+        this.suggestionLoading = false;
+      }
+    });
+  }
+
+  private buildBrandSuggestions(query: string): SearchSuggestionItem[] {
+    return this.allBrandEntries
+      .filter((brand) => brand.brand_name.toLowerCase().includes(query))
+      .slice(0, 5)
+      .map((brand) => ({
+        label: brand.brand_name,
+        subtitle: 'Brand',
+        type: 'brand',
+        routeValue: brand.brand_name,
+        routeType: 'all',
+        image: brand.brand_image || null,
+      }));
+  }
+
+  private buildCategorySuggestions(query: string): SearchSuggestionItem[] {
+    const categoryItems = [
+      ...this.panels.flatMap((panel) => panel.categoryItems.map((item) => ({ ...item, subtitle: panel.name }))),
+      ...this.mobileQuickLinks.map((item) => ({ label: item.name, value: item.value, type: 'all' as const, subtitle: 'Quick link' }))
+    ];
+
+    return categoryItems
+      .filter((item) => item.label.toLowerCase().includes(query))
+      .filter((item, index, array) => array.findIndex((entry) => entry.label === item.label) === index)
+      .slice(0, 5)
+      .map((item) => ({
+        label: item.label,
+        subtitle: item.subtitle,
+        type: 'category',
+        routeValue: item.value,
+        routeType: item.type,
+      }));
+  }
+
+  private buildRelatedSuggestions(query: string): SearchSuggestionItem[] {
+    const relatedItems = this.panels.flatMap((panel) =>
+      panel.concernItems.map((item) => ({
+        label: item.label,
+        value: item.value,
+        type: item.type,
+        subtitle: `${panel.name} concern`
+      }))
+    );
+
+    return relatedItems
+      .filter((item) => item.label.toLowerCase().includes(query))
+      .filter((item, index, array) => array.findIndex((entry) => entry.label === item.label) === index)
+      .slice(0, 5)
+      .map((item) => ({
+        label: item.label,
+        subtitle: item.subtitle,
+        type: 'related',
+        routeValue: item.value,
+        routeType: item.type,
+      }));
+  }
+
+  private createSuggestionGroup(
+    title: string,
+    type: SearchSuggestionItem['type'],
+    items: SearchSuggestionItem[]
+  ): SearchSuggestionGroup | null {
+    if (!items.length) {
+      return null;
+    }
+
+    return { title, type, items };
+  }
   onVisibleChange(status: boolean) {
     if (!status && this.searchTerm.length != 0) {
       this.searchTerm = ''
@@ -247,6 +553,7 @@ export class HeaderComponent {
       next: (res) => {
         this.allBrands = res;
         this.allBrandKey = Object.keys(this.allBrands || {});
+        this.allBrandEntries = this.flattenBrands(this.allBrands);
         this.loading = false;
         this.cdr.detectChanges();
       },
@@ -255,6 +562,24 @@ export class HeaderComponent {
         this.loading = false;
       }
     });
+  }
+
+  private flattenBrands(groupedBrands: any): Array<{ id?: number; brand_name: string; brand_image?: string }> {
+    return Object.values(groupedBrands || {})
+      .flatMap((entry: any) => Array.isArray(entry) ? entry : [])
+      .filter((brand: any) => !!brand?.brand_name);
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent) {
+    const target = event.target as Node;
+    const clickedInsideDesktop = this.desktopSearchShell?.nativeElement?.contains(target);
+    const clickedInsideMobile = this.mobileSearchShell?.nativeElement?.contains(target);
+
+    if (!clickedInsideDesktop && !clickedInsideMobile) {
+      this.closeSearchSuggestions();
+      this.isHeaderSearchFocused = false;
+    }
   }
   hairBannerData: any = []
   getHairBannerList() {
@@ -439,6 +764,17 @@ export class HeaderComponent {
   closeCartDrawer() {
     this.cartDrawerVisible = false;
   }
+
+  openCartProduct(item: CartItem): void {
+    const productSlug = this.slugify(item.productName || '');
+    if (!productSlug) {
+      return;
+    }
+
+    this.closeCartDrawer();
+    void this.router.navigate(['/products', productSlug]);
+  }
+
   signIn() {
     this.router.navigate(['account/login'])
   }
@@ -452,7 +788,14 @@ export class HeaderComponent {
 
   onQuantityChange(item: CartItem, newQuantity: number): void {
     const change = newQuantity - item.quantity;
-    this.cartService.updateQuantity(item.productId, change);
+    const itemKey = item.detailId ?? item.productId;
+    void this.cartService.updateQuantity(itemKey, change).catch(() => {
+      this.message.error('Unable to update cart right now.');
+    });
+  }
+
+  trackByCartItem(index: number, item: CartItem): number {
+    return item.detailId ?? item.productId;
   }
 
   getDiscountPercent(item: CartItem): number {

@@ -36,6 +36,16 @@ export class HeaderService extends InterfaceService {
     );
   }
 
+  searchProducts(searchText: string, limit = 6) {
+    return this.http.get(
+      this.getApiUrl(`/filter-products/?filter=all&searchText=${encodeURIComponent(searchText)}&limit=${limit}`),
+      this.getHttpOptions('json', { auth: false })
+    ).pipe(
+      map(res => res),
+      catchError(this.handleError)
+    );
+  }
+
   getTopBrandsList() {
     return this.http.get(
       this.getApiUrl(`/top-brands/`),

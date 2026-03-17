@@ -13,7 +13,10 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 import os
 from pathlib import Path
 
+from .env import load_local_env
 from .confiq import *
+
+load_local_env()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -26,7 +29,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-oma_(v&4e1!@je7)0frn6og8mp^4+^1u-7oth^0oi@76ki$!5_')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv('DJANGO_DEBUG', 'false').lower() == 'true'
+DEBUG = os.getenv('DJANGO_DEBUG', 'true').lower() == 'true'
 
 ALLOWED_HOSTS = [
     host.strip()

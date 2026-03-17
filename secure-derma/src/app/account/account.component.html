@@ -1,0 +1,641 @@
+<section class="account-shell" [class.account-shell--detail]="isOrderDetailView">
+    <div class="account-hero" *ngIf="!isOrderDetailView">
+        <div class="account-hero__copy">
+            <p class="account-eyebrow m-0">My Account</p>
+            <h1 class="account-title m-0">{{ fullName }}</h1>
+            <p class="account-subtitle m-0">
+                Manage your personal details, orders, saved addresses, and support preferences from one place.
+            </p>
+            <div class="account-status">
+                <span class="account-status__chip" *ngFor="let badge of verificationBadges">{{ badge }}</span>
+            </div>
+        </div>
+
+        <div class="account-hero__meta">
+            <div class="account-pill">
+                <lucide-angular class="d-flex" [img]="icons.account.contact" [size]="16"></lucide-angular>
+                <span>{{ primaryEmail }}</span>
+            </div>
+            <div class="account-pill">
+                <lucide-angular class="d-flex" [img]="icons.auth.phone" [size]="16"></lucide-angular>
+                <span>{{ primaryPhone }}</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="account-layout" [class.account-layout--detail]="isOrderDetailView">
+        <aside class="account-nav" *ngIf="!isOrderDetailView">
+            <p class="account-nav__title m-0">My Account</p>
+            <button
+                *ngFor="let section of sections"
+                type="button"
+                class="account-nav__item"
+                [class.account-nav__item--active]="activeSection === section.id"
+                (click)="openSection(section.id)">
+                <lucide-angular class="d-flex" [img]="section.icon" [size]="18"></lucide-angular>
+                <span>{{ section.title }}</span>
+            </button>
+            <button type="button" class="account-nav__item account-nav__item--logout" (click)="logout()">
+                <lucide-angular class="d-flex" [img]="icons.account.logout" [size]="18"></lucide-angular>
+                <span>Logout</span>
+            </button>
+        </aside>
+
+        <div class="account-content" [class.account-content--detail]="isOrderDetailView">
+            <section class="account-card" *ngIf="activeSection === 'personal-details'">
+                <div class="account-card__head account-card__head--start">
+                    <div>
+                        <p class="account-card__eyebrow m-0">Profile</p>
+                        <h2 class="account-card__title m-0">Personal Details</h2>
+                        <p class="account-card__caption m-0">
+                            Keep your account information up to date for checkout, communication, and order support.
+                        </p>
+                    </div>
+                    <button
+                        *ngIf="!isEditingProfile"
+                        type="button"
+                        class="account-action-btn"
+                        (click)="startProfileEdit()">
+                        Edit Details
+                    </button>
+                </div>
+
+                <div class="profile-panel" [class.profile-panel--editing]="isEditingProfile">
+                    <div class="profile-form">
+                        <label class="profile-field">
+                            <span class="profile-field__label">Full Name</span>
+                            <input
+                                type="text"
+                                [value]="profileForm.username"
+                                (input)="onProfileInput('username', $any($event.target).value)"
+                                (blur)="onProfileBlur('username')"
+                                [disabled]="!isEditingProfile"
+                                placeholder="Enter your full name" />
+                            <span class="profile-field__error" *ngIf="profileErrors.username">{{ profileErrors.username }}</span>
+                        </label>
+
+                        <label class="profile-field">
+                            <span class="profile-field__label">Email Address</span>
+                            <input
+                                type="email"
+                                [value]="profileForm.email"
+                                (input)="onProfileInput('email', $any($event.target).value)"
+                                (blur)="onProfileBlur('email')"
+                                [disabled]="!isEditingProfile || !canEditEmail"
+                                placeholder="Enter your email address" />
+                            <span class="profile-field__hint" *ngIf="!canEditEmail">Google login accounts keep the same verified email.</span>
+                            <span class="profile-field__error" *ngIf="profileErrors.email">{{ profileErrors.email }}</span>
+                        </label>
+
+                        <label class="profile-field">
+                            <span class="profile-field__label">Mobile Number</span>
+                            <input
+                                type="tel"
+                                inputmode="numeric"
+                                [value]="profileForm.phone"
+                                (input)="onProfileInput('phone', $any($event.target).value)"
+                                (blur)="onProfileBlur('phone')"
+                                [disabled]="!isEditingProfile"
+                                placeholder="Enter your mobile number" />
+                            <span class="profile-field__error" *ngIf="profileErrors.phone">{{ profileErrors.phone }}</span>
+                        </label>
+                    </div>
+
+                    <div class="profile-sidecard">
+                        <p class="profile-sidecard__title m-0">Verification</p>
+                        <p class="profile-sidecard__text m-0">
+                            Your profile uses validated personal details for checkout and account access.
+                        </p>
+                        <div class="profile-sidecard__list">
+                            <div class="profile-check">
+                                <lucide-angular class="d-flex" [img]="icons.account.security" [size]="16"></lucide-angular>
+                                <span>Validated name, email, and mobile format</span>
+                            </div>
+                            <div class="profile-check">
+                                <lucide-angular class="d-flex" [img]="icons.account.security" [size]="16"></lucide-angular>
+                                <span>Duplicate email and mobile checks before save</span>
+                            </div>
+                            <div class="profile-check">
+                                <lucide-angular class="d-flex" [img]="icons.account.security" [size]="16"></lucide-angular>
+                                <span>Account session remains active unless you log out</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <p class="profile-feedback m-0" *ngIf="profileFeedback">{{ profileFeedback }}</p>
+
+                <div class="profile-actions" *ngIf="isEditingProfile">
+                    <button type="button" class="account-secondary-btn" (click)="cancelProfileEdit()" [disabled]="isSavingProfile">
+                        Cancel
+                    </button>
+                    <button type="button" class="account-action-btn" (click)="saveProfile()" [disabled]="isSavingProfile">
+                        {{ isSavingProfile ? 'Saving...' : 'Save Changes' }}
+                    </button>
+                </div>
+            </section>
+
+            <section class="account-card" *ngIf="activeSection === 'orders'" [class.account-card--detail]="isOrderDetailView">
+                <div class="account-card__head account-card__head--start" *ngIf="!isOrderDetailView">
+                    <div>
+                        <p class="account-card__eyebrow m-0">Shopping</p>
+                        <h2 class="account-card__title m-0">Orders</h2>
+                        <p class="account-card__caption m-0">
+                            Review your recent orders, delivery progress, and order details in one place.
+                        </p>
+                    </div>
+                    <lucide-angular class="d-flex" [img]="icons.account.orders" [size]="20"></lucide-angular>
+                </div>
+                <div class="orders-shell" *ngIf="!isOrdersLoading && !ordersError && orders.length && !isOrderDetailView; else ordersState">
+                    <div class="orders-marketplace-header">
+                        <div>
+                            <p class="detail-item__label m-0">All Orders</p>
+                            <h3 class="orders-marketplace-header__title m-0">{{ totalOrders }} order{{ totalOrders > 1 ? 's' : '' }} in your account</h3>
+                        </div>
+                        <div class="orders-marketplace-header__badge">Marketplace-style tracking</div>
+                    </div>
+
+                    <div class="orders-list orders-list--full">
+                        <button
+                            type="button"
+                            class="order-card"
+                            *ngFor="let order of orders"
+                            (click)="openOrderDetail(order.id)">
+                            <div class="order-card__top">
+                                <div class="order-card__headline">
+                                    <span class="order-card__status">{{ getOrderMarketplaceStatus(order) }}</span>
+                                    <p class="order-card__date m-0">Ordered on {{ order.created_at | date:'dd MMM yyyy, hh:mm a' }}</p>
+                                </div>
+                                <strong class="order-card__amount">₹{{ order.amount_rupees }}</strong>
+                            </div>
+
+                            <div class="order-card__body" *ngIf="getOrderPrimaryItem(order) as leadItem">
+                                <button type="button" class="order-card__image-wrap order-media-btn" (click)="openOrderProduct(leadItem); $event.stopPropagation()">
+                                    <img *ngIf="leadItem.thumbnail" [src]="leadItem.thumbnail" [alt]="leadItem.product_name" class="order-card__image" />
+                                </button>
+                                <div class="order-card__content">
+                                    <div class="order-card__identity">
+                                        <p class="order-card__number m-0">{{ order.order_number }}</p>
+                                        <p class="order-card__item m-0">{{ leadItem.product_name }}</p>
+                                        <p class="order-card__subcopy m-0">
+                                            <ng-container *ngIf="leadItem.quality_label">
+                                                {{ leadItem.quality_label }} •
+                                            </ng-container>
+                                            Qty {{ leadItem.quantity }}
+                                            <ng-container *ngIf="getAdditionalItemCount(order)"> • +{{ getAdditionalItemCount(order) }} more item{{ getAdditionalItemCount(order) > 1 ? 's' : '' }}</ng-container>
+                                        </p>
+                                    </div>
+                                    <div class="order-card__delivery">
+                                        <span class="detail-item__label">Delivering to</span>
+                                        <strong>{{ getOrderDestination(order) }}</strong>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="order-card__footer">
+                                <div class="order-card__footer-meta">
+                                    <span>{{ order.item_count }} item{{ order.item_count > 1 ? 's' : '' }}</span>
+                                    <span>{{ shipmentProviderLabel }}</span>
+                                </div>
+                                <span class="order-link-btn">View order details</span>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="order-detail-page" *ngIf="isOrderDetailView && !isOrderDetailLoading && !orderDetailError && selectedOrder; else orderDetailState">
+                    <div class="order-breadcrumbs mb-3 ms-2">
+                        <button type="button" class="order-breadcrumbs__link" (click)="openSection('personal-details')">My Account</button>
+                        <span class="order-breadcrumbs__separator">/</span>
+                        <button type="button" class="order-breadcrumbs__link" (click)="backToOrders()">Orders</button>
+                        <span class="order-breadcrumbs__separator">/</span>
+                        <span class="order-breadcrumbs__current">{{ selectedOrder.order_number }}</span>
+                    </div>
+
+                    <div class="order-detail-page__header">
+                        <div class="order-detail-page__header-row">
+                            <div>
+                                <p class="detail-item__label m-0">Order Details</p>
+                                <h2 class="order-detail-page__title m-0">{{ selectedOrder.order_number }}</h2>
+                                <p class="order-detail-page__subtitle m-0">Track delivery, review items, and manage this order in one place.</p>
+                            </div>
+                            <button type="button" class="order-back-btn" (click)="backToOrders()">
+                                Back to Orders
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="order-detail-page__layout">
+                        <div class="order-detail order-detail--page">
+                            <div class="order-detail__hero">
+                                <div class="order-detail__head">
+                                    <div>
+                                        <p class="detail-item__label m-0">Order Details</p>
+                                        <p class="order-card__number m-0">{{ selectedOrder.order_number }}</p>
+                                        <p class="order-card__date m-0">{{ selectedOrder.created_at | date:'dd MMM yyyy, hh:mm a' }}</p>
+                                    </div>
+                                    <span class="order-card__status">{{ getOrderMarketplaceStatus(selectedOrder) }}</span>
+                                </div>
+
+                                <div class="order-detail__hero-card" *ngIf="selectedOrderPrimaryItem as leadItem">
+                                    <button *ngIf="leadItem.thumbnail; else orderHeroMediaFallback"
+                                        type="button"
+                                        class="order-detail__hero-media order-media-btn"
+                                        (click)="openOrderProduct(leadItem)">
+                                        <img [src]="leadItem.thumbnail" [alt]="leadItem.product_name" />
+                                    </button>
+                                    <ng-template #orderHeroMediaFallback>
+                                        <div class="order-detail__hero-media order-detail__hero-media--placeholder" aria-hidden="true">
+                                            No image
+                                        </div>
+                                    </ng-template>
+                                    <div class="order-detail__hero-copy">
+                                        <h3 class="order-detail__hero-title m-0">{{ leadItem.product_name }}</h3>
+                                        <p class="order-detail__hero-text m-0">
+                                            Qty {{ leadItem.quantity }}
+                                            <ng-container *ngIf="selectedOrderAdditionalItemCount"> • +{{ selectedOrderAdditionalItemCount }} more item{{ selectedOrderAdditionalItemCount > 1 ? 's' : '' }}</ng-container>
+                                        </p>
+                                        <div class="order-detail__hero-tags">
+                                            <span class="order-detail__hero-tag" *ngIf="leadItem.quality_label">{{ leadItem.quality_label }}</span>
+                                            <span class="order-detail__hero-tag">{{ getOrderDestination(selectedOrder) }}</span>
+                                            <span class="order-detail__hero-tag">{{ shipmentProviderLabel }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="order-detail__hero-price">
+                                        <strong>₹{{ selectedOrder.amount_rupees }}</strong>
+                                        <span>{{ selectedOrder.item_count }} item{{ selectedOrder.item_count > 1 ? 's' : '' }}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="shipment-tracker">
+                                <div class="shipment-tracker__head">
+                                    <div>
+                                        <p class="detail-item__label m-0">Shipment Tracking</p>
+                                        <h3 class="shipment-tracker__title m-0">Track your delivery like a marketplace order</h3>
+                                    </div>
+                                    <span class="shipment-tracker__status">{{ shipmentStatusLabel }}</span>
+                                </div>
+
+                                <div class="shipment-tracker__summary">
+                                    <div class="shipment-tracker__summary-item">
+                                        <span class="detail-item__label">Courier</span>
+                                        <strong>{{ shipmentProviderLabel }}</strong>
+                                    </div>
+                                    <div class="shipment-tracker__summary-item">
+                                        <span class="detail-item__label">Tracking ID</span>
+                                        <strong>{{ shipmentTrackingId }}</strong>
+                                    </div>
+                                    <div class="shipment-tracker__summary-item">
+                                        <span class="detail-item__label">Estimated Delivery</span>
+                                        <strong>{{ estimatedDeliveryDate ? (estimatedDeliveryDate | date:'dd MMM yyyy') : 'TBA' }}</strong>
+                                    </div>
+                                </div>
+
+                                <div class="shipment-timeline">
+                                    <div
+                                        class="shipment-step"
+                                        *ngFor="let step of shipmentTrackingSteps"
+                                        [class.shipment-step--completed]="step.state === 'completed'"
+                                        [class.shipment-step--current]="step.state === 'current'">
+                                        <div class="shipment-step__marker">
+                                            <lucide-angular
+                                                class="d-flex"
+                                                [img]="step.state === 'upcoming' ? icons.product.truck : icons.account.security"
+                                                [size]="16"></lucide-angular>
+                                        </div>
+                                        <div class="shipment-step__content">
+                                            <div class="shipment-step__top">
+                                                <strong>{{ step.title }}</strong>
+                                                <span>{{ step.timestamp | date:(step.id === 'packed' || step.id === 'shipped' || step.id === 'out-for-delivery' || step.id === 'delivered' ? 'dd MMM yyyy' : 'dd MMM, hh:mm a') }}</span>
+                                            </div>
+                                            <p class="shipment-step__text m-0">{{ step.description }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="order-items-card">
+                                <div class="order-section-head">
+                                    <div>
+                                        <p class="detail-item__label m-0">Items in this order</p>
+                                        <h3 class="order-section-head__title m-0">{{ selectedOrder.item_count }} item{{ selectedOrder.item_count > 1 ? 's' : '' }}</h3>
+                                    </div>
+                                </div>
+
+                                <div class="order-items">
+                                    <div class="order-item" *ngFor="let item of selectedOrder.items">
+                                        <button type="button" class="order-item__media order-media-btn" (click)="openOrderProduct(item)">
+                                            <img *ngIf="item.thumbnail" [src]="item.thumbnail" [alt]="item.product_name" />
+                                        </button>
+                                        <div class="order-item__copy">
+                                            <p class="order-item__name m-0">{{ item.product_name }}</p>
+                                            <p class="order-item__quality m-0" *ngIf="item.quality_label">{{ item.quality_label }}</p>
+                                            <p class="order-item__meta m-0">Qty {{ item.quantity }} • ₹{{ item.unit_price }}</p>
+                                            <p class="order-item__save m-0" *ngIf="item.original_price > item.unit_price">
+                                                You saved ₹{{ (item.original_price - item.unit_price) * item.quantity }}
+                                            </p>
+                                        </div>
+                                        <div class="order-item__actions">
+                                            <strong>₹{{ item.line_total }}</strong>
+                                            <button type="button" class="order-link-btn" (click)="openOrderProduct(item)">View product</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="order-sidebar">
+                            <div class="order-switcher" *ngIf="orders.length > 1">
+                                <div class="order-section-head">
+                                    <div>
+                                        <p class="detail-item__label m-0">More Orders</p>
+                                        <h3 class="order-section-head__title m-0">Switch without going back</h3>
+                                    </div>
+                                </div>
+
+                                <div class="order-switcher__list">
+                                    <button
+                                        type="button"
+                                        class="order-switcher__item"
+                                        *ngFor="let order of orders"
+                                        [class.order-switcher__item--active]="order.id === selectedOrder.id"
+                                        (click)="openOrderDetail(order.id)">
+                                        <div class="order-switcher__copy" *ngIf="getOrderPrimaryItem(order) as leadItem">
+                                            <strong>{{ leadItem.product_name }}</strong>
+                                            <span>{{ order.order_number }}</span>
+                                            <span>{{ getOrderMarketplaceStatus(order) }}</span>
+                                        </div>
+                                        <strong class="order-switcher__amount">₹{{ order.amount_rupees }}</strong>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="order-payment">
+                                <div class="order-payment__row">
+                                    <span class="detail-item__label">Payment Status</span>
+                                    <strong>{{ getOrderStatusLabel(selectedOrder.payment_status || 'verified') }}</strong>
+                                </div>
+                                <div class="order-payment__row">
+                                    <span class="detail-item__label">Payment ID</span>
+                                    <strong>{{ selectedOrder.payment_id || 'Not available' }}</strong>
+                                </div>
+                                <div class="order-payment__row">
+                                    <span class="detail-item__label">Paid On</span>
+                                    <strong>{{ selectedOrder.paid_at | date:'dd MMM yyyy, hh:mm a' }}</strong>
+                                </div>
+                            </div>
+
+                            <div class="order-address">
+                                <span class="detail-item__label">Delivery Address</span>
+                                <p class="order-address__text m-0">{{ selectedOrderAddressSummary }}</p>
+                            </div>
+
+                            <div class="order-bill">
+                                <p class="order-bill__title m-0">Bill Details</p>
+                                <div class="order-bill__row">
+                                    <span>Original price</span>
+                                    <strong>₹{{ selectedOrder.original_total_rupees || selectedOrder.amount_rupees }}</strong>
+                                </div>
+                                <div class="order-bill__row">
+                                    <span>Discount</span>
+                                    <strong class="order-metric__save">₹{{ selectedOrder.savings_rupees }}</strong>
+                                </div>
+                                <div class="order-bill__row">
+                                    <span>Shipping</span>
+                                    <strong>{{ (selectedOrder.shipping_rupees || 0) === 0 ? 'Free' : ('₹' + (selectedOrder.shipping_rupees || 0)) }}</strong>
+                                </div>
+                                <div class="order-bill__row order-bill__row--total">
+                                    <span>Total paid</span>
+                                    <strong>₹{{ selectedOrder.amount_rupees }}</strong>
+                                </div>
+                            </div>
+
+                            <div class="order-detail__actions order-detail__actions--sidebar">
+                                <button type="button" class="account-secondary-btn order-detail__btn" (click)="openSection('addresses')">
+                                    Delivery Details
+                                </button>
+                                <button type="button" class="account-secondary-btn order-detail__btn" (click)="openSection('contact-us')">
+                                    Need Help
+                                </button>
+                                <button type="button" class="account-secondary-btn order-detail__btn" (click)="downloadInvoice()">
+                                    Download Invoice
+                                </button>
+                                <button type="button" class="account-action-btn order-detail__btn" (click)="startShopping()" [disabled]="isReordering">
+                                    {{ isReordering ? 'Adding to cart...' : 'Order Again' }}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <ng-template #orderDetailState>
+                    <div class="order-detail-state order-detail-state--loading" *ngIf="isOrderDetailLoading" aria-live="polite">
+                        <div class="order-detail-state__card">
+                            <div class="order-detail-state__bar order-detail-state__bar--sm"></div>
+                            <div class="order-detail-state__bar order-detail-state__bar--lg"></div>
+                            <div class="order-detail-state__bar order-detail-state__bar--md"></div>
+                            <div class="order-detail-state__panel">
+                                <div class="order-detail-state__thumb"></div>
+                                <div class="order-detail-state__copy">
+                                    <div class="order-detail-state__bar order-detail-state__bar--md"></div>
+                                    <div class="order-detail-state__bar order-detail-state__bar--sm"></div>
+                                </div>
+                            </div>
+                            <p class="order-detail-state__text m-0">Loading order details...</p>
+                        </div>
+                    </div>
+                    <div class="order-detail-state" *ngIf="!isOrderDetailLoading && orderDetailError">
+                        {{ orderDetailError }}
+                    </div>
+                </ng-template>
+
+                <ng-template #ordersState>
+                    <div class="orders-state orders-state-height" *ngIf="isOrdersLoading">Loading your orders...</div>
+                    <div class="orders-state" *ngIf="!isOrdersLoading && ordersError">{{ ordersError }}</div>
+                    <div class="orders-empty" *ngIf="!isOrdersLoading && !ordersError && !orders.length">
+                        <p class="orders-empty__title m-0">No paid orders yet</p>
+                        <p class="orders-empty__text m-0">Finish a purchase and your completed paid orders will appear here with product, savings, and delivery details.</p>
+                        <button type="button" class="account-action-btn" (click)="startShopping()">Start Shopping</button>
+                    </div>
+                </ng-template>
+            </section>
+
+            <section class="account-card" *ngIf="activeSection === 'addresses'">
+                <div class="account-card__head account-card__head--start">
+                    <div>
+                        <p class="account-card__eyebrow m-0">Delivery</p>
+                        <h2 class="account-card__title m-0">Addresses</h2>
+                        <p class="account-card__caption m-0">
+                            Keep your delivery contact and address complete so checkout stays fast and error-free.
+                        </p>
+                    </div>
+                    <button
+                        *ngIf="!isEditingAddress"
+                        type="button"
+                        class="account-action-btn"
+                        (click)="startAddressEdit()">
+                        Edit Address
+                    </button>
+                </div>
+
+                <div class="profile-panel">
+                    <div class="profile-form">
+                        <label class="profile-field">
+                            <span class="profile-field__label">Recipient Name</span>
+                            <input
+                                type="text"
+                                [value]="addressForm.name"
+                                (input)="onAddressInput('name', $any($event.target).value)"
+                                (blur)="onAddressBlur('name')"
+                                [disabled]="!isEditingAddress"
+                                placeholder="Enter full delivery name" />
+                            <span class="profile-field__error" *ngIf="addressErrors.name">{{ addressErrors.name }}</span>
+                        </label>
+
+                        <label class="profile-field">
+                            <span class="profile-field__label">Email Address</span>
+                            <input
+                                type="email"
+                                [value]="addressForm.email"
+                                (input)="onAddressInput('email', $any($event.target).value)"
+                                (blur)="onAddressBlur('email')"
+                                [disabled]="!isEditingAddress"
+                                placeholder="Enter delivery email" />
+                            <span class="profile-field__error" *ngIf="addressErrors.email">{{ addressErrors.email }}</span>
+                        </label>
+
+                        <label class="profile-field">
+                            <span class="profile-field__label">Mobile Number</span>
+                            <input
+                                type="tel"
+                                inputmode="numeric"
+                                [value]="addressForm.contact"
+                                (input)="onAddressInput('contact', $any($event.target).value)"
+                                (blur)="onAddressBlur('contact')"
+                                [disabled]="!isEditingAddress"
+                                placeholder="Enter delivery mobile number" />
+                            <span class="profile-field__error" *ngIf="addressErrors.contact">{{ addressErrors.contact }}</span>
+                        </label>
+
+                        <label class="profile-field">
+                            <span class="profile-field__label">Address Line 1</span>
+                            <input
+                                type="text"
+                                [value]="addressForm.address"
+                                (input)="onAddressInput('address', $any($event.target).value)"
+                                (blur)="onAddressBlur('address')"
+                                [disabled]="!isEditingAddress"
+                                placeholder="House number, building, street, area" />
+                            <span class="profile-field__error" *ngIf="addressErrors.address">{{ addressErrors.address }}</span>
+                        </label>
+
+                        <label class="profile-field">
+                            <span class="profile-field__label">Address Line 2</span>
+                            <input
+                                type="text"
+                                [value]="addressForm.address_line_2 || ''"
+                                (input)="onAddressInput('address_line_2', $any($event.target).value)"
+                                (blur)="onAddressBlur('address_line_2')"
+                                [disabled]="!isEditingAddress"
+                                placeholder="Landmark, apartment, suite, optional" />
+                            <span class="profile-field__error" *ngIf="addressErrors.address_line_2">{{ addressErrors.address_line_2 }}</span>
+                        </label>
+
+                        <label class="profile-field">
+                            <span class="profile-field__label">City</span>
+                            <input
+                                type="text"
+                                [value]="addressForm.city"
+                                (input)="onAddressInput('city', $any($event.target).value)"
+                                (blur)="onAddressBlur('city')"
+                                [disabled]="!isEditingAddress"
+                                placeholder="Enter city" />
+                            <span class="profile-field__error" *ngIf="addressErrors.city">{{ addressErrors.city }}</span>
+                        </label>
+
+                        <label class="profile-field">
+                            <span class="profile-field__label">State</span>
+                            <input
+                                type="text"
+                                [value]="addressForm.state"
+                                (input)="onAddressInput('state', $any($event.target).value)"
+                                (blur)="onAddressBlur('state')"
+                                [disabled]="!isEditingAddress"
+                                placeholder="Enter state" />
+                            <span class="profile-field__error" *ngIf="addressErrors.state">{{ addressErrors.state }}</span>
+                        </label>
+
+                        <label class="profile-field">
+                            <span class="profile-field__label">Postal Code</span>
+                            <input
+                                type="text"
+                                inputmode="numeric"
+                                [value]="addressForm.postal_code"
+                                (input)="onAddressInput('postal_code', $any($event.target).value)"
+                                (blur)="onAddressBlur('postal_code')"
+                                [disabled]="!isEditingAddress"
+                                placeholder="Enter 6-digit postal code" />
+                            <span class="profile-field__error" *ngIf="addressErrors.postal_code">{{ addressErrors.postal_code }}</span>
+                        </label>
+                    </div>
+
+                    <div class="profile-sidecard">
+                        <p class="profile-sidecard__title m-0">Saved Delivery Summary</p>
+                        <div class="address-card">
+                            <p class="address-card__name m-0">{{ displayAddressName }}</p>
+                            <p class="address-card__line m-0" *ngFor="let line of formattedAddress">{{ line }}</p>
+                        </div>
+                        <p class="profile-sidecard__text m-0">
+                            These details are reused during checkout and help prevent failed deliveries caused by incomplete address data.
+                        </p>
+                    </div>
+                </div>
+
+                <p class="profile-feedback m-0" *ngIf="addressFeedback">{{ addressFeedback }}</p>
+
+                <div class="profile-actions" *ngIf="isEditingAddress">
+                    <button type="button" class="account-secondary-btn" (click)="cancelAddressEdit()" [disabled]="isSavingAddress">
+                        Cancel
+                    </button>
+                    <button type="button" class="account-action-btn" (click)="saveAddress()" [disabled]="isSavingAddress">
+                        {{ isSavingAddress ? 'Saving...' : 'Save Address' }}
+                    </button>
+                </div>
+            </section>
+
+            <section class="account-card" *ngIf="activeSection === 'contact-us'">
+                <div class="account-card__head">
+                    <div>
+                        <p class="account-card__eyebrow m-0">Support</p>
+                        <h2 class="account-card__title m-0">Contact Us</h2>
+                    </div>
+                    <lucide-angular class="d-flex" [img]="icons.account.contact" [size]="20"></lucide-angular>
+                </div>
+                <div class="support-grid">
+                    <div class="support-item">
+                        <span class="detail-item__label">Support</span>
+                        <strong>Use the Secure Derma contact and help channels for account and order assistance.</strong>
+                    </div>
+                    <div class="support-item">
+                        <span class="detail-item__label">Help topics</span>
+                        <strong>Orders, delivery, products, account</strong>
+                    </div>
+                </div>
+            </section>
+
+            <section class="account-card" *ngIf="activeSection === 'account-security'">
+                <div class="account-card__head">
+                    <div>
+                        <p class="account-card__eyebrow m-0">Security</p>
+                        <h2 class="account-card__title m-0">Account Security</h2>
+                    </div>
+                    <lucide-angular class="d-flex" [img]="icons.account.security" [size]="20"></lucide-angular>
+                </div>
+                <p class="account-card__text m-0">
+                    You stay signed in until you log out. Use the logout action here whenever you want to end the current session manually.
+                </p>
+            </section>
+        </div>
+    </div>
+</section>

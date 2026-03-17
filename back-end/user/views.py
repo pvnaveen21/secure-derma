@@ -6,8 +6,47 @@ from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenRefreshView
 from rest_framework_simplejwt.exceptions import TokenError, InvalidToken
+import os
+import re
+from django.core.exceptions import ValidationError
+from django.core.validators import validate_email
 
 from user.models import User
+
+
+def _serialize_user(user):
+    return {
+        'id': user.id,
+        'username': user.username,
+        'email': user.email,
+        'phone': user.phone,
+        'is_staff': user.is_staff,
+        'is_superuser': user.is_superuser,
+        'is_google_login': user.is_google_login,
+    }
+
+
+def _normalize_profile_payload(payload):
+    username = re.sub(r"\s+", " ", str(payload.get('username', '') or '')).strip()
+    email = str(payload.get('email', '') or '').strip().lower()
+    phone = re.sub(r"\D", "", str(payload.get('phone', '') or ''))[:10]
+
+    if not re.fullmatch(r"^[A-Za-z][A-Za-z .'-]{1,79}$", username):
+        raise ValueError('Enter a valid full name.')
+
+    try:
+        validate_email(email)
+    except ValidationError as exc:
+        raise ValueError('Enter a valid email address.') from exc
+
+    if not re.fullmatch(r"^[6-9]\d{9}$", phone):
+        raise ValueError('Enter a valid 10-digit mobile number.')
+
+    return {
+        'username': username,
+        'email': email,
+        'phone': phone,
+    }
 
 
 class AdminLoginApiView(APIView):
@@ -83,6 +122,39 @@ class AdminTokenRefreshView(TokenRefreshView):
             )
 
 
+class UserTokenRefreshView(TokenRefreshView):
+
+    permission_classes = [AllowAny]
+
+    def post(self, request, *args, **kwargs):
+        refresh_token = request.data.get('refresh')
+
+        if not refresh_token:
+            return Response(
+                {'error': 'Refresh token is required.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            response = super().post(request, *args, **kwargs)
+            return Response({
+                'message': 'Token refreshed successfully.',
+                'access': response.data.get('access'),
+            }, status=status.HTTP_200_OK)
+
+        except TokenError as e:
+            return Response(
+                {'error': 'Invalid or expired refresh token.', 'detail': str(e)},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+
+        except InvalidToken as e:
+            return Response(
+                {'error': 'Invalid token.', 'detail': str(e)},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+
+
 class AdminDetailApiView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -97,10 +169,46 @@ class AdminDetailApiView(APIView):
         }, status=status.HTTP_200_OK)
 
 
-GOOGLE_CLIENT_ID = "366738678025-5bleq673qblpukr2ten3o0qq6oji7hr2.apps.googleusercontent.com"
+class UserDetailApiView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        return Response(_serialize_user(user), status=status.HTTP_200_OK)
+
+    def patch(self, request):
+        user = request.user
+
+        try:
+            profile = _normalize_profile_payload(request.data)
+        except ValueError as exc:
+            return Response({'detail': str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+
+        if User.objects.filter(email__iexact=profile['email']).exclude(pk=user.pk).exists():
+            return Response({'detail': 'This email address is already in use.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if User.objects.filter(phone=profile['phone']).exclude(pk=user.pk).exists():
+            return Response({'detail': 'This mobile number is already in use.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if user.is_google_login and profile['email'] != user.email:
+            return Response(
+                {'detail': 'Email cannot be changed for Google login accounts.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        user.username = profile['username']
+        user.email = profile['email']
+        user.phone = profile['phone']
+        user.save(update_fields=['username', 'email', 'phone', 'modified_at'])
+
+        return Response(_serialize_user(user), status=status.HTTP_200_OK)
+
 from google.oauth2 import id_token
 from google.auth.transport import requests
 from rest_framework.decorators import api_view
+
+GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "").strip()
+
 @api_view(['POST'])
 def google_login(request):
     token = request.data.get("token")

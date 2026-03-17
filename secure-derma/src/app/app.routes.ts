@@ -20,8 +20,24 @@ export const routes: Routes = [
                 loadComponent: () => import('./products/products.component').then(m => m.ProductsComponent),
             },
             {
+                path: 'checkout',
+                loadComponent: () => import('./checkout/checkout.component').then(m => m.CheckoutComponent),
+            },
+            {
+                path: 'account',
+                loadComponent: () => import('./account/account.component').then(m => m.AccountComponent),
+            },
+            {
                 path: 'account/login',
                 loadComponent: () => import('./auth/login/login.component').then(m => m.LoginComponent),
+            },
+            {
+                path: 'account/orders/:orderId',
+                loadComponent: () => import('./account/account.component').then(m => m.AccountComponent),
+            },
+            {
+                path: 'account/:section',
+                loadComponent: () => import('./account/account.component').then(m => m.AccountComponent),
             },
         ]
     }

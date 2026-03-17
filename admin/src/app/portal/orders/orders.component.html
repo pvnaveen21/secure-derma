@@ -1,0 +1,281 @@
+<div class="orders-workspace">
+  <section class="orders-hero">
+    <div class="orders-hero__copy">
+      <p class="orders-hero__eyebrow m-0">Order Management</p>
+      <h2 class="orders-hero__title m-0">Seller-style order desk</h2>
+      <p class="orders-hero__text m-0">
+        Review orders, inspect payments, verify customer details, and work through the queue from a single admin workspace.
+      </p>
+    </div>
+    <div class="orders-hero__actions">
+      <button nz-button nzType="default" (click)="exportCurrentView()">Export Current View</button>
+      <button nz-button nzType="primary" (click)="refreshAll()">Refresh</button>
+    </div>
+  </section>
+
+  @if (loadError) {
+    <nz-card class="orders-error-card">
+      <p class="m-0">{{ loadError }}</p>
+    </nz-card>
+  }
+
+  <nz-spin [nzSpinning]="summaryLoading">
+    <section class="orders-metrics">
+      <nz-card class="orders-metric">
+        <p class="orders-metric__label m-0">Paid Orders</p>
+        <h3 class="orders-metric__value m-0">{{ summary.total_orders }}</h3>
+        <p class="orders-metric__meta m-0">Confirmed successful payments</p>
+      </nz-card>
+      <nz-card class="orders-metric">
+        <p class="orders-metric__label m-0">Revenue</p>
+        <h3 class="orders-metric__value m-0">{{ formatCurrency(summary.total_revenue) }}</h3>
+        <p class="orders-metric__meta m-0">Captured order value</p>
+      </nz-card>
+      <nz-card class="orders-metric">
+        <p class="orders-metric__label m-0">Pending Payments</p>
+        <h3 class="orders-metric__value m-0">{{ summary.pending_orders }}</h3>
+        <p class="orders-metric__meta m-0">Require payment follow-up</p>
+      </nz-card>
+      <nz-card class="orders-metric">
+        <p class="orders-metric__label m-0">Average Order Value</p>
+        <h3 class="orders-metric__value m-0">{{ formatCurrency(summary.average_order_value) }}</h3>
+        <p class="orders-metric__meta m-0">
+          @if (summary.latest_paid_at) {
+            Last paid {{ summary.latest_paid_at | date:'dd MMM yyyy' }}
+          } @else {
+            No recent paid orders
+          }
+        </p>
+      </nz-card>
+    </section>
+  </nz-spin>
+
+  <section class="orders-toolbar">
+    <div class="orders-search">
+      <label class="orders-toolbar__label" for="admin-order-search">Search Orders</label>
+      <input
+        id="admin-order-search"
+        nz-input
+        placeholder="Order number, Razorpay id, customer, phone"
+        [(ngModel)]="searchText"
+        (keyup.enter)="applyFilters()"
+      />
+    </div>
+
+    <div class="orders-toolbar__controls">
+      <div class="orders-select-wrap">
+        <label class="orders-toolbar__label" for="admin-order-status">Status</label>
+        <nz-select
+          id="admin-order-status"
+          [(ngModel)]="selectedStatus"
+          nzPlaceHolder="Filter by status"
+          class="orders-toolbar__status"
+        >
+          @for (status of statusOptions; track status.value) {
+            <nz-option [nzLabel]="status.label" [nzValue]="status.value"></nz-option>
+          }
+        </nz-select>
+      </div>
+      <button nz-button nzType="primary" (click)="applyFilters()">Apply</button>
+      <button nz-button nzType="default" (click)="resetFilters()">Reset</button>
+    </div>
+  </section>
+
+  <section class="orders-quick-filters">
+    @for (status of statusOptions; track status.value) {
+      <button
+        type="button"
+        class="orders-quick-filter"
+        [class.orders-quick-filter--active]="selectedStatus === status.value"
+        (click)="setStatus(status.value)">
+        {{ status.label }}
+      </button>
+    }
+  </section>
+
+  <section class="orders-board">
+    <nz-card class="orders-list-panel">
+      <div class="orders-list-panel__head">
+        <div>
+          <p class="orders-list-panel__eyebrow m-0">Orders Queue</p>
+          <h3 class="orders-list-panel__title m-0">{{ total }} result<span *ngIf="total !== 1">s</span></h3>
+        </div>
+        <p class="orders-list-panel__meta m-0">
+          Showing {{ rangeStart }}-{{ rangeEnd }}
+        </p>
+      </div>
+
+      <nz-spin [nzSpinning]="loading">
+        @if (orders.length) {
+          <div class="orders-list">
+            @for (order of orders; track order.id) {
+              <button
+                type="button"
+                class="orders-row"
+                [class.orders-row--active]="selectedOrderId === order.id"
+                (click)="openOrder(order.id)">
+                <div class="orders-row__top">
+                  <div class="orders-row__identity">
+                    <p class="orders-row__number m-0">{{ order.order_number }}</p>
+                    <p class="orders-row__sub m-0">{{ order.razorpay_order_id }}</p>
+                  </div>
+                  <nz-tag class="orders-row__status" [nzColor]="'default'">
+                    {{ getStatusLabel(order.status) }}
+                  </nz-tag>
+                </div>
+
+                <div class="orders-row__body">
+                  <div class="orders-row__customer">
+                    <p class="orders-row__name m-0">{{ order.customer_name || 'Walk-in customer' }}</p>
+                    <p class="orders-row__sub m-0">{{ order.customer_email || order.customer_phone || 'No contact info' }}</p>
+                  </div>
+                  <div class="orders-row__amount">
+                    <strong>{{ formatCurrency(order.amount_rupees) }}</strong>
+                    <span>{{ order.item_count }} item<span *ngIf="order.item_count !== 1">s</span></span>
+                  </div>
+                </div>
+
+                <div class="orders-row__footer">
+                  <span>{{ order.updated_at | date:'dd MMM yyyy, hh:mm a' }}</span>
+                  <span>{{ order.customer_city || 'No city' }}, {{ order.customer_state || 'No state' }}</span>
+                </div>
+              </button>
+            }
+          </div>
+
+          <nz-pagination
+            class="orders-pager"
+            [nzTotal]="total"
+            [nzPageIndex]="pageIndex"
+            [nzPageSize]="pageSize"
+            [nzPageSizeOptions]="[10, 20, 50]"
+            [nzShowSizeChanger]="true"
+            [nzShowQuickJumper]="true"
+            [nzHideOnSinglePage]="true"
+            [nzSimple]="true"
+            (nzPageIndexChange)="onPageIndexChange($event)"
+            (nzPageSizeChange)="onPageSizeChange($event)">
+          </nz-pagination>
+        } @else {
+          <nz-empty nzNotFoundImage="simple" nzNotFoundContent="No orders found"></nz-empty>
+        }
+      </nz-spin>
+    </nz-card>
+
+    <nz-card class="orders-detail-panel">
+      <div class="orders-detail-panel__head">
+        <div>
+          <p class="orders-detail-panel__eyebrow m-0">Order Workspace</p>
+          <h3 class="orders-detail-panel__title m-0">{{ selectedOrderLabel }}</h3>
+        </div>
+        @if (selectedOrder) {
+          <div class="orders-detail-panel__head-actions">
+            <button nz-button nzType="default" nzSize="small" (click)="copyValue('Order number', selectedOrder.order_number)">Copy Order</button>
+            <button nz-button nzType="default" nzSize="small" (click)="copyValue('Payment id', selectedOrder.razorpay_payment_id)">Copy Payment</button>
+          </div>
+        }
+      </div>
+
+      <nz-spin [nzSpinning]="detailLoading">
+        @if (selectedOrder) {
+          <div class="orders-detail">
+            <section class="orders-detail__hero">
+              <div class="orders-detail__hero-copy">
+                <nz-tag [nzColor]="'processing'">{{ getStatusLabel(selectedOrder.status) }}</nz-tag>
+                <h4 class="orders-detail__hero-title m-0">{{ formatCurrency(selectedOrder.amount_rupees) }}</h4>
+                <p class="orders-detail__hero-text m-0">
+                  Created {{ selectedOrder.created_at | date:'dd MMM yyyy, hh:mm a' }} • Updated {{ selectedOrder.updated_at | date:'dd MMM yyyy, hh:mm a' }}
+                </p>
+              </div>
+              <div class="orders-detail__hero-meta">
+                <span>{{ selectedOrder.currency }}</span>
+                <span>{{ selectedOrder.item_count }} item<span *ngIf="selectedOrder.item_count !== 1">s</span></span>
+              </div>
+            </section>
+
+            <section class="orders-detail__grid">
+              <div class="orders-info-card">
+                <p class="orders-info-card__label m-0">Customer</p>
+                <h4 class="orders-info-card__value m-0">{{ selectedOrder.customer_name || 'Walk-in customer' }}</h4>
+                <p class="orders-info-card__meta m-0">{{ selectedOrder.customer_email || 'No email' }}</p>
+                <p class="orders-info-card__meta m-0">{{ selectedOrder.customer_phone || 'No phone' }}</p>
+              </div>
+
+              <div class="orders-info-card">
+                <p class="orders-info-card__label m-0">Payment Reference</p>
+                <h4 class="orders-info-card__value m-0">{{ selectedOrder.razorpay_payment_id || 'Pending payment id' }}</h4>
+                <p class="orders-info-card__meta m-0">{{ selectedOrder.razorpay_order_id }}</p>
+                <p class="orders-info-card__meta m-0">Amount {{ formatCurrency(selectedOrder.amount_rupees) }}</p>
+              </div>
+
+              <div class="orders-info-card orders-info-card--wide">
+                <p class="orders-info-card__label m-0">Shipping Address</p>
+                <h4 class="orders-info-card__value m-0">{{ selectedOrder.customer_city || 'No city' }}, {{ selectedOrder.customer_state || 'No state' }}</h4>
+                <p class="orders-info-card__meta m-0">{{ selectedOrderAddress }}</p>
+              </div>
+            </section>
+
+            <section class="orders-section">
+              <div class="orders-section__head">
+                <h4 class="m-0">Line Items</h4>
+                <span>{{ selectedOrder.items.length }} line<span *ngIf="selectedOrder.items.length !== 1">s</span></span>
+              </div>
+
+              <div class="orders-lines">
+                @for (item of selectedOrder.items; track item.id) {
+                  <div class="orders-lines__row">
+                    <div class="orders-lines__item">
+                      @if (item.thumbnail) {
+                        <div class="orders-lines__media">
+                          <img [src]="item.thumbnail" [alt]="item.product_name" />
+                        </div>
+                      }
+                      <p class="orders-lines__name m-0">{{ item.product_name }}</p>
+                      @if (item.quality_label) {
+                        <p class="orders-lines__quality m-0">Quality: {{ item.quality_label }}</p>
+                      }
+                      <p class="orders-lines__meta m-0">Product #{{ item.product_id }} • Variant #{{ item.product_detail_id }}</p>
+                    </div>
+                    <div class="orders-lines__amount">
+                      <span>{{ item.quantity }} x {{ formatCurrency(item.unit_price) }}</span>
+                      <strong>{{ formatCurrency(item.line_total) }}</strong>
+                    </div>
+                  </div>
+                }
+              </div>
+            </section>
+
+            <section class="orders-section">
+              <div class="orders-section__head">
+                <h4 class="m-0">Payment Timeline</h4>
+                <span>{{ selectedOrder.payments.length }} event<span *ngIf="selectedOrder.payments.length !== 1">s</span></span>
+              </div>
+
+              @if (selectedOrder.payments.length) {
+                <div class="orders-lines">
+                  @for (payment of selectedOrder.payments; track payment.id) {
+                    <div class="orders-lines__row">
+                      <div>
+                        <p class="orders-lines__name m-0">{{ getStatusLabel(payment.status) }}</p>
+                        <p class="orders-lines__meta m-0">
+                          {{ payment.razorpay_payment_id || payment.razorpay_order_id }}
+                        </p>
+                      </div>
+                      <div class="orders-lines__amount">
+                        <span>{{ payment.updated_at | date:'dd MMM yyyy, hh:mm a' }}</span>
+                      </div>
+                    </div>
+                  }
+                </div>
+              } @else {
+                <nz-empty nzNotFoundImage="simple" nzNotFoundContent="No payment history"></nz-empty>
+              }
+            </section>
+          </div>
+        } @else {
+          <nz-empty nzNotFoundImage="simple" nzNotFoundContent="Select an order to review its full details"></nz-empty>
+        }
+      </nz-spin>
+    </nz-card>
+  </section>
+</div>

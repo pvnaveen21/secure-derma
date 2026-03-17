@@ -207,7 +207,7 @@
         <div data-scroll-body class="concern-strip__products">
             @for (product of concernProducts; track product.id) {
             <div class="product-card concern-product-card">
-                <div class="product-image" (click)="producetView(product.product_name)">
+                <div class="product-image" (click)="producetView(product)">
                     <div class="image-container">
                         <img [src]="product.thumbnail_image" [attr.data-hover]="product.hover_image"
                             [alt]="product.product_name" />
@@ -232,8 +232,8 @@
                         <span class="original-price">₹ {{ product.original_price }}</span>
                     </div>
 
-                    <button class="add-to-cart-btn">
-                        Add to Cart
+                    <button class="add-to-cart-btn" (click)="addToCart(product)">
+                        {{ recentlyAddedProductId === product.id ? 'Added to cart' : 'Add to Cart' }}
                     </button>
                 </div>
             </div>
@@ -266,7 +266,7 @@
         <div data-scroll-body class="product-grid py-2">
             @for (product of trendingProductList; track product.id) {
             <div class="product-card scroll-animate">
-                <div class="product-image" (click)="producetView(product?.product_name)">
+                <div class="product-image" (click)="producetView(product)">
                     <div class="image-container">
                         <img [src]="product.thumbnail_image" [attr.data-hover]="product.hover_image"
                             [alt]="product.product_name" />
@@ -294,8 +294,8 @@
                         <span class="original-price">₹ {{ product.product_details[0]?.original_price }}</span>
                     </div>
 
-                    <button class="add-to-cart-btn">
-                        Add to Cart
+                    <button class="add-to-cart-btn" (click)="addToCart(product)">
+                        {{ recentlyAddedProductId === product.id ? 'Added to cart' : 'Add to Cart' }}
                     </button>
                     <!-- </div> -->
                 </div>
