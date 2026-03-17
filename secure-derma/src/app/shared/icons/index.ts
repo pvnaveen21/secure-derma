@@ -1,4 +1,4 @@
-import { ArrowRightIcon, BadgeCheckIcon, BadgeIndianRupeeIcon, ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon, ChevronUpIcon, HandbagIcon, IndianRupeeIcon, LocateFixed, MapPinIcon, MenuIcon, MinusIcon, MoonIcon, PhoneIcon, PlusIcon, ReceiptIndianRupeeIcon, RotateCcwIcon, SearchIcon, SendToBackIcon, ShieldCheckIcon, SquareArrowLeft, SunIcon, TruckElectricIcon, TruckIcon, UserIcon, XIcon } from 'lucide-angular';
+import { ArrowRightIcon, BadgeCheckIcon, BadgeIndianRupeeIcon, ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon, ChevronUpIcon, HandbagIcon, IndianRupeeIcon, LocateFixed, LogOutIcon, MailIcon, MapPinIcon, MenuIcon, MinusIcon, MoonIcon, PackageIcon, PhoneIcon, PlusIcon, ReceiptIndianRupeeIcon, RotateCcwIcon, SearchIcon, SendToBackIcon, ShieldCheckIcon, SquareArrowLeft, SunIcon, TruckElectricIcon, TruckIcon, UserIcon, XIcon } from 'lucide-angular';
 
 export const Icons = {
   theme: {
@@ -7,6 +7,7 @@ export const Icons = {
   },
   header: {
     search: SearchIcon,
+    close: XIcon,
     down: ChevronDownIcon,
     user: UserIcon,
     handbag: HandbagIcon,
@@ -44,5 +45,13 @@ export const Icons = {
     back: ChevronLeftIcon,
     resend: RotateCcwIcon,
     action: ArrowRightIcon,
+  },
+  account: {
+    user: UserIcon,
+    orders: PackageIcon,
+    address: MapPinIcon,
+    contact: MailIcon,
+    security: ShieldCheckIcon,
+    logout: LogOutIcon,
   }
 }

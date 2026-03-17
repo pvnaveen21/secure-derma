@@ -87,6 +87,16 @@ class RazorpayPaymentFlowTests(TestCase):
             email="buyer@example.com",
             password="buyerpass123",
         )
+        self.customer_payload = {
+            "name": "Naveen Kumar",
+            "email": "naveen@example.com",
+            "contact": "9876543210",
+            "address": "12 Lake View Road, Sector 4",
+            "address_line_2": "Near City Clinic",
+            "city": "Bengaluru",
+            "state": "Karnataka",
+            "postal_code": "560001",
+        }
 
     @patch.dict(
         "os.environ",
@@ -115,11 +125,7 @@ class RazorpayPaymentFlowTests(TestCase):
                         "quantity": 2,
                     }
                 ],
-                "customer": {
-                    "name": "Naveen",
-                    "email": "naveen@example.com",
-                    "contact": "9999999999",
-                },
+                "customer": self.customer_payload,
             },
             format="json",
         )
@@ -130,7 +136,9 @@ class RazorpayPaymentFlowTests(TestCase):
         order = SecureDermaOrder.objects.get(razorpay_order_id="order_razorpay_123")
         self.assertEqual(order.status, OrderStatus.PAYMENT_PENDING)
         self.assertEqual(order.amount_rupees, 998)
-        self.assertEqual(order.customer_name, "Naveen")
+        self.assertEqual(order.customer_name, "Naveen Kumar")
+        self.assertEqual(order.customer_address, self.customer_payload["address"])
+        self.assertEqual(order.customer_postal_code, self.customer_payload["postal_code"])
         self.assertEqual(order.items.count(), 1)
 
         payment = SecureDermaPayment.objects.get(order=order)
@@ -151,6 +159,35 @@ class RazorpayPaymentFlowTests(TestCase):
         )
 
         self.assertEqual(response.status_code, 401)
+
+    @patch.dict(
+        "os.environ",
+        {"RAZORPAY_KEY_ID": "rzp_test_123", "RAZORPAY_KEY_SECRET": "secret_123"},
+        clear=False,
+    )
+    def test_create_order_requires_complete_customer_details(self):
+        self.client.force_authenticate(user=self.user)
+
+        response = self.client.post(
+            "/api/payments/create-order/",
+            {
+                "items": [
+                    {
+                        "detailId": self.detail.id,
+                        "quantity": 1,
+                    }
+                ],
+                "customer": {
+                    "name": "Naveen",
+                    "email": "not-an-email",
+                    "contact": "123",
+                },
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data["detail"], "Enter a valid customer email address.")
 
     @patch.dict(
         "os.environ",
@@ -178,7 +215,8 @@ class RazorpayPaymentFlowTests(TestCase):
                         "detailId": self.detail.id,
                         "quantity": 1,
                     }
-                ]
+                ],
+                "customer": self.customer_payload,
             },
             format="json",
         )
@@ -251,6 +289,16 @@ class SecureDermaCartAPIViewTests(TestCase):
             password="buyerpass123",
         )
         self.client.force_authenticate(user=self.user)
+        self.customer_payload = {
+            "name": "Cart User",
+            "email": "cartuser@example.com",
+            "contact": "9876543210",
+            "address": "44 Residency Road, Block B",
+            "address_line_2": "Opposite Metro Gate",
+            "city": "Bengaluru",
+            "state": "Karnataka",
+            "postal_code": "560001",
+        }
 
     def test_sync_guest_cart_creates_cart_items(self):
         response = self.client.post(
@@ -326,7 +374,8 @@ class SecureDermaCartAPIViewTests(TestCase):
                         "detailId": self.detail.id,
                         "quantity": 1,
                     }
-                ]
+                ],
+                "customer": self.customer_payload,
             },
             format="json",
         )
@@ -397,6 +446,11 @@ class AdminOrderApiTests(TestCase):
             customer_name="Admin Test",
             customer_email="customer@example.com",
             customer_phone="9876543210",
+            customer_address="221B Baker Street",
+            customer_address_line_2="Near Central Park",
+            customer_city="Bengaluru",
+            customer_state="Karnataka",
+            customer_postal_code="560001",
             items_snapshot=[],
         )
         SecureDermaOrderItem.objects.create(
@@ -447,11 +501,134 @@ class AdminOrderApiTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data["count"], 1)
         self.assertEqual(response.data["results"][0]["order_number"], self.order.order_number)
+        self.assertEqual(response.data["results"][0]["customer_postal_code"], self.order.customer_postal_code)
 
     def test_admin_order_detail_returns_items_and_payments(self):
         response = self.client.get(f"/api/admin/orders/{self.order.id}/")
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data["order_number"], self.order.order_number)
+        self.assertEqual(response.data["customer_address"], self.order.customer_address)
         self.assertEqual(len(response.data["items"]), 1)
         self.assertEqual(len(response.data["payments"]), 1)
+
+
+class UserOrderApiTests(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.user = User.objects.create_user(
+            email="buyer@example.com",
+            password="buyerpass123",
+            username="Buyer User",
+            phone="9876543210",
+        )
+        self.other_user = User.objects.create_user(
+            email="other@example.com",
+            password="otherpass123",
+            username="Other User",
+            phone="9123456789",
+        )
+        self.client.force_authenticate(user=self.user)
+
+        self.brand = Brand.objects.create(brand_name="User Brand")
+        self.category = Categories.objects.create(categorie="User Cat")
+        self.product_type = ProductType.objects.create(categorie=self.category, product_type="Cleanser")
+        self.product = Product.objects.create(
+            brand=self.brand,
+            categorie=self.category,
+            product_type=self.product_type,
+            product_name="User Product",
+            slug="user-product",
+        )
+        self.detail = ProductDetails.objects.create(
+            product=self.product,
+            product_weight="50",
+            weight_type="ml",
+            combo=1,
+            original_price=799,
+            selling_price=699,
+            available_stock_count=10,
+            discount_price=100,
+        )
+
+        self.order = SecureDermaOrder.objects.create(
+            user=self.user,
+            order_number="securederma_user_001",
+            razorpay_order_id="order_user_001",
+            razorpay_payment_id="pay_user_001",
+            amount_rupees=699,
+            amount_paise=69900,
+            currency="INR",
+            status=OrderStatus.PAID,
+            customer_name="Buyer User",
+            customer_email="buyer@example.com",
+            customer_phone="9876543210",
+            customer_address="Anna Nagar",
+            customer_city="Chennai",
+            customer_state="Tamil Nadu",
+            customer_postal_code="638301",
+            shipping_name="Buyer User",
+            shipping_address="Anna Nagar",
+            shipping_city="Chennai",
+            shipping_state="Tamil Nadu",
+            shipping_pincode="638301",
+            shipping_provider="manual-checkout",
+            items_snapshot=[],
+        )
+        SecureDermaOrderItem.objects.create(
+            order=self.order,
+            product=self.product,
+            product_detail=self.detail,
+            product_name="User Product",
+            quantity=1,
+            unit_price=699,
+            line_total=699,
+        )
+        SecureDermaPayment.objects.create(
+            order=self.order,
+            razorpay_order_id=self.order.razorpay_order_id,
+            razorpay_payment_id=self.order.razorpay_payment_id,
+            status=PaymentStatus.VERIFIED,
+            payload={},
+        )
+
+    def test_user_order_list_returns_only_authenticated_users_orders(self):
+        SecureDermaOrder.objects.create(
+            user=self.other_user,
+            order_number="securederma_user_002",
+            razorpay_order_id="order_user_002",
+            amount_rupees=999,
+            amount_paise=99900,
+            currency="INR",
+            status=OrderStatus.PAYMENT_PENDING,
+        )
+
+        response = self.client.get("/api/orders/")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["count"], 1)
+        self.assertEqual(response.data["results"][0]["order_number"], self.order.order_number)
+        self.assertEqual(response.data["results"][0]["items"][0]["product_slug"], "user-product")
+
+    def test_user_order_detail_returns_authenticated_users_order(self):
+        response = self.client.get(f"/api/orders/{self.order.id}/")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["order_number"], self.order.order_number)
+        self.assertEqual(response.data["shipping_city"], "Chennai")
+        self.assertEqual(response.data["items"][0]["product_name"], "User Product")
+
+    def test_user_order_detail_rejects_other_users_order(self):
+        other_order = SecureDermaOrder.objects.create(
+            user=self.other_user,
+            order_number="securederma_user_003",
+            razorpay_order_id="order_user_003",
+            amount_rupees=999,
+            amount_paise=99900,
+            currency="INR",
+            status=OrderStatus.PAID,
+        )
+
+        response = self.client.get(f"/api/orders/{other_order.id}/")
+
+        self.assertEqual(response.status_code, 404)

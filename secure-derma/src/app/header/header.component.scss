@@ -20,6 +20,7 @@
         display: flex;
         align-items: center;
         gap: 2.5rem;
+        transition: gap 220ms ease;
 
         @media only screen and (max-width:76.8rem) {
             padding-block: 1rem;
@@ -115,6 +116,12 @@
     justify-content: space-between;
     white-space: nowrap;
     height: 5rem;
+    overflow: hidden;
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(0);
+    transition: flex 240ms ease, max-width 240ms ease, opacity 180ms ease, transform 220ms ease, visibility 180ms ease;
+    max-width: 52rem;
 
     .menu-title-main {
         height: 100%;
@@ -720,9 +727,220 @@
     align-items: center;
     gap: 2rem;
     flex: 1;
+    min-width: 0;
+    transition: flex 240ms ease, gap 220ms ease;
 
     .search-container {
         flex: 1;
+        position: relative;
+        min-width: 0;
+        transition: transform 220ms ease, max-width 240ms ease, box-shadow 220ms ease;
+    }
+}
+
+@media only screen and (min-width:76.81rem) {
+    .header-menu--search-active {
+        gap: 1.5rem;
+    }
+
+    .navigation-menu--search-hidden {
+        flex: 0 1 0;
+        max-width: 0;
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+        transform: translateX(-1rem);
+    }
+
+    .search-signin--expanded {
+        flex: 1 1 100%;
+    }
+
+    .search-container--active {
+        transform: translateX(0) scale(1.01);
+        box-shadow: 0 0.8rem 2rem color-mix(in srgb, var(--brand-primary) 10%, transparent);
+    }
+}
+
+.mobile-header-search {
+    position: relative;
+}
+
+.header-search-suggestions {
+    position: absolute;
+    top: calc(100% + 0.7rem);
+    left: 0;
+    right: 0;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-0.5rem) scale(0.98);
+    transform-origin: top center;
+    transition: opacity 180ms ease, transform 220ms cubic-bezier(.2, .8, .2, 1), visibility 180ms ease;
+    background: color-mix(in srgb, var(--card-bg) 96%, #ffffff 4%);
+    border: 0.06rem solid color-mix(in srgb, var(--border-color) 82%, transparent);
+    border-radius: 1rem;
+    box-shadow: 0 1rem 2.5rem color-mix(in srgb, rgba(15, 23, 42, 0.16) 100%, transparent);
+    padding: 0.9rem;
+    z-index: 15;
+    pointer-events: none;
+    max-height: min(32rem, calc(100vh - 8rem));
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+}
+
+.header-search-suggestions--open {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0) scale(1);
+    pointer-events: auto;
+}
+
+.header-search-suggestions--mobile {
+    top: calc(100% + 0.45rem);
+}
+
+.header-search-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.9rem;
+}
+
+.header-search-group {
+    display: grid;
+    gap: 0.35rem;
+    align-content: start;
+}
+
+.header-search-group__head {
+    padding-bottom: 0.35rem;
+
+    span {
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: color-mix(in srgb, var(--brand-primary) 76%, var(--brand-secondary) 24%);
+    }
+}
+
+.header-search-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    width: 100%;
+    text-align: left;
+    border: 0.06rem solid transparent;
+    border-radius: 0.85rem;
+    background: color-mix(in srgb, var(--surface) 84%, var(--card-bg));
+    padding: 0.65rem 0.7rem;
+    transition: transform 160ms ease, border-color 160ms ease, background-color 160ms ease, box-shadow 160ms ease;
+
+    &:hover {
+        transform: translateY(-0.08rem);
+        border-color: color-mix(in srgb, var(--brand-primary) 24%, var(--border-color));
+        background: color-mix(in srgb, var(--hover-bg) 82%, var(--card-bg));
+        box-shadow: 0 0.45rem 1rem color-mix(in srgb, var(--brand-primary) 10%, transparent);
+    }
+}
+
+.header-search-item__media {
+    width: 2.9rem;
+    height: 2.9rem;
+    border-radius: 0.8rem;
+    overflow: hidden;
+    flex-shrink: 0;
+    background: color-mix(in srgb, var(--brand-primary) 10%, var(--card-bg));
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    color: var(--brand-primary);
+
+    img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+}
+
+.header-search-item__copy {
+    display: grid;
+    gap: 0.1rem;
+    min-width: 0;
+    flex: 1;
+
+    strong {
+        font-size: 0.92rem;
+        line-height: 1.25;
+        color: var(--text-primary);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    span {
+        font-size: 0.76rem;
+        color: var(--text-secondary);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+}
+
+.header-search-item__meta {
+    display: grid;
+    justify-items: end;
+    gap: 0.14rem;
+    flex-shrink: 0;
+}
+
+.header-search-item__price {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.header-search-item__original {
+    font-size: 0.72rem;
+    color: var(--text-secondary);
+    text-decoration: line-through;
+}
+
+.header-search-state {
+    min-height: 5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.55rem;
+    color: var(--text-secondary);
+    font-size: 0.88rem;
+    text-align: center;
+}
+
+.header-search-state__pulse {
+    width: 0.55rem;
+    height: 0.55rem;
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--brand-primary) 76%, var(--brand-secondary) 24%);
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--brand-primary) 18%, transparent);
+    animation: headerSearchPulse 1.2s ease-in-out infinite;
+}
+
+@keyframes headerSearchPulse {
+    0% {
+        transform: scale(0.92);
+        box-shadow: 0 0 0 0 color-mix(in srgb, var(--brand-primary) 20%, transparent);
+    }
+
+    70% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0.5rem color-mix(in srgb, var(--brand-primary) 0%, transparent);
+    }
+
+    100% {
+        transform: scale(0.92);
+        box-shadow: 0 0 0 0 color-mix(in srgb, var(--brand-primary) 0%, transparent);
     }
 }
 
@@ -888,6 +1106,27 @@ nz-input-group {
     color: rgb(198, 198, 198);
 }
 
+.search-clear-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    background: transparent;
+    padding: 0;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: color 0.16s ease, transform 0.16s ease;
+
+    &:hover {
+        color: var(--text-primary);
+        transform: scale(1.05);
+    }
+
+    ::ng-deep .anticon {
+        font-size: 1rem;
+    }
+}
+
 .mobile-view {
     display: none;
 
@@ -897,9 +1136,41 @@ nz-input-group {
 }
 
 .only-web-view {
-
     @media only screen and (max-width:76.8rem) {
         display: none;
+    }
+}
+
+@media only screen and (max-width:76.8rem) {
+    .header-search-suggestions {
+        padding: 0.75rem;
+        border-radius: 0.9rem;
+        max-height: min(28rem, calc(100vh - 7rem));
+    }
+
+    .header-search-grid {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 0.75rem;
+    }
+
+    .header-search-item {
+        padding: 0.6rem 0.65rem;
+    }
+
+    .header-search-item__media {
+        width: 2.55rem;
+        height: 2.55rem;
+        border-radius: 0.65rem;
+    }
+}
+
+@media only screen and (max-width:48rem) {
+    .header-search-item__copy strong {
+        white-space: normal;
+    }
+
+    .header-search-item__meta {
+        justify-items: start;
     }
 }
 
@@ -1331,6 +1602,14 @@ nz-input-group {
             background: color-mix(in srgb, var(--hover-bg) 82%, var(--card-bg));
             flex-shrink: 0;
             border: 0.06rem solid color-mix(in srgb, var(--border-color) 75%, transparent);
+            cursor: pointer;
+            transition: transform 0.18s ease, box-shadow 0.18s ease;
+
+            &:hover,
+            &:focus-visible {
+                transform: translateY(-0.08rem);
+                box-shadow: 0 0 0 0.14rem color-mix(in srgb, var(--brand-primary) 14%, transparent);
+            }
 
             img {
                 width: 100%;
@@ -1494,6 +1773,7 @@ nz-input-group {
 
             .value {
                 color: color-mix(in srgb, var(--brand-primary) 75%, var(--brand-secondary) 25%);
+                font-weight: 800;
             }
         }
 
@@ -1506,6 +1786,11 @@ nz-input-group {
 
             &.free {
                 color: #52c41a;
+            }
+
+            &.save {
+                color: color-mix(in srgb, var(--brand-primary) 75%, var(--brand-secondary) 25%);
+                font-weight: 700;
             }
         }
     }

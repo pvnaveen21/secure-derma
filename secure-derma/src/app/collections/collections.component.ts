@@ -557,8 +557,13 @@ export class CollectionsComponent implements OnInit {
       .replace(/\s+/g, '-');
   }
 
-  productView(value: any) {
-    this.router.navigate([`./products/${this.slugify(value)}`], {
+  productView(product: any) {
+    const productSlug = product?.slug || product?.product_slug || this.slugify(product?.product_name || '');
+    if (!productSlug) {
+      return;
+    }
+
+    this.router.navigate([`./products/${productSlug}`], {
       queryParams: {
         collection: this.bannerType
       }
