@@ -1,126 +1,229 @@
-<!-- <div
-    style="width: 27rem; margin: auto;box-shadow: rgba(0, 0, 0, 0.24) 0rem 0.3rem 0.8rem; border-radius: 0.5rem;margin-top: 10rem; padding-top: rem;">
+<div class="login-shell">
+    <div class="login-shell__glow login-shell__glow--one"></div>
+    <div class="login-shell__glow login-shell__glow--two"></div>
 
-    <div class="logo-container">
-        <div class="app-logo" >
-            <h2 class="logo-title">Secure</h2>
-            <p class="logo-subtitle m-0">Derma</p>
-        </div>
-    </div>
-    <h2 style="font-weight: 600;text-align: center;">Welcome Back</h2>
-    <div style="padding: 1rem;">
-        <h4>Log In Or Sign Up</h4>
-        <label for="" style="text-align: start !important;">Email Address</label>
-        <input nz-input nzSize="large" placeholder="Email address" style="border-radius: 0.5rem;padding: 0.6rem;margin-top: 0.5rem;" />
-        <div style="margin-top: 1rem;">
-            <label nz-checkbox [(ngModel)]="checked">Send me updates and exclusive offers</label>
-        </div>
-        <div class="mt-4">
-            <button class="secure-btn btn-primary btn-lg signin-btn w-100">Send OTP</button>
+    <div class="login-layout">
+        <section class="login-showcase">
+            <div class="login-showcase__content">
+                <span class="login-showcase__eyebrow">Clinical commerce, designed for trust</span>
+                <h1 class="login-showcase__title">Secure access for your skin, hair, and wellness journey.</h1>
+                <p class="login-showcase__text">
+                    Sign in to manage orders, save routines, and continue consultations with a clean, secure patient experience.
+                </p>
 
-        </div>
-    </div>
+                <div class="login-showcase__highlights">
+                    <div class="highlight-card">
+                        <span class="highlight-card__value">24/7</span>
+                        <span class="highlight-card__label">Access to your saved care flow</span>
+                    </div>
+                    <div class="highlight-card">
+                        <span class="highlight-card__value">Encrypted</span>
+                        <span class="highlight-card__label">Protected sign-in and account actions</span>
+                    </div>
+                    <div class="highlight-card">
+                        <span class="highlight-card__value">1 Place</span>
+                        <span class="highlight-card__label">Orders, profiles, and treatment updates</span>
+                    </div>
+                </div>
 
-
-
-    <p style="padding-inline: 0.7rem;text-align: center;">Secure Derma uses encrypted clinical authentication for your
-        safty</p>
-    <nz-divider style="margin-block: 1.4rem; margin-inline: 0rem;"></nz-divider>
-
-    <p style="font-size: 0.8rem;">LOGIN WITH PHONE</p>
-
-</div> -->
-
-
-<div class="login-container">
-    <div class="login-card">
-        <div class="logo-container">
-            <div class="logo-icon">
-                <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-                    <path d="M16 4L8 8V14C8 20 16 26 16 26C16 26 24 20 24 14V8L16 4Z" fill="white" stroke="white"
-                        stroke-width="2" />
-                    <path d="M12 16L15 19L20 12" stroke="#059669" stroke-width="2" stroke-linecap="round"
-                        stroke-linejoin="round" />
-                </svg>
+                <div class="login-showcase__panel">
+                    <div class="login-showcase__panel-copy">
+                        <span class="login-showcase__panel-badge">Professional care, simplified</span>
+                        <h2 class="login-showcase__panel-title">A cleaner portal for repeat purchases, follow-ups, and routine continuity.</h2>
+                        <ul class="login-showcase__list">
+                            <li>Fast access with Google or email OTP</li>
+                            <li>Built for desktop and mobile from the same flow</li>
+                            <li>Consistent with the Secure Derma brand system</li>
+                        </ul>
+                    </div>
+                    <div class="login-showcase__media">
+                        <img [src]="assets.secura.skin" alt="Secure Derma skincare" class="login-showcase__image" />
+                        <div class="floating-note floating-note--top">
+                            <span class="floating-note__label">Secure session</span>
+                            <strong class="floating-note__value">Verified access</strong>
+                        </div>
+                        <div class="floating-note floating-note--bottom">
+                            <span class="floating-note__label">Easy sign-in</span>
+                            <strong class="floating-note__value">Use Google or email OTP to continue</strong>
+                        </div>
+                    </div>
+                </div>
             </div>
-        </div>
+        </section>
 
-        <h1 class="title">Secure</h1>
-        <p class="subtitle">DERMA</p>
-        @if(!showOtp){
+        <section class="login-panel">
+            <div class="login-card">
+                <div class="login-brand">
+                    <div class="logo-icon">
+                        <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                            <path d="M16 4L8 8V14C8 20 16 26 16 26C16 26 24 20 24 14V8L16 4Z" fill="white" stroke="white"
+                                stroke-width="2" />
+                            <path d="M12 16L15 19L20 12" stroke="#059669" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" />
+                        </svg>
+                    </div>
+                    <div>
+                        <h2 class="login-brand__title m-0">Secure Derma</h2>
+                        <p class="login-brand__subtitle m-0">Protected access for your account</p>
+                    </div>
+                </div>
 
-        <h2 class="welcome">Welcome Back</h2>
-        <p class="description">Log in or sign up to your clinical portal</p>
-        }
+                <div class="login-stepper">
+                    <div class="login-step" [class.login-step--active]="!showOtp" [class.login-step--complete]="showOtp">
+                        <span class="login-step__index">1</span>
+                        <span class="login-step__label">Sign in</span>
+                    </div>
+                    <div class="login-stepper__line"></div>
+                    <div class="login-step" [class.login-step--active]="showOtp">
+                        <span class="login-step__index">2</span>
+                        <span class="login-step__label">Verify OTP</span>
+                    </div>
+                </div>
 
-        <div class="form-container">
-            @if(!showOtp){
-            <label class="form-label">Email Address</label>
-            <input nz-input nzSize="large" placeholder="Email address"
-                style="border-radius: 0.5rem;padding: 0.6rem;margin-top: 0.5rem;" />
+                @if(!showOtp){
+                <div class="login-copy">
+                    <h3 class="login-copy__title">Continue to your account</h3>
+                    <p class="login-copy__text">
+                        @if(authMode === 'email'){
+                        Use Google for instant access or continue with your email to receive a one-time code.
+                        } @else {
+                        Enter your mobile number to receive a one-time code and continue securely.
+                        }
+                    </p>
+                </div>
 
+                <div class="form-container">
+                    <div class="google-login-block">
+                        <button type="button" class="google-custom-btn" (click)="continueWithGoogle()" [disabled]="googleLoading">
+                            <span class="google-custom-btn__mark" aria-hidden="true">
+                                <svg viewBox="0 0 48 48" class="google-custom-btn__logo">
+                                    <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"></path>
+                                    <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"></path>
+                                    <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"></path>
+                                    <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"></path>
+                                </svg>
+                            </span>
+                            <span class="google-custom-btn__label">
+                                {{ googleLoading ? 'Signing you in with Google...' : 'Continue with Google' }}
+                            </span>
+                        </button>
+                        <div id="googleBtn" class="google-login-button" aria-hidden="true"></div>
+                        @if(googleLoading){
+                        <p class="google-login-status m-0">Signing you in with Google...</p>
+                        }
+                        <div class="google-divider">
+                            <span>or continue with {{ authMode === 'email' ? 'email' : 'phone' }}</span>
+                        </div>
+                    </div>
 
-            <!-- <label nz-checkbox [(ngModel)]="sendUpdates" class="checkbox">
-                Send me updates and exclusive offers
-            </label> -->
+                    <div class="auth-mode-switch" [class.auth-mode-switch--phone]="authMode === 'phone'">
+                        <button type="button" class="auth-mode-switch__btn" [class.auth-mode-switch__btn--active]="authMode === 'email'"
+                            (click)="switchAuthMode('email')">
+                            Email
+                        </button>
+                        <button type="button" class="auth-mode-switch__btn" [class.auth-mode-switch__btn--active]="authMode === 'phone'"
+                            (click)="switchAuthMode('phone')">
+                            Phone
+                        </button>
+                    </div>
 
-            <div style="margin-top: 1rem;" class="checkbox">
-                <label nz-checkbox [(ngModel)]="sendUpdates">Send me updates and exclusive offers</label>
-            </div>
-            <button nz-button nzType="primary" nzBlock class="submit-btn" (click)="sendOtp()">
-                Send OTP
-                <span nz-icon nzType="arrow-right" class="btn-icon"></span>
-            </button>
-            }
-            @else{
-                <button nz-button nzType="link" class="back-button" (click)="back()">
-                    <span nz-icon nzType="left" class="back-icon"></span>
-                    Change Email
+                    <div class="field-group">
+                        <label class="form-label" [for]="authMode === 'email' ? 'login-email' : 'login-phone'">
+                            {{ authMode === 'email' ? 'Email Address' : 'Phone Number' }}
+                        </label>
+                        <div class="input-shell" [class.input-shell--error]="authMode === 'email' ? !!emailError : !!phoneError">
+                            @if(authMode === 'email'){
+                            <input id="login-email" nz-input nzSize="large" [(ngModel)]="email"
+                                placeholder="Enter your email address" class="login-input"
+                                (ngModelChange)="onEmailInput()" (keydown.enter)="sendOtp()" />
+                            } @else {
+                            <input id="login-phone" nz-input nzSize="large" [(ngModel)]="phone"
+                                placeholder="Enter your mobile number" class="login-input" inputmode="numeric"
+                                maxlength="10" pattern="[0-9]*" (input)="onPhoneInput($event)" (keydown.enter)="sendOtp()" />
+                            }
+                        </div>
+                        @if(authMode === 'email' && emailError){
+                        <p class="field-error m-0">{{ emailError }}</p>
+                        }
+                        @if(authMode === 'phone' && phoneError){
+                        <p class="field-error m-0">{{ phoneError }}</p>
+                        }
+                    </div>
+
+                    <div class="checkbox">
+                        <label nz-checkbox [(ngModel)]="sendUpdates">Send me updates and exclusive offers</label>
+                    </div>
+
+                    <button nz-button nzType="primary" nzBlock class="submit-btn" (click)="sendOtp()">
+                        Send OTP
+                        <lucide-angular class="btn-icon d-flex" [img]="icons.auth.action" [size]="18"></lucide-angular>
+                    </button>
+
+                    <div class="info-box">
+                        <lucide-angular class="info-icon d-flex" [img]="icons.auth.shield" [size]="18"></lucide-angular>
+                        <span class="info-text">
+                            Secure Derma uses encrypted clinical authentication for your
+                            <strong>safety</strong>
+                        </span>
+                    </div>
+                </div>
+
+                <button nz-button nzType="link" class="phone-login" (click)="switchAuthMode(authMode === 'email' ? 'phone' : 'email')">
+                    <lucide-angular class="phone-icon d-flex" [img]="icons.auth.phone" [size]="18"></lucide-angular>
+                    {{ authMode === 'email' ? 'LOGIN WITH PHONE' : 'CONTINUE WITH EMAIL' }}
                 </button>
+                }
+                @else{
+                <div class="login-copy">
+                    <h3 class="login-copy__title">Verify your access</h3>
+                    <p class="login-copy__text">
+                        Enter the 6-digit code we sent to complete your secure sign-in.
+                    </p>
+                </div>
 
-            <h1 class="">Verify Identity</h1>
-            <p class="description">
-                Enter the 6-digit code we sent to<br>
-                <!-- <strong>dgmail.com</strong> -->
-            </p>
-            <nz-flex nzVertical [nzGap]="16">
-                <nz-flex nzVertical>
-                    <nz-input-otp [nzFormatter]="formatter"></nz-input-otp>
-                </nz-flex>
-            </nz-flex>
+                <div class="otp-card">
+                    <button nz-button nzType="link" class="back-button" (click)="back()">
+                        <lucide-angular class="back-icon d-flex" [img]="icons.auth.back" [size]="18"></lucide-angular>
+                        Change {{ authMode === 'email' ? 'Email' : 'Phone' }}
+                    </button>
 
-            <div class="mt-5">
-                <button nz-button nzType="primary" nzBlock class="submit-btn" (click)="sendOtp()">
-                    Verify & Continue
-                </button>
+                    <div class="otp-card__header">
+                        <div class="otp-icon-wrap">
+                            <lucide-angular class="otp-icon d-flex" [img]="icons.auth.shield" [size]="22"></lucide-angular>
+                        </div>
+                        <div class="otp-card__header-copy">
+                            <span class="otp-card__eyebrow">{{ authMode === 'email' ? 'Email verification' : 'Phone verification' }}</span>
+                            <p class="otp-card__destination m-0">{{ maskedOtpDestinationLabel }}</p>
+                        </div>
+                    </div>
+
+                    <div class="otp-instruction">
+                        Use the latest code sent to your {{ authMode === 'email' ? 'email address' : 'mobile number' }}.
+                    </div>
+
+                    <nz-flex nzVertical [nzGap]="16" class="otp-field">
+                        <nz-flex nzVertical>
+                            <nz-input-otp [nzFormatter]="formatter" (ngModelChange)="onOtpChange($event)"></nz-input-otp>
+                        </nz-flex>
+                    </nz-flex>
+                    @if(otpError){
+                    <p class="field-error m-0">{{ otpError }}</p>
+                    }
+
+                    <div class="otp-actions">
+                        <button nz-button nzType="primary" nzBlock class="submit-btn" (click)="verifyOtp()">
+                            Verify & Continue
+                            <lucide-angular class="btn-icon d-flex" [img]="icons.auth.action" [size]="18"></lucide-angular>
+                        </button>
+
+                        <button nz-button nzType="link" class="resend-button" [disabled]="timer > 0" (click)="resendCode()">
+                            <lucide-angular class="resend-icon d-flex" [img]="icons.auth.resend" [size]="17"></lucide-angular>
+                            {{ timer > 0 ? 'Resend code in ' + timer + 's' : 'Resend code' }}
+                        </button>
+                    </div>
+                </div>
+                }
             </div>
-
-            <div>
-                <button nz-button nzType="link" class="resend-button" [disabled]="timer > 0" (click)="resendCode()">
-                    <span nz-icon nzType="reload" class="resend-icon"></span>
-                    {{ timer > 0 ? 'Resend code in ' + timer + 's' : 'Resend code' }}
-                </button>
-            </div>
-            }
-            @if(!showOtp){
-
-            <div class="info-box">
-                <span nz-icon nzType="safety" class="info-icon"></span>
-                <span class="info-text">
-                    Secure Derma uses encrypted clinical authentication for your
-                    <strong>safety</strong>
-                </span>
-            </div>
-            }
-
-        </div>
-        @if(!showOtp){
-
-        <button nz-button nzType="link" class="phone-login">
-            <span nz-icon nzType="phone" class="phone-icon"></span>
-            LOGIN WITH PHONE
-        </button>
-        }
-
+        </section>
     </div>
 </div>

@@ -9,12 +9,17 @@ import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzDrawerModule } from 'ng-zorro-antd/drawer';
 import { NzDividerModule } from 'ng-zorro-antd/divider';
 import { NzInputModule } from 'ng-zorro-antd/input';
-import { distinctUntilChanged, map } from 'rxjs';
+import { NzMessageService } from 'ng-zorro-antd/message';
+import { distinctUntilChanged, firstValueFrom, map } from 'rxjs';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { HorizontalScrollComponent } from '../shared/horizontal-scroll/horizontal-scroll.component';
 import { Icons } from '../shared/icons';
 import { Assets } from '../shared/assets';
 import { ProductService } from '../services/product.service';
+import { CartService } from '../services/cart.service';
+import { PaymentService } from '../services/payment.service';
+import { AuthService } from '../services/auth/auth.service';
+import { PincodeService, PincodeServiceabilityResponse } from '../services/pincode.service';
 @Component({
   selector: 'app-products',
   imports: [
@@ -35,6 +40,7 @@ import { ProductService } from '../services/product.service';
   styleUrl: './products.component.scss'
 })
 export class ProductsComponent {
+  private readonly savedPincodeStorageKey = 'secure_derma_last_checked_pincode';
   readonly reviewPreviewCharacterLimit = 220;
   expandedReviews = new Set<number>();
   icons = Icons
@@ -150,6 +156,11 @@ export class ProductsComponent {
     private productService: ProductService,
     private route: ActivatedRoute,
     private router: Router,
+    private cartService: CartService,
+    private paymentService: PaymentService,
+    private pincodeService: PincodeService,
+    private authService: AuthService,
+    private message: NzMessageService,
     @Inject(PLATFORM_ID) private platformId: Object
     // private cdr: ChangeDetectorRef,
   ) { }
@@ -176,6 +187,10 @@ export class ProductsComponent {
         // Get variant from queryParams (not paramMap)
 
       });
+
+    if (isPlatformBrowser(this.platformId)) {
+      setTimeout(() => this.initializeSavedPincode());
+    }
     // setInterval(()=>{
     //   if (this.drawerPlacement == 'right'){
     //     this.drawerPlacement='bottom'
@@ -198,6 +213,8 @@ export class ProductsComponent {
     items: string[];
   }[] = [];
   activeProductInfoKey = 'description';
+  addToCartLoading = false;
+  buyNowLoading = false;
   get breadcrumbCollectionSlug() {
     const routeCollection = this.route.snapshot.queryParamMap.get('collection');
 
@@ -372,6 +389,79 @@ export class ProductsComponent {
     this.updateUrlWithVariant(value);
 
   }
+
+  async addSelectedProductToCart(): Promise<void> {
+    const normalizedProduct = this.getSelectedProductForCart();
+    if (!normalizedProduct) {
+      this.message.error('Select a valid variant before adding to cart.');
+      return;
+    }
+
+    if (this.addToCartLoading) {
+      return;
+    }
+
+    this.addToCartLoading = true;
+
+    try {
+      const result = await this.cartService.addToCart(normalizedProduct);
+
+      switch (result.status) {
+        case 'added':
+          this.message.success(`${this.productData?.product_name || 'Item'} added to cart`);
+          break;
+        case 'updated':
+          this.message.success(`${this.productData?.product_name || 'Item'} quantity updated in cart`);
+          break;
+        case 'limit_reached':
+          this.message.info(`${this.productData?.product_name || 'Item'} is already at the maximum quantity`);
+          break;
+        default:
+          this.message.error(`Unable to add ${this.productData?.product_name || 'this item'} right now`);
+      }
+    } catch {
+      this.message.error(`Unable to add ${this.productData?.product_name || 'this item'} right now`);
+    } finally {
+      this.addToCartLoading = false;
+    }
+  }
+
+  async buySelectedProductNow(): Promise<void> {
+    const selectedDetail = this.getSelectedDetail();
+    if (!selectedDetail?.id || !this.productData?.id) {
+      this.message.error('Select a valid variant before continuing.');
+      return;
+    }
+
+    this.paymentService.saveCheckoutSession({
+      source: 'buy_now',
+      items: [
+        {
+          productId: this.productData.id,
+          detailId: selectedDetail.id,
+          quantity: 1,
+          productName: this.productData?.product_name || 'Product',
+          thumbnail: this.productData?.thumbnail_image || this.mainViewImage || '',
+          productWeight: selectedDetail.product_weight,
+          weightType: selectedDetail.weight_type,
+          qualityLabel: [selectedDetail.product_weight, selectedDetail.weight_type].filter(Boolean).join(' '),
+          unitPrice: selectedDetail.selling_price,
+          originalPrice: selectedDetail.original_price,
+          lineTotal: selectedDetail.selling_price,
+        }
+      ]
+    });
+
+    if (!this.authService.isLoggedIn()) {
+      this.message.warning('Please login to continue checkout.');
+      this.authService.redirectUrl = '/checkout';
+      this.router.navigate(['/account/login']);
+      return;
+    }
+
+    this.router.navigate(['/checkout']);
+  }
+
   updateUrlWithVariant(variantId: any) {
     this.router.navigate([], {
       relativeTo: this.route,
@@ -702,13 +792,260 @@ export class ProductsComponent {
 
   visible = false;
   drawerPlacement: any = 'right'
+  locationPincode = '';
+  locationCity = '';
+  locationError = '';
+  locationStatusMessage = 'Enter your pincode to check delivery date.';
+  locationCheckLoading = false;
+  currentLocationLoading = false;
+  deliveryWindowLabel = '';
+  locationSuggestions: Array<{
+    pincode: string;
+    location_name: string;
+    city: string;
+    state: string;
+  }> = [];
+
+  @HostListener('window:resize')
+  onWindowResize() {
+    this.updateDrawerPlacement();
+  }
+
+  ngAfterViewInit() {
+    this.updateDrawerPlacement();
+  }
 
   open(): void {
+    this.updateDrawerPlacement();
     this.visible = true;
   }
 
   close(): void {
     this.visible = false;
+    this.locationError = '';
+    this.locationSuggestions = [];
+  }
+
+  onPincodeInput(event?: Event) {
+    const input = event?.target as HTMLInputElement | undefined;
+    const normalized = (input?.value ?? this.locationPincode).replace(/\D/g, '').slice(0, 6);
+    this.locationPincode = normalized;
+    if (input && input.value !== normalized) {
+      input.value = normalized;
+    }
+    if (this.locationError) {
+      this.locationError = '';
+    }
+    this.locationSuggestions = [];
+  }
+
+  async checkLocation() {
+    if (this.locationPincode.length !== 6) {
+      this.locationError = 'Enter a valid 6-digit pincode.';
+      return;
+    }
+
+    this.locationError = '';
+    this.locationSuggestions = [];
+
+    if (this.locationCheckLoading) {
+      return;
+    }
+
+    this.locationCheckLoading = true;
+
+    try {
+      const response = await firstValueFrom(this.pincodeService.checkServiceability(this.locationPincode));
+      this.applyPincodeResponse(response);
+    } catch (error: any) {
+      this.locationCity = '';
+      this.locationStatusMessage = 'Enter your pincode to check delivery date.';
+      this.locationError = typeof error === 'string'
+        ? error
+        : error?.detail || 'Unable to check delivery for this pincode right now.';
+    } finally {
+      this.locationCheckLoading = false;
+    }
+  }
+
+  async useCurrentLocation() {
+    if (!isPlatformBrowser(this.platformId) || !navigator.geolocation) {
+      this.locationError = 'Geolocation is not supported on this device.';
+      return;
+    }
+
+    if (this.currentLocationLoading || this.locationCheckLoading) {
+      return;
+    }
+
+    this.currentLocationLoading = true;
+    this.locationError = '';
+    this.locationCity = '';
+    this.locationStatusMessage = 'Detecting your current location.';
+    this.locationSuggestions = [];
+
+    try {
+      const position = await this.getCurrentBrowserPosition();
+      const response = await firstValueFrom(
+        this.pincodeService.checkCurrentLocation(
+          position.coords.latitude,
+          position.coords.longitude
+        )
+      );
+
+      this.locationPincode = response.pincode;
+      this.applyPincodeResponse(response);
+    } catch (error: any) {
+      this.locationStatusMessage = 'Enter your pincode to check delivery date.';
+      this.locationError = typeof error === 'string'
+        ? error
+        : error?.detail || 'Unable to use your current location right now.';
+    } finally {
+      this.currentLocationLoading = false;
+    }
+  }
+
+  async confirmLocation() {
+    await this.checkLocation();
+    if (this.locationError) {
+      return;
+    }
+
+    this.message.success(`Delivery location updated to ${this.locationCity}.`);
+    this.close();
+  }
+
+  applySuggestedPincode(pincode: string) {
+    this.locationPincode = pincode;
+    this.locationError = '';
+    this.locationSuggestions = [];
+    this.checkLocation();
+  }
+
+  private updateDrawerPlacement() {
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
+
+    this.drawerPlacement = window.innerWidth < 768 ? 'bottom' : 'right';
+  }
+
+  private getSelectedDetail() {
+    return this.productDetailsMain?.find((item: any) => item.id == this.selectedGramId) ?? this.currentPriceData ?? null;
+  }
+
+  private applyPincodeResponse(response: PincodeServiceabilityResponse) {
+    const cityParts = [
+      response.location_name,
+      response.city,
+      response.state
+    ].filter((value, index, values) => Boolean(value) && values.indexOf(value) === index);
+
+    this.locationCity = cityParts.join(', ') || response.pincode;
+
+    if (!response.serviceable) {
+      this.locationStatusMessage = 'This pincode is currently outside the serviceable delivery area.';
+      this.locationSuggestions = response.suggested_pincodes || [];
+      this.deliveryWindowLabel = '';
+      this.locationError = this.locationSuggestions.length
+        ? `Pincode not found in the official India directory. Did you mean ${this.locationSuggestions[0].pincode}?`
+        : 'Delivery is not available for this pincode yet.';
+      return;
+    }
+
+    const etaLabel = response.eta_min_days && response.eta_max_days
+      ? `Estimated delivery in ${response.eta_min_days}-${response.eta_max_days} days.`
+      : 'Delivery support is available for this location.';
+
+    this.locationStatusMessage = etaLabel;
+    this.deliveryWindowLabel = this.buildDeliveryWindowLabel(response.eta_min_days, response.eta_max_days);
+    this.persistCheckedPincode(response.pincode);
+  }
+
+  private buildDeliveryWindowLabel(minDays: number | null, maxDays: number | null) {
+    if (!minDays || !maxDays) {
+      return '';
+    }
+
+    const startDate = this.addDays(new Date(), minDays);
+    const endDate = this.addDays(new Date(), maxDays);
+    const formatDate = (value: Date) => value.toLocaleDateString('en-IN', {
+      weekday: 'short',
+      day: 'numeric',
+      month: 'short',
+    });
+
+    const startLabel = formatDate(startDate);
+    const endLabel = formatDate(endDate);
+    return startLabel === endLabel ? startLabel : `${startLabel} - ${endLabel}`;
+  }
+
+  private addDays(baseDate: Date, days: number) {
+    const value = new Date(baseDate);
+    value.setDate(value.getDate() + days);
+    return value;
+  }
+
+  private initializeSavedPincode() {
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
+
+    const savedPincode = localStorage.getItem(this.savedPincodeStorageKey);
+    if (!savedPincode || this.locationPincode === savedPincode) {
+      return;
+    }
+
+    this.locationPincode = savedPincode;
+    this.checkLocation();
+  }
+
+  private persistCheckedPincode(pincode: string) {
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
+
+    localStorage.setItem(this.savedPincodeStorageKey, pincode);
+  }
+
+  private getCurrentBrowserPosition(): Promise<GeolocationPosition> {
+    return new Promise((resolve, reject) => {
+      navigator.geolocation.getCurrentPosition(
+        (position) => resolve(position),
+        (error) => {
+          switch (error.code) {
+            case error.PERMISSION_DENIED:
+              reject('Location permission was denied.');
+              break;
+            case error.POSITION_UNAVAILABLE:
+              reject('Current location is unavailable.');
+              break;
+            case error.TIMEOUT:
+              reject('Location request timed out.');
+              break;
+            default:
+              reject('Unable to access current location.');
+          }
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 300000,
+        }
+      );
+    });
+  }
+
+  private getSelectedProductForCart() {
+    const selectedDetail = this.getSelectedDetail();
+    if (!selectedDetail) {
+      return null;
+    }
+
+    return {
+      ...this.productData,
+      details: [selectedDetail]
+    };
   }
 
   slugify(value: string): string {

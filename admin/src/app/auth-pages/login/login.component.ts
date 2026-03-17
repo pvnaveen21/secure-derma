@@ -14,6 +14,7 @@ import { NzIconModule } from 'ng-zorro-antd/icon';
 import { NzCheckboxModule } from 'ng-zorro-antd/checkbox';
 import { AuthService } from '@app/services/auth/auth.service';
 import { NzMessageService } from 'ng-zorro-antd/message';
+import { environment } from '../../../environments/environment';
 declare var google: any;
 
 @Component({
@@ -32,6 +33,7 @@ declare var google: any;
   styleUrls: ['./login.component.scss'],
 })
 export class LoginComponent implements OnInit {
+  private readonly googleClientId = environment.GOOGLE_CLIENT_ID;
   loginForm!: FormGroup;
   passwordVisible = false;
   isLoading = false;
@@ -46,7 +48,7 @@ export class LoginComponent implements OnInit {
 
   ngOnInit(): void {
     google.accounts.id.initialize({
-      client_id: '366738678025-5bleq673qblpukr2ten3o0qq6oji7hr2.apps.googleusercontent.com',
+      client_id: this.googleClientId,
       callback: this.handleCredentialResponse.bind(this)
     });
 

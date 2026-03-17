@@ -1,0 +1,264 @@
+<div class="checkout-page secure-home-container" *ngIf="checkoutSession as session">
+    <nav class="checkout-breadcrumb" aria-label="Breadcrumb">
+        <a routerLink="/" class="checkout-breadcrumb__link">Home</a>
+        <span class="checkout-breadcrumb__sep">/</span>
+        <span class="checkout-breadcrumb__current">Checkout</span>
+    </nav>
+
+    <section class="checkout-header">
+        <div class="checkout-header__copy">
+            <h1 class="checkout-header__title mb-0">Checkout</h1>
+            <p class="checkout-header__text mb-0">Review your bag, confirm delivery details, and complete payment securely.</p>
+        </div>
+        <div class="checkout-header__meta">
+            <span class="checkout-header__pill">{{ totalItems }} item<span *ngIf="totalItems !== 1">s</span></span>
+            <span class="checkout-header__pill checkout-header__pill--strong">₹{{ subtotal }} payable</span>
+        </div>
+    </section>
+
+    <div class="checkout-steps">
+        <div class="checkout-step" [class.checkout-step--active]="currentStep === 1" [class.checkout-step--done]="currentStep > 1">
+            <span class="checkout-step__index">1</span>
+            <div>
+                <h3 class="checkout-step__title mb-0">Delivery Details</h3>
+                <p class="checkout-step__copy mb-0">Enter name, address, postal code, email, and mobile number.</p>
+            </div>
+        </div>
+        <div class="checkout-step" [class.checkout-step--active]="currentStep === 2">
+            <span class="checkout-step__index">2</span>
+            <div>
+                <h3 class="checkout-step__title mb-0">Payment</h3>
+                <p class="checkout-step__copy mb-0">Review the order and complete payment.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="checkout-layout">
+        <section class="checkout-main">
+            <div class="checkout-panel" *ngIf="currentStep === 1">
+                <div class="checkout-panel__header">
+                    <span class="checkout-panel__eyebrow">Step 1</span>
+                    <h2 class="checkout-panel__title mb-0">Delivery Details</h2>
+                </div>
+
+                <div class="checkout-form">
+                    <div class="checkout-form__field">
+                        <label class="checkout-form__label" for="checkout-name">Full name</label>
+                        <input id="checkout-name" nz-input [ngModel]="checkoutCustomer.name"
+                            (ngModelChange)="onCheckoutFieldChange('name', $event)" (blur)="onCheckoutFieldBlur('name')"
+                            placeholder="Name on the delivery address" class="checkout-form__input"
+                            [class.checkout-form__input--error]="!!checkoutErrors.name" />
+                        <span class="checkout-form__error" *ngIf="checkoutErrors.name">{{ checkoutErrors.name }}</span>
+                    </div>
+
+                    <div class="checkout-form__field">
+                        <label class="checkout-form__label" for="checkout-mobile">Mobile number</label>
+                        <input id="checkout-mobile" nz-input [ngModel]="checkoutCustomer.contact"
+                            (ngModelChange)="onCheckoutFieldChange('contact', $event)" (blur)="onCheckoutFieldBlur('contact')"
+                            maxlength="10" inputmode="numeric" placeholder="10-digit mobile number"
+                            class="checkout-form__input" [class.checkout-form__input--error]="!!checkoutErrors.contact" />
+                        <span class="checkout-form__error" *ngIf="checkoutErrors.contact">{{ checkoutErrors.contact }}</span>
+                    </div>
+
+                    <div class="checkout-form__field checkout-form__field--full">
+                        <label class="checkout-form__label" for="checkout-email">Email</label>
+                        <input id="checkout-email" nz-input type="email" [ngModel]="checkoutCustomer.email"
+                            (ngModelChange)="onCheckoutFieldChange('email', $event)" (blur)="onCheckoutFieldBlur('email')"
+                            placeholder="you@example.com" class="checkout-form__input"
+                            [class.checkout-form__input--error]="!!checkoutErrors.email" />
+                        <span class="checkout-form__error" *ngIf="checkoutErrors.email">{{ checkoutErrors.email }}</span>
+                    </div>
+
+                    <div class="checkout-form__field checkout-form__field--full">
+                        <label class="checkout-form__label" for="checkout-address">Address line 1</label>
+                        <input id="checkout-address" nz-input [ngModel]="checkoutCustomer.address"
+                            (ngModelChange)="onCheckoutFieldChange('address', $event)" (blur)="onCheckoutFieldBlur('address')"
+                            placeholder="House number, building, street, area" class="checkout-form__input"
+                            [class.checkout-form__input--error]="!!checkoutErrors.address" />
+                        <span class="checkout-form__error" *ngIf="checkoutErrors.address">{{ checkoutErrors.address }}</span>
+                    </div>
+
+                    <div class="checkout-form__field checkout-form__field--full">
+                        <label class="checkout-form__label" for="checkout-address2">Address line 2</label>
+                        <input id="checkout-address2" nz-input [ngModel]="checkoutCustomer.address_line_2"
+                            (ngModelChange)="onCheckoutFieldChange('address_line_2', $event)" (blur)="onCheckoutFieldBlur('address_line_2')"
+                            placeholder="Landmark, apartment, suite" class="checkout-form__input"
+                            [class.checkout-form__input--error]="!!checkoutErrors.address_line_2" />
+                        <span class="checkout-form__error" *ngIf="checkoutErrors.address_line_2">{{ checkoutErrors.address_line_2 }}</span>
+                    </div>
+
+                    <div class="checkout-form__field">
+                        <label class="checkout-form__label" for="checkout-city">City</label>
+                        <input id="checkout-city" nz-input [ngModel]="checkoutCustomer.city"
+                            (ngModelChange)="onCheckoutFieldChange('city', $event)" (blur)="onCheckoutFieldBlur('city')"
+                            placeholder="City" class="checkout-form__input"
+                            [class.checkout-form__input--error]="!!checkoutErrors.city" />
+                        <span class="checkout-form__error" *ngIf="checkoutErrors.city">{{ checkoutErrors.city }}</span>
+                    </div>
+
+                    <div class="checkout-form__field">
+                        <label class="checkout-form__label" for="checkout-state">State</label>
+                        <input id="checkout-state" nz-input [ngModel]="checkoutCustomer.state"
+                            placeholder="State" class="checkout-form__input"
+                            [disabled]="true"
+                            [class.checkout-form__input--error]="!!checkoutErrors.state" />
+                        <span class="checkout-form__error" *ngIf="checkoutErrors.state">{{ checkoutErrors.state }}</span>
+                    </div>
+
+                    <div class="checkout-form__field checkout-form__field--full">
+                        <label class="checkout-form__label" for="checkout-postal-code">Postal code</label>
+                        <input id="checkout-postal-code" nz-input [ngModel]="checkoutCustomer.postal_code"
+                            (ngModelChange)="onCheckoutFieldChange('postal_code', $event)" (blur)="onCheckoutFieldBlur('postal_code')"
+                            maxlength="6" inputmode="numeric" placeholder="6-digit postal code"
+                            class="checkout-form__input" [class.checkout-form__input--error]="!!checkoutErrors.postal_code" />
+                        <span class="checkout-form__error" *ngIf="checkoutErrors.postal_code">{{ checkoutErrors.postal_code }}</span>
+                    </div>
+                </div>
+
+                <div class="checkout-panel__actions">
+                    <button nz-button nzType="primary" class="checkout-panel__btn" [disabled]="validatingDetails" (click)="continueToPayment()">
+                        {{ validatingDetails ? 'Checking details...' : 'Next: Payment' }}
+                    </button>
+                </div>
+            </div>
+
+            <div class="checkout-panel" *ngIf="currentStep === 2">
+                <div class="checkout-panel__header">
+                    <span class="checkout-panel__eyebrow">Step 2</span>
+                    <div class="checkout-panel__header-row">
+                        <h2 class="checkout-panel__title mb-0">Payment</h2>
+                        <button type="button" class="checkout-panel__edit-link" (click)="backToDetails()">
+                            Edit Delivery Details
+                        </button>
+                    </div>
+                </div>
+
+                <div class="payment-card">
+                    <div class="payment-card__row payment-card__row--top">
+                        <div>
+                            <span class="payment-card__label">Deliver to</span>
+                            <strong class="payment-card__name">{{ checkoutCustomer.name }}</strong>
+                        </div>
+                        <button type="button" class="payment-card__edit-btn" (click)="backToDetails()">
+                            Edit
+                        </button>
+                    </div>
+                    <p class="payment-card__address mb-0">
+                        {{ checkoutCustomer.address }}<span *ngIf="checkoutCustomer.address_line_2">, {{ checkoutCustomer.address_line_2 }}</span>,
+                        {{ checkoutCustomer.city }}, {{ checkoutCustomer.state }} - {{ checkoutCustomer.postal_code }}
+                    </p>
+                    <nz-divider></nz-divider>
+                    <div class="payment-card__row">
+                        <span class="payment-card__label">Contact</span>
+                        <strong>{{ checkoutCustomer.contact }}</strong>
+                    </div>
+                    <div class="payment-card__row">
+                        <span class="payment-card__label">Email</span>
+                        <strong>{{ checkoutCustomer.email }}</strong>
+                    </div>
+                    <nz-divider></nz-divider>
+                    <div class="payment-card__row payment-card__row--total">
+                        <span class="payment-card__label">Total payable</span>
+                        <strong>₹{{ subtotal }}</strong>
+                    </div>
+                </div>
+
+                <div class="checkout-panel__actions">
+                    <button nz-button nzType="default" class="checkout-panel__btn checkout-panel__btn--ghost" (click)="backToDetails()">
+                        Back
+                    </button>
+                    <button nz-button nzType="primary" class="checkout-panel__btn" [disabled]="paymentLoading" (click)="payNow()">
+                        {{ paymentLoading ? 'Starting Payment...' : 'Pay Now' }}
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <aside class="checkout-summary">
+            <div class="checkout-summary__card">
+                <div class="checkout-summary__top drawer-header">
+                    <div>
+                        <span class="checkout-summary__eyebrow">Order Summary</span>
+                        <h3 class="checkout-summary__title mb-0">Your Bag</h3>
+                    </div>
+                    <span class="checkout-summary__badge items-count">{{ totalItems }} item<span *ngIf="totalItems !== 1">s</span></span>
+                </div>
+
+                <div class="checkout-summary__list cart-items-container">
+                    <div class="checkout-item cart-item" *ngFor="let item of session.items">
+                        <div class="checkout-item__media item-image">
+                            <img *ngIf="item.thumbnail" [src]="item.thumbnail" [alt]="item.productName" class="checkout-item__image" />
+                        </div>
+                        <div class="checkout-item__copy item-details">
+                            <h4 class="checkout-item__title item-name mb-0">{{ item.productName }}</h4>
+                            <div class="checkout-item__meta-row">
+                                <p class="checkout-item__quality mb-0" *ngIf="item.qualityLabel">
+                                    Quality: {{ item.qualityLabel }}
+                                </p>
+                                <p class="checkout-item__meta item-sku mb-0">SKU-{{ item.detailId }}</p>
+                            </div>
+                            <div class="checkout-item__actions item-controls">
+                                <div class="checkout-item__quantity quantity-list">
+                                    <button type="button" class="checkout-item__qty-btn" [disabled]="item.quantity <= 1"
+                                        (click)="updateItemQuantity(item, -1)">-</button>
+                                    <span class="checkout-item__qty-value">{{ item.quantity }}</span>
+                                    <button type="button" class="checkout-item__qty-btn" [disabled]="item.quantity >= 10"
+                                        (click)="updateItemQuantity(item, 1)">+</button>
+                                </div>
+                                <button type="button" class="checkout-item__remove" (click)="removeItem(item)">Delete</button>
+                            </div>
+                        </div>
+                        <div class="checkout-item__price item-price">
+                            <span class="checkout-item__save save-badge" *ngIf="getDiscountPercent(item) > 0">
+                                Save {{ getDiscountPercent(item) }}%
+                            </span>
+                            <strong class="price">₹{{ item.unitPrice }}</strong>
+                            <span class="original-price" *ngIf="item.originalPrice && item.originalPrice > item.unitPrice">
+                                ₹{{ item.originalPrice }}
+                            </span>
+                            <span class="checkout-item__unit-price">Qty {{ item.quantity }} · Total ₹{{ item.lineTotal }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="checkout-summary__bill">
+                    <div class="checkout-summary__bill-head">
+                        <span>Bill details</span>
+                    </div>
+
+                    <div class="checkout-summary__row">
+                        <span>Items</span>
+                        <strong>{{ totalItems }}</strong>
+                    </div>
+                    <div class="checkout-summary__row">
+                        <span>Original price</span>
+                        <strong>₹{{ subtotal + totalSavings }}</strong>
+                    </div>
+                    <div class="checkout-summary__row">
+                        <span>Shipping</span>
+                        <strong class="checkout-summary__free">FREE</strong>
+                    </div>
+                    <div class="checkout-summary__row" *ngIf="totalSavings > 0">
+                        <span>You save</span>
+                        <strong class="checkout-summary__save">₹{{ totalSavings }}</strong>
+                    </div>
+                    <div class="checkout-summary__row checkout-summary__row--total">
+                        <span>Total</span>
+                        <strong>₹{{ subtotal }}</strong>
+                    </div>
+                </div>
+
+                <div class="checkout-summary__assurance">
+                    <div class="checkout-summary__assurance-item">
+                        <strong>Secure payment</strong>
+                        <span>Processed through Razorpay</span>
+                    </div>
+                    <div class="checkout-summary__assurance-item">
+                        <strong>Address verified</strong>
+                        <span>Postal code checked before payment</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+    </div>
+</div>

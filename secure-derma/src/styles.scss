@@ -1,7 +1,10 @@
 html {
+    min-height: 100%;
     font-size: 62.5%;
     box-sizing: border-box;
     scroll-behavior: smooth;
+    overflow-y: scroll;
+    scrollbar-gutter: stable;
     background-color: var(--background);
 }
 
@@ -40,6 +43,7 @@ html.cdk-global-scrollblock {
 }
 
 body {
+    min-height: 100dvh;
     font-family: 'Avenir Next', 'Nunito Sans', 'Segoe UI', sans-serif;
     font-size: 1rem;
     line-height: 1.5rem;
@@ -49,6 +53,16 @@ body {
     -moz-osx-font-smoothing: grayscale;
     // overflow-x: hidden;
     transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+body,
+app-root {
+    display: block;
+    width: 100%;
+}
+
+app-root {
+    min-height: 100dvh;
 }
 
 h1 {

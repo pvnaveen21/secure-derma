@@ -7,6 +7,7 @@ from ingredient.views import IngredientDetailAPIView, IngredientListCreateAPIVie
 from product.views import ProductDetailAPIView, ProductDetailDeleteAPIView, ProductImageDeleteAPIView, ProductListCreateAPIView, ProductReviewImageDeleteAPIView, ProductReviewListCreateAPIView, ProductReviewRUDAPIView
 from product_type.views import ProductTypeDetailAPIView, ProductTypeListCreateAPIView
 from skin_concern.views import SkinConcernsDetailAPIView, SkinConcernsListCreateAPIView
+from secure_derma.views import AdminOrderDetailAPIView, AdminOrderListAPIView, AdminOrderSummaryAPIView
 from user.views import AdminLoginApiView, AdminTokenRefreshView  , AdminDetailApiView, google_login  
 
 urlpatterns = [
@@ -76,4 +77,7 @@ urlpatterns = [
     path("reviews/images/<int:pk>/", 
          ProductReviewImageDeleteAPIView.as_view(), 
          name="review-detail"),
+    path("orders/summary/", AdminOrderSummaryAPIView.as_view(), name="admin-order-summary"),
+    path("orders/", AdminOrderListAPIView.as_view(), name="admin-order-list"),
+    path("orders/<int:pk>/", AdminOrderDetailAPIView.as_view(), name="admin-order-detail"),
 ]

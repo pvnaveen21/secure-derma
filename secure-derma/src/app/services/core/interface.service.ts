@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
-// import { ACCESS_TOKEN, getToken } from '@app/core/token';
+import { ACCESS_TOKEN, getToken } from '@app/core/token';
 import { catchError, Observable, throwError } from 'rxjs';
 import { GetApiUrl } from './config';
 // import { GetApiUrl } from '@app/core/config';
@@ -30,11 +30,9 @@ export class InterfaceService {
     const config: HttpOptionsConfig = Object.assign(JSON.parse(JSON.stringify(HttpOptionDefaultValue)), _config);
     let headers = new HttpHeaders();
 
-    // headers.set('Access-Control-Allow-Origin', '*');
-    // if (config.auth && getToken(ACCESS_TOKEN)) {
-    //   headers = headers.set('Authorization', `Bearer ${getToken(ACCESS_TOKEN)}`);
-    // }
-    // headers = headers.append('Accept', '*/*');
+    if (config.auth && getToken(ACCESS_TOKEN)) {
+      headers = headers.set('Authorization', `Bearer ${getToken(ACCESS_TOKEN)}`);
+    }
 
     if (type === 'json') {
       headers = headers.set('Content-Type', 'application/json');

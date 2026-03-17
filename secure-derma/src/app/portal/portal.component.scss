@@ -15,17 +15,45 @@
 
 /* Ensure parent does not block sticky */
 .secure-derma-main {
+    display: flex;
+    flex-direction: column;
+    min-height: 100dvh;
     width: 100%;
     margin: 0;
     overflow: visible;
     background-color: var(--portal-bg);
-    /* MUST */
 }
 
-/* Content to enable scrolling */
-.page-content, .footer {
+/* Keep footer anchored while route content swaps */
+.page-content {
+    flex: 1 0 auto;
+    width: 100%;
+    min-height: 24rem;
+    transition: min-height 0.12s ease;
+}
+
+.page-content--navigating {
+    contain: layout;
+}
+
+.footer-container {
+    flex-shrink: 0;
+    width: 100%;
+}
+
+.page-content,
+.footer-container {
     max-width: 90rem;
     margin: auto;
 }
 
-.header-container {}
+@media (max-width: 76.8rem) {
+    .page-content,
+    .footer-container {
+        width: 100%;
+    }
+
+    .page-content {
+        min-height: 20rem;
+    }
+}

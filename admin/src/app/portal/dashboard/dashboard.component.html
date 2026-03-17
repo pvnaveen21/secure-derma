@@ -1,0 +1,78 @@
+<div class="orders-dashboard">
+  <div class="orders-dashboard__header">
+    <div>
+      <p class="orders-dashboard__eyebrow m-0">Payments</p>
+      <h2 class="orders-dashboard__title m-0">Paid orders overview</h2>
+    </div>
+    <button nz-button nzType="default" (click)="loadDashboard()">Refresh</button>
+  </div>
+
+  @if (loadError) {
+    <nz-card class="orders-dashboard__error">
+      <p class="m-0">{{ loadError }}</p>
+    </nz-card>
+  }
+
+  <nz-spin [nzSpinning]="loading">
+    <div class="orders-dashboard__stats">
+      <nz-card class="metric-card metric-card--orders">
+        <p class="metric-card__label m-0">Paid Orders</p>
+        <h3 class="metric-card__value m-0">{{ summary.total_orders }}</h3>
+      </nz-card>
+
+      <nz-card class="metric-card metric-card--revenue">
+        <p class="metric-card__label m-0">Revenue</p>
+        <h3 class="metric-card__value m-0">{{ formatCurrency(summary.total_revenue) }}</h3>
+      </nz-card>
+
+      <nz-card class="metric-card metric-card--average">
+        <p class="metric-card__label m-0">Average Order</p>
+        <h3 class="metric-card__value m-0">{{ formatCurrency(summary.average_order_value) }}</h3>
+      </nz-card>
+
+      <nz-card class="metric-card metric-card--pending">
+        <p class="metric-card__label m-0">Pending Payments</p>
+        <h3 class="metric-card__value m-0">{{ summary.pending_orders }}</h3>
+      </nz-card>
+    </div>
+
+    <nz-card class="orders-list-card" [nzTitle]="ordersListTitle">
+      <ng-template #ordersListTitle>
+        <div class="orders-list-card__title">
+          <span>Latest Paid Orders</span>
+          <span class="orders-list-card__meta">
+            Last payment:
+            {{ summary.latest_paid_at ? (summary.latest_paid_at | date:'medium') : 'No payments yet' }}
+          </span>
+        </div>
+      </ng-template>
+
+      @if (recentOrders.length) {
+        <div class="orders-list">
+          @for (order of recentOrders; track order.id) {
+            <div class="orders-list__row">
+              <div>
+                <p class="orders-list__number m-0">{{ order.order_number }}</p>
+                <p class="orders-list__customer m-0">
+                  {{ order.customer_name || 'Walk-in customer' }}
+                  @if (order.customer_email) {
+                    <span>• {{ order.customer_email }}</span>
+                  }
+                </p>
+              </div>
+
+              <div class="orders-list__meta-block">
+                <span class="orders-list__status">{{ order.status }}</span>
+                <span class="orders-list__amount">{{ formatCurrency(order.amount_rupees) }}</span>
+                <span class="orders-list__items">{{ order.item_count }} item(s)</span>
+                <span class="orders-list__date">{{ order.updated_at | date:'medium' }}</span>
+              </div>
+            </div>
+          }
+        </div>
+      } @else {
+        <nz-empty nzNotFoundImage="simple" nzNotFoundContent="No paid orders yet"></nz-empty>
+      }
+    </nz-card>
+  </nz-spin>
+</div>
