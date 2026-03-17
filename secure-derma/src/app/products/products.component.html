@@ -225,14 +225,18 @@
                     </div>
                     <div class="location-box-copy">
                         <span class="location-box-label">Deliver to</span>
-                        <span class="location-box-value">638301</span>
+                        <span class="location-box-value">{{ locationPincode || 'Enter your pincode' }}</span>
                     </div>
                 </div>
 
                 <div class="location-status">
                     <p class=" delivery-date mb-0">
                         <lucide-angular [img]="icons.product.truck" class="d-flex com-icon-size"></lucide-angular>
-                        <span class="free-del">Free Delivery</span> between Sun, 16 Nov - Sun, 16 Nov
+                        @if (deliveryWindowLabel) {
+                        <span><span class="free-del">Free Delivery</span> between {{ deliveryWindowLabel }}</span>
+                        } @else {
+                        <span>{{ locationStatusMessage }}</span>
+                        }
                     </p>
                 </div>
 
@@ -528,28 +532,44 @@
                         <input id="location-pincode" nz-input [(ngModel)]="locationPincode" maxlength="6"
                             inputmode="numeric" placeholder="e.g. 560001" class="location-drawer__input"
                             (input)="onPincodeInput($event)" (keydown.enter)="checkLocation()" />
-                        <button class="secure-btn btn-primary location-drawer__check-btn" (click)="checkLocation()">
-                            Check
+                        <button class="secure-btn btn-primary location-drawer__check-btn"
+                            [disabled]="locationCheckLoading" (click)="checkLocation()">
+                            {{ locationCheckLoading ? 'Checking...' : 'Check' }}
                         </button>
                     </div>
                     @if(locationError){
                     <p class="location-drawer__error mb-0">{{ locationError }}</p>
+                    }
+                    @if(locationSuggestions.length){
+                    <p class="location-drawer__status-copy mb-0">
+                        Suggestions:
+                    </p>
+                    <div class="location-drawer__highlights">
+                        @for(suggestion of locationSuggestions; track suggestion.pincode){
+                        <button type="button" class="location-drawer__highlight"
+                            (click)="applySuggestedPincode(suggestion.pincode)">
+                            <span class="location-drawer__highlight-title">{{ suggestion.pincode }}</span>
+                            <span class="location-drawer__highlight-copy">{{ suggestion.location_name || suggestion.city || suggestion.state }}</span>
+                        </button>
+                        }
+                    </div>
                     }
                 </div>
 
                 <div class="location-drawer__status-card">
                     <div class="location-drawer__status-head">
                         <span class="location-drawer__status-label">Delivering to</span>
-                        <span class="location-drawer__status-city">{{ locationCity }}</span>
+                        <span class="location-drawer__status-city">{{ locationCity || 'Not checked yet' }}</span>
                     </div>
                     <p class="location-drawer__status-copy mb-0">
-                        Orders for this location are eligible for shipping updates and estimated delivery windows at checkout.
+                        {{ locationStatusMessage }}
                     </p>
                 </div>
 
-                <button type="button" class="location-drawer__current-btn" (click)="useCurrentLocation()">
+                <button type="button" class="location-drawer__current-btn"
+                    [disabled]="currentLocationLoading || locationCheckLoading" (click)="useCurrentLocation()">
                     <lucide-angular [img]="icons.product.locateFixed" class="d-flex" [size]="18"></lucide-angular>
-                    <span>Use my current location</span>
+                    <span>{{ currentLocationLoading ? 'Detecting current location...' : 'Use my current location' }}</span>
                 </button>
 
                 <div class="location-drawer__highlights">
@@ -565,8 +585,9 @@
             </div>
 
             <div class="location-drawer__footer">
-                <button class="secure-btn btn-primary w-100 location-drawer__confirm-btn" (click)="confirmLocation()">
-                    Confirm location
+                <button class="secure-btn btn-primary w-100 location-drawer__confirm-btn"
+                    [disabled]="locationCheckLoading" (click)="confirmLocation()">
+                    {{ locationCheckLoading ? 'Checking...' : 'Confirm location' }}
                 </button>
             </div>
         </div>

@@ -8,6 +8,9 @@ export interface CartItem {
   productId: number;
   productName: string;
   thumbnail: string;
+  productWeight?: string;
+  weightType?: string;
+  qualityLabel?: string;
   price: number;
   originalPrice?: number;
   discountPrice?: number;
@@ -128,15 +131,50 @@ export class CartService {
     }
   }
 
-  async removeItem(productId: number): Promise<void> {
-    const currentItem = this.cartItems.value.find((item) => item.productId === productId);
+  async addItemByDetail(detailId: number, quantity = 1): Promise<AddToCartResult> {
+    if (!detailId || quantity < 1) {
+      return { status: 'missing_details' };
+    }
+
+    if (!this.isAuthenticated()) {
+      return { status: 'missing_details' };
+    }
+
+    try {
+      const response = await firstValueFrom(
+        this.http.post<CartApiResponse>(
+          GetApiUrl('/cart/items/'),
+          {
+            detailId,
+            quantity
+          },
+          this.getHttpOptions()
+        )
+      );
+
+      this.cartItems.next(response.items || []);
+      const updatedItem = (response.items || []).find((item) => item.detailId === detailId);
+      return {
+        status: updatedItem?.quantity && updatedItem.quantity > quantity ? 'updated' : 'added',
+        quantity: updatedItem?.quantity || quantity
+      };
+    } catch (error: any) {
+      if (error?.status === 400 || error?.status === 409) {
+        return { status: 'limit_reached' };
+      }
+      throw error;
+    }
+  }
+
+  async removeItem(itemKey: number): Promise<void> {
+    const currentItem = this.cartItems.value.find((item) => (item.detailId ?? item.productId) === itemKey);
     if (!currentItem?.detailId) {
-      this.removeGuestItem(productId);
+      this.removeGuestItem(itemKey);
       return;
     }
 
     if (!this.isAuthenticated()) {
-      this.removeGuestItem(productId);
+      this.removeGuestItem(itemKey);
       return;
     }
 
@@ -149,14 +187,14 @@ export class CartService {
     this.cartItems.next(response.items || []);
   }
 
-  async updateQuantity(productId: number, change: number): Promise<void> {
-    const currentItem = this.cartItems.value.find((item) => item.productId === productId);
+  async updateQuantity(itemKey: number, change: number): Promise<void> {
+    const currentItem = this.cartItems.value.find((item) => (item.detailId ?? item.productId) === itemKey);
     if (!currentItem) {
       return;
     }
 
     if (!this.isAuthenticated() || !currentItem.detailId) {
-      this.updateGuestItemQuantity(productId, change);
+      this.updateGuestItemQuantity(itemKey, change);
       return;
     }
 
@@ -195,7 +233,7 @@ export class CartService {
 
   private addGuestItem(product: any, selectedDetail: any): AddToCartResult {
     const currentCart = [...this.cartItems.value];
-    const existingItem = currentCart.find((item) => item.productId === product.id);
+    const existingItem = currentCart.find((item) => (item.detailId ?? item.productId) === selectedDetail.id);
 
     if (existingItem) {
       if (existingItem.quantity >= 10) {
@@ -207,6 +245,9 @@ export class CartService {
         productId: product.id,
         productName: product.product_name,
         thumbnail: product.thumbnail_image,
+        productWeight: selectedDetail.product_weight,
+        weightType: selectedDetail.weight_type,
+        qualityLabel: [selectedDetail.product_weight, selectedDetail.weight_type].filter(Boolean).join(' '),
         price: selectedDetail.selling_price,
         originalPrice: selectedDetail.original_price,
         discountPrice: selectedDetail.discount_price,
@@ -224,9 +265,9 @@ export class CartService {
     };
   }
 
-  private updateGuestItemQuantity(productId: number, change: number): void {
+  private updateGuestItemQuantity(itemKey: number, change: number): void {
     const items = this.cartItems.value.map((item) => {
-      if (item.productId !== productId) {
+      if ((item.detailId ?? item.productId) !== itemKey) {
         return item;
       }
 
@@ -242,8 +283,8 @@ export class CartService {
     this.saveGuestCart();
   }
 
-  private removeGuestItem(productId: number): void {
-    const updated = this.cartItems.value.filter((item) => item.productId !== productId);
+  private removeGuestItem(itemKey: number): void {
+    const updated = this.cartItems.value.filter((item) => (item.detailId ?? item.productId) !== itemKey);
     this.cartItems.next(updated);
     this.saveGuestCart();
   }

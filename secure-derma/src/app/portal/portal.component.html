@@ -3,11 +3,15 @@
         <app-header></app-header>
     </div>
 
-    <div class="page-content">
+    <div
+        #pageContent
+        class="page-content"
+        [class.page-content--navigating]="isNavigating"
+        [style.min-height.px]="contentMinHeight || null">
         <router-outlet></router-outlet>
     </div>
 
-    <div class="">
+    <div class="footer-container">
         <app-footer></app-footer>
     </div>
 </div>

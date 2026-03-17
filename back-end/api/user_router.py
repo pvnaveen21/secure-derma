@@ -1,6 +1,6 @@
 from django.urls import path
 
-from secure_derma.views import BrandListAPIView, CollectionBannerAPIView, ConcernProductsAPIView, HairBannerAPIView, HomeProductTypeAPIView, ImagesAPIView, LandingPageImagesAPIView, ProductDetailAPIView, ProductListWithFiltersAPIView, ProductSideMenuAPIView, RazorpayCreateOrderAPIView, RazorpayVerifyPaymentAPIView, RoutineBuilderAPIView, SecureDermaCartAPIView, SecureDermaCartItemAPIView, SecureDermaCartSyncAPIView, SkinBannerAPIView, SupplementBannerAPIView, TopBrandsAPIView, TrendingProductsFastAPIView
+from secure_derma.views import BrandListAPIView, CollectionBannerAPIView, ConcernProductsAPIView, CurrentLocationPincodeAPIView, HairBannerAPIView, HomeProductTypeAPIView, ImagesAPIView, LandingPageImagesAPIView, PincodeServiceabilityAPIView, ProductDetailAPIView, ProductListWithFiltersAPIView, ProductSideMenuAPIView, RazorpayCreateOrderAPIView, RazorpayVerifyPaymentAPIView, RoutineBuilderAPIView, SecureDermaCartAPIView, SecureDermaCartItemAPIView, SecureDermaCartSyncAPIView, SkinBannerAPIView, SupplementBannerAPIView, TopBrandsAPIView, TrendingProductsFastAPIView, UserOrderDetailAPIView, UserOrderListAPIView
 from send_otp.views import SendOTPView, VerifyOTPView
 from user.views import UserDetailApiView, UserTokenRefreshView, google_login
 
@@ -26,8 +26,12 @@ urlpatterns = [
     path('cart/sync/', SecureDermaCartSyncAPIView.as_view(), name='secure-derma-cart-sync'),
     path('cart/items/', SecureDermaCartItemAPIView.as_view(), name='secure-derma-cart-item-create'),
     path('cart/items/<int:detail_id>/', SecureDermaCartItemAPIView.as_view(), name='secure-derma-cart-item-detail'),
+    path('pincode/serviceability/', PincodeServiceabilityAPIView.as_view(), name='pincode-serviceability'),
+    path('pincode/current-location/', CurrentLocationPincodeAPIView.as_view(), name='pincode-current-location'),
     path('payments/create-order/', RazorpayCreateOrderAPIView.as_view(), name='razorpay-create-order'),
     path('payments/verify/', RazorpayVerifyPaymentAPIView.as_view(), name='razorpay-verify-payment'),
+    path('orders/', UserOrderListAPIView.as_view(), name='user-order-list'),
+    path('orders/<int:pk>/', UserOrderDetailAPIView.as_view(), name='user-order-detail'),
     # path('filter-products/', FilterProductsAPIView.as_view(), name='filter-products'),
     path('filter-products/', ProductListWithFiltersAPIView.as_view(), name='filter-products'),
     path("products/<slug:slug>/", ProductDetailAPIView.as_view(), name="product-detail"),

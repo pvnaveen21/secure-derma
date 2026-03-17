@@ -6,6 +6,7 @@ export class User {
   firstName: string;
   lastName: string;
   mobile: number;
+  is_google_login?: boolean;
   profile_image: any;
   companyName: string;
   customer: any;
@@ -30,6 +31,7 @@ export class User {
     this.firstName = data['first_name'] || null;
     this.lastName = data['last_name'] || null;
     this.mobile = data['phone'] || null;
+    this.is_google_login = data['is_google_login'] || false;
     this.profile_image = data['profile_image'] || null;
     this.companyName = data['company_name'] || null;
     this.customer = data['customer'] || null;

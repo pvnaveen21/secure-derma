@@ -1,10 +1,13 @@
 import hashlib
 import hmac
 import os
+import re
 import uuid
 
 import requests
 from django.conf import settings
+from django.core.exceptions import ValidationError
+from django.core.validators import validate_email
 from django.db import transaction
 from banner_images.models import ImageFile
 from brand.models import Brand
@@ -23,6 +26,11 @@ from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from .models import OrderStatus, PaymentStatus, SecureDermaCartItem, SecureDermaOrder, SecureDermaOrderItem, SecureDermaPayment
+from .pincode_service import (
+    PincodeLookupError,
+    check_pincode_serviceability,
+    check_pincode_serviceability_for_coordinates,
+)
 
 
 def _build_media_url(request, image_field):
@@ -32,6 +40,20 @@ def _build_media_url(request, image_field):
         return request.build_absolute_uri(image_field.url)
     except ValueError:
         return ""
+
+
+def _build_quality_label(detail):
+    if not detail:
+        return ""
+
+    weight = str(getattr(detail, "product_weight", "") or "").strip()
+    weight_type = str(getattr(detail, "weight_type", "") or "").strip()
+    combo = getattr(detail, "combo", 1) or 1
+
+    unit_label = " ".join(part for part in [weight, weight_type] if part).strip()
+    if combo > 1 and unit_label:
+        return f"{combo} x {unit_label}"
+    return unit_label
 
 
 def _serialize_cart_items(request, cart_items):
@@ -51,6 +73,9 @@ def _serialize_cart_items(request, cart_items):
                 "productId": product.id,
                 "productName": product.product_name,
                 "thumbnail": _build_media_url(request, product.thumbnail_image),
+                "productWeight": detail.product_weight,
+                "weightType": detail.weight_type,
+                "qualityLabel": _build_quality_label(detail),
                 "price": detail.selling_price,
                 "originalPrice": detail.original_price,
                 "discountPrice": detail.discount_price,
@@ -95,6 +120,52 @@ def _normalize_cart_quantity(raw_quantity, default=1):
     if quantity < 1 or quantity > 10:
         return None
     return quantity
+
+
+def _normalize_customer_payload(raw_customer):
+    customer = raw_customer if isinstance(raw_customer, dict) else {}
+
+    normalized_customer = {
+        "name": re.sub(r"\s+", " ", str(customer.get("name", "") or "")).strip(),
+        "email": str(customer.get("email", "") or "").strip().lower(),
+        "contact": re.sub(r"\D", "", str(customer.get("contact", "") or ""))[:10],
+        "address": re.sub(r"\s+", " ", str(customer.get("address", "") or "")).strip(),
+        "address_line_2": re.sub(r"\s+", " ", str(customer.get("address_line_2", "") or "")).strip(),
+        "city": re.sub(r"\s+", " ", str(customer.get("city", "") or "")).strip(),
+        "state": re.sub(r"\s+", " ", str(customer.get("state", "") or "")).strip(),
+        "postal_code": re.sub(r"\D", "", str(customer.get("postal_code", "") or ""))[:6],
+    }
+
+    name_pattern = re.compile(r"^[A-Za-z][A-Za-z .'-]{1,79}$")
+    location_pattern = re.compile(r"^[A-Za-z][A-Za-z .'-]{1,79}$")
+
+    if not name_pattern.fullmatch(normalized_customer["name"]):
+        raise ValueError("Enter a valid customer name.")
+
+    try:
+        validate_email(normalized_customer["email"])
+    except ValidationError as exc:
+        raise ValueError("Enter a valid customer email address.") from exc
+
+    if not re.fullmatch(r"^[6-9]\d{9}$", normalized_customer["contact"]):
+        raise ValueError("Enter a valid 10-digit mobile number.")
+
+    if len(normalized_customer["address"]) < 10 or len(normalized_customer["address"]) > 255:
+        raise ValueError("Enter a complete delivery address.")
+
+    if len(normalized_customer["address_line_2"]) > 255:
+        raise ValueError("Address line 2 is too long.")
+
+    if not location_pattern.fullmatch(normalized_customer["city"]):
+        raise ValueError("Enter a valid city.")
+
+    if not location_pattern.fullmatch(normalized_customer["state"]):
+        raise ValueError("Enter a valid state.")
+
+    if not re.fullmatch(r"^\d{6}$", normalized_customer["postal_code"]):
+        raise ValueError("Enter a valid 6-digit postal code.")
+
+    return normalized_customer
 
 
 class SecureDermaCartAPIView(APIView):
@@ -239,6 +310,42 @@ class SecureDermaCartItemAPIView(APIView):
         if not deleted:
             return Response({"detail": "Cart item not found."}, status=status.HTTP_404_NOT_FOUND)
         return Response(_serialize_cart_items(request, list(_get_user_cart_queryset(request.user))))
+
+
+class PincodeServiceabilityAPIView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, *args, **kwargs):
+        pincode = request.query_params.get("pincode", "")
+
+        try:
+            result = check_pincode_serviceability(pincode)
+        except ValueError as exc:
+            return Response({"detail": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+        except PincodeLookupError as exc:
+            return Response({"detail": str(exc)}, status=status.HTTP_502_BAD_GATEWAY)
+
+        return Response(result)
+
+
+class CurrentLocationPincodeAPIView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, *args, **kwargs):
+        try:
+            latitude = float(request.query_params.get("lat", ""))
+            longitude = float(request.query_params.get("lng", ""))
+        except (TypeError, ValueError):
+            return Response({"detail": "Valid lat and lng query parameters are required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            result = check_pincode_serviceability_for_coordinates(latitude, longitude)
+        except PincodeLookupError as exc:
+            return Response({"detail": str(exc)}, status=status.HTTP_502_BAD_GATEWAY)
+        except ValueError as exc:
+            return Response({"detail": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(result)
 
 class BrandListAPIView(ListAPIView):
     permission_classes = [AllowAny]
@@ -519,6 +626,9 @@ class RazorpayCreateOrderAPIView(APIView):
                     "product_id": detail.product_id,
                     "detail_id": detail.id,
                     "product_name": detail.product.product_name,
+                    "product_weight": detail.product_weight,
+                    "weight_type": detail.weight_type,
+                    "quality_label": _build_quality_label(detail),
                     "quantity": quantity,
                     "unit_price": detail.selling_price,
                     "line_total": line_total,
@@ -534,12 +644,38 @@ class RazorpayCreateOrderAPIView(APIView):
         amount_paise = amount_rupees * 100
         receipt = f"securederma_{uuid.uuid4().hex[:20]}"
 
-        customer = request.data.get("customer") or {}
+        try:
+            customer = _normalize_customer_payload(request.data.get("customer"))
+        except ValueError as exc:
+            return Response(
+                {"detail": str(exc)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         notes = {
-            "customer_name": str(customer.get("name", ""))[:255],
-            "customer_email": str(customer.get("email", ""))[:255],
-            "customer_phone": str(customer.get("contact", ""))[:20],
+            "customer_name": customer["name"][:255],
+            "customer_email": customer["email"][:255],
+            "customer_phone": customer["contact"][:20],
+            "customer_postal_code": customer["postal_code"][:10],
         }
+
+        shipping_details = {
+            "shipping_name": customer["name"][:255],
+            "shipping_address": customer["address"][:255],
+            "shipping_landmark": customer["address_line_2"][:255],
+            "shipping_city": customer["city"][:100],
+            "shipping_pincode": customer["postal_code"][:10],
+            "shipping_state": customer["state"][:100],
+            "shipping_provider": "manual-checkout",
+        }
+
+        try:
+            shipping_route = check_pincode_serviceability(customer["postal_code"])
+            shipping_details["shipping_provider"] = str(
+                shipping_route.get("provider_name") or shipping_details["shipping_provider"]
+            )[:100]
+        except (ValueError, PincodeLookupError):
+            pass
 
         response = requests.post(
             "https://api.razorpay.com/v1/orders",
@@ -582,6 +718,18 @@ class RazorpayCreateOrderAPIView(APIView):
                 customer_name=notes["customer_name"],
                 customer_email=notes["customer_email"],
                 customer_phone=notes["customer_phone"],
+                customer_address=customer["address"][:255],
+                customer_address_line_2=customer["address_line_2"][:255],
+                customer_city=customer["city"][:100],
+                customer_state=customer["state"][:100],
+                customer_postal_code=customer["postal_code"][:10],
+                shipping_name=shipping_details["shipping_name"],
+                shipping_address=shipping_details["shipping_address"],
+                shipping_landmark=shipping_details["shipping_landmark"],
+                shipping_city=shipping_details["shipping_city"],
+                shipping_pincode=shipping_details["shipping_pincode"],
+                shipping_state=shipping_details["shipping_state"],
+                shipping_provider=shipping_details["shipping_provider"],
                 items_snapshot=cart_summary,
             )
 
@@ -846,6 +994,11 @@ class AdminOrderListAPIView(APIView):
                     "customer_name": order.customer_name,
                     "customer_email": order.customer_email,
                     "customer_phone": order.customer_phone,
+                    "customer_address": order.customer_address,
+                    "customer_address_line_2": order.customer_address_line_2,
+                    "customer_city": order.customer_city,
+                    "customer_state": order.customer_state,
+                    "customer_postal_code": order.customer_postal_code,
                     "razorpay_order_id": order.razorpay_order_id,
                     "razorpay_payment_id": order.razorpay_payment_id,
                     "item_count": item_count,
@@ -871,7 +1024,13 @@ class AdminOrderDetailAPIView(APIView):
         try:
             order = (
                 SecureDermaOrder.objects.select_related("user")
-                .prefetch_related("items", "payments")
+                .prefetch_related(
+                    Prefetch(
+                        "items",
+                        queryset=SecureDermaOrderItem.objects.select_related("product", "product_detail"),
+                    ),
+                    "payments",
+                )
                 .get(pk=pk)
             )
         except SecureDermaOrder.DoesNotExist:
@@ -891,6 +1050,11 @@ class AdminOrderDetailAPIView(APIView):
                 "customer_name": order.customer_name,
                 "customer_email": order.customer_email,
                 "customer_phone": order.customer_phone,
+                "customer_address": order.customer_address,
+                "customer_address_line_2": order.customer_address_line_2,
+                "customer_city": order.customer_city,
+                "customer_state": order.customer_state,
+                "customer_postal_code": order.customer_postal_code,
                 "razorpay_order_id": order.razorpay_order_id,
                 "razorpay_payment_id": order.razorpay_payment_id,
                 "created_at": order.created_at,
@@ -901,11 +1065,191 @@ class AdminOrderDetailAPIView(APIView):
                         "product_id": item.product_id,
                         "product_detail_id": item.product_detail_id,
                         "product_name": item.product_name,
+                        "thumbnail": _build_media_url(request, item.product.thumbnail_image),
+                        "product_weight": item.product_detail.product_weight,
+                        "weight_type": item.product_detail.weight_type,
+                        "quality_label": _build_quality_label(item.product_detail),
                         "quantity": item.quantity,
                         "unit_price": item.unit_price,
                         "line_total": item.line_total,
                     }
                     for item in order.items.all()
+                ],
+                "payments": [
+                    {
+                        "id": payment.id,
+                        "status": payment.status,
+                        "razorpay_order_id": payment.razorpay_order_id,
+                        "razorpay_payment_id": payment.razorpay_payment_id,
+                        "created_at": payment.created_at,
+                        "updated_at": payment.updated_at,
+                    }
+                    for payment in order.payments.all()
+                ],
+            }
+        )
+
+
+class UserOrderListAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        orders = (
+            SecureDermaOrder.objects.filter(user=request.user, status=OrderStatus.PAID)
+            .prefetch_related(
+                Prefetch(
+                    "items",
+                    queryset=SecureDermaOrderItem.objects.select_related("product", "product_detail"),
+                )
+            )
+            .order_by("-created_at")
+        )
+
+        results = []
+        for order in orders:
+            order_items = list(order.items.all())
+            item_count = sum(item.quantity for item in order_items)
+            savings = sum(
+                max((item.product_detail.original_price or item.unit_price) - item.unit_price, 0) * item.quantity
+                for item in order_items
+            )
+
+            results.append(
+                {
+                    "id": order.id,
+                    "order_number": order.order_number,
+                    "status": order.status,
+                    "amount_rupees": order.amount_rupees,
+                    "currency": order.currency,
+                    "created_at": order.created_at,
+                    "updated_at": order.updated_at,
+                    "item_count": item_count,
+                    "savings_rupees": savings,
+                    "shipping": {
+                        "name": order.shipping_name or order.customer_name,
+                        "address": order.shipping_address or order.customer_address,
+                        "landmark": order.shipping_landmark,
+                        "city": order.shipping_city or order.customer_city,
+                        "state": order.shipping_state or order.customer_state,
+                        "pincode": order.shipping_pincode or order.customer_postal_code,
+                    },
+                    "items": [
+                        {
+                            "id": item.id,
+                            "product_id": item.product_id,
+                            "product_detail_id": item.product_detail_id,
+                            "product_name": item.product_name,
+                            "product_slug": item.product.slug,
+                            "thumbnail": _build_media_url(request, item.product.thumbnail_image),
+                            "product_weight": item.product_detail.product_weight,
+                            "weight_type": item.product_detail.weight_type,
+                            "quality_label": _build_quality_label(item.product_detail),
+                            "quantity": item.quantity,
+                            "unit_price": item.unit_price,
+                            "line_total": item.line_total,
+                            "original_price": item.product_detail.original_price,
+                        }
+                        for item in order_items
+                    ],
+                }
+            )
+
+        return Response(
+            {
+                "count": len(results),
+                "results": results,
+            }
+        )
+
+
+class UserOrderDetailAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, pk, *args, **kwargs):
+        try:
+            order = (
+                SecureDermaOrder.objects.filter(user=request.user, status=OrderStatus.PAID)
+                .prefetch_related(
+                    Prefetch(
+                        "items",
+                        queryset=SecureDermaOrderItem.objects.select_related("product", "product_detail"),
+                    ),
+                    "payments",
+                )
+                .get(pk=pk)
+            )
+        except SecureDermaOrder.DoesNotExist:
+            return Response({"detail": "Order not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        order_items = list(order.items.all())
+        verified_payment = next(
+            (payment for payment in order.payments.all() if payment.status == PaymentStatus.VERIFIED),
+            order.payments.first(),
+        )
+        original_total = sum((item.product_detail.original_price or item.unit_price) * item.quantity for item in order_items)
+        savings = sum(
+            max((item.product_detail.original_price or item.unit_price) - item.unit_price, 0) * item.quantity
+            for item in order_items
+        )
+
+        return Response(
+            {
+                "id": order.id,
+                "order_number": order.order_number,
+                "status": order.status,
+                "amount_rupees": order.amount_rupees,
+                "amount_paise": order.amount_paise,
+                "currency": order.currency,
+                "created_at": order.created_at,
+                "updated_at": order.updated_at,
+                "customer_name": order.customer_name,
+                "customer_email": order.customer_email,
+                "customer_phone": order.customer_phone,
+                "customer_address": order.customer_address,
+                "customer_address_line_2": order.customer_address_line_2,
+                "customer_city": order.customer_city,
+                "customer_state": order.customer_state,
+                "customer_postal_code": order.customer_postal_code,
+                "shipping_name": order.shipping_name,
+                "shipping_address": order.shipping_address,
+                "shipping_landmark": order.shipping_landmark,
+                "shipping_city": order.shipping_city,
+                "shipping_state": order.shipping_state,
+                "shipping_pincode": order.shipping_pincode,
+                "shipping_provider": order.shipping_provider,
+                "savings_rupees": savings,
+                "original_total_rupees": original_total,
+                "subtotal_rupees": order.amount_rupees,
+                "shipping_rupees": 0,
+                "payment_status": verified_payment.status if verified_payment else PaymentStatus.VERIFIED,
+                "payment_id": verified_payment.razorpay_payment_id if verified_payment else order.razorpay_payment_id,
+                "paid_at": verified_payment.updated_at if verified_payment else order.updated_at,
+                "item_count": sum(item.quantity for item in order_items),
+                "shipping": {
+                    "name": order.shipping_name or order.customer_name,
+                    "address": order.shipping_address or order.customer_address,
+                    "landmark": order.shipping_landmark,
+                    "city": order.shipping_city or order.customer_city,
+                    "state": order.shipping_state or order.customer_state,
+                    "pincode": order.shipping_pincode or order.customer_postal_code,
+                },
+                "items": [
+                    {
+                        "id": item.id,
+                        "product_id": item.product_id,
+                        "product_detail_id": item.product_detail_id,
+                        "product_name": item.product_name,
+                        "product_slug": item.product.slug,
+                        "thumbnail": _build_media_url(request, item.product.thumbnail_image),
+                        "product_weight": item.product_detail.product_weight,
+                        "weight_type": item.product_detail.weight_type,
+                        "quality_label": _build_quality_label(item.product_detail),
+                        "quantity": item.quantity,
+                        "unit_price": item.unit_price,
+                        "line_total": item.line_total,
+                        "original_price": item.product_detail.original_price,
+                    }
+                    for item in order_items
                 ],
                 "payments": [
                     {
@@ -978,6 +1322,7 @@ class TrendingProductsFastAPIView(ListAPIView):
             
             products_list.append({
                 'id': product.id,
+                'slug': product.slug,
                 'product_name': product.product_name,
                 'brand_name': product.brand.brand_name,
                 'product_type': product.product_type.product_type,
@@ -1578,6 +1923,7 @@ class ProductListWithFiltersAPIView(APIView):
         # =========================
         filter_value = (request.GET.get("filter") or "").strip()
         slug = filter_value.lower() if filter_value else ""
+        search_text = (request.GET.get("searchText") or "").strip()
 
         # =====================================================
         # BASE PRODUCT QUERYSET
@@ -1645,6 +1991,17 @@ class ProductListWithFiltersAPIView(APIView):
 
         if current_brand:
             products = products.filter(brand__slug__in=current_brand)
+
+        if search_text:
+            products = products.filter(
+                Q(product_name__icontains=search_text)
+                | Q(brand__brand_name__icontains=search_text)
+                | Q(product_type__product_type__icontains=search_text)
+                | Q(categorie__categorie__icontains=search_text)
+                | Q(skin_concern__skin_concern__icontains=search_text)
+                | Q(hair_concern__hair_concern__icontains=search_text)
+                | Q(ingredient__ingredient__icontains=search_text)
+            )
 
         # =====================================================
         # PRICE FILTER (SAFE)

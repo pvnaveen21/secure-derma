@@ -372,8 +372,13 @@ export class HomeComponent {
     })
   }
 
-  producetView(value:any){
-    this.router.navigate([`./products/${this.slugify(value)}`]);
+  producetView(product: any) {
+    const productSlug = product?.slug || product?.product_slug || this.slugify(product?.product_name || '');
+    if (!productSlug) {
+      return;
+    }
+
+    this.router.navigate([`./products/${productSlug}`]);
     
   }
 

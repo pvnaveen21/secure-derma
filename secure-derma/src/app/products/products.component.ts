@@ -19,6 +19,7 @@ import { ProductService } from '../services/product.service';
 import { CartService } from '../services/cart.service';
 import { PaymentService } from '../services/payment.service';
 import { AuthService } from '../services/auth/auth.service';
+import { PincodeService, PincodeServiceabilityResponse } from '../services/pincode.service';
 @Component({
   selector: 'app-products',
   imports: [
@@ -39,7 +40,7 @@ import { AuthService } from '../services/auth/auth.service';
   styleUrl: './products.component.scss'
 })
 export class ProductsComponent {
-  private readonly productLoginIntentKey = 'secure_derma_resume_product_buy_now';
+  private readonly savedPincodeStorageKey = 'secure_derma_last_checked_pincode';
   readonly reviewPreviewCharacterLimit = 220;
   expandedReviews = new Set<number>();
   icons = Icons
@@ -157,6 +158,7 @@ export class ProductsComponent {
     private router: Router,
     private cartService: CartService,
     private paymentService: PaymentService,
+    private pincodeService: PincodeService,
     private authService: AuthService,
     private message: NzMessageService,
     @Inject(PLATFORM_ID) private platformId: Object
@@ -185,6 +187,10 @@ export class ProductsComponent {
         // Get variant from queryParams (not paramMap)
 
       });
+
+    if (isPlatformBrowser(this.platformId)) {
+      setTimeout(() => this.initializeSavedPincode());
+    }
     // setInterval(()=>{
     //   if (this.drawerPlacement == 'right'){
     //     this.drawerPlacement='bottom'
@@ -427,86 +433,35 @@ export class ProductsComponent {
       return;
     }
 
+    this.paymentService.saveCheckoutSession({
+      source: 'buy_now',
+      items: [
+        {
+          productId: this.productData.id,
+          detailId: selectedDetail.id,
+          quantity: 1,
+          productName: this.productData?.product_name || 'Product',
+          thumbnail: this.productData?.thumbnail_image || this.mainViewImage || '',
+          productWeight: selectedDetail.product_weight,
+          weightType: selectedDetail.weight_type,
+          qualityLabel: [selectedDetail.product_weight, selectedDetail.weight_type].filter(Boolean).join(' '),
+          unitPrice: selectedDetail.selling_price,
+          originalPrice: selectedDetail.original_price,
+          lineTotal: selectedDetail.selling_price,
+        }
+      ]
+    });
+
     if (!this.authService.isLoggedIn()) {
-      this.message.warning('Please login to continue payment.');
-      if (typeof window !== 'undefined') {
-        localStorage.setItem(this.productLoginIntentKey, '1');
-      }
-      this.authService.redirectUrl = this.router.url;
+      this.message.warning('Please login to continue checkout.');
+      this.authService.redirectUrl = '/checkout';
       this.router.navigate(['/account/login']);
       return;
     }
 
-    if (this.buyNowLoading) {
-      return;
-    }
-
-    this.buyNowLoading = true;
-
-    try {
-      await this.paymentService.loadRazorpayScript();
-
-      if (!window.Razorpay) {
-        throw new Error('Razorpay SDK is unavailable.');
-      }
-
-      const order = await firstValueFrom(
-        this.paymentService.createRazorpayOrder([
-          {
-            productId: this.productData.id,
-            detailId: selectedDetail.id,
-            quantity: 1
-          }
-        ])
-      );
-
-      const razorpay = new window.Razorpay({
-        key: order.key_id,
-        amount: order.amount_paise,
-        currency: order.currency,
-        name: 'Secure Derma',
-        description: this.productData?.product_name || 'Product order',
-        order_id: order.order_id,
-        theme: {
-          color: '#1a5944'
-        },
-        handler: async (response: {
-          razorpay_order_id: string;
-          razorpay_payment_id: string;
-          razorpay_signature: string;
-        }) => {
-          try {
-            await firstValueFrom(this.paymentService.verifyRazorpayPayment(response));
-            this.message.success('Payment completed successfully.');
-          } catch (error) {
-            console.error('Payment verification failed:', error);
-            this.message.error('Payment received, but verification failed. Please contact support.');
-          } finally {
-            this.buyNowLoading = false;
-            if (typeof window !== 'undefined') {
-              localStorage.removeItem(this.productLoginIntentKey);
-            }
-          }
-        },
-        modal: {
-          ondismiss: () => {
-            this.buyNowLoading = false;
-          }
-        }
-      });
-
-      razorpay.on('payment.failed', () => {
-        this.buyNowLoading = false;
-        this.message.error('Payment failed. Please try again.');
-      });
-
-      razorpay.open();
-    } catch (error) {
-      console.error('Checkout failed:', error);
-      this.buyNowLoading = false;
-      this.message.error('Unable to start payment right now.');
-    }
+    this.router.navigate(['/checkout']);
   }
+
   updateUrlWithVariant(variantId: any) {
     this.router.navigate([], {
       relativeTo: this.route,
@@ -837,9 +792,19 @@ export class ProductsComponent {
 
   visible = false;
   drawerPlacement: any = 'right'
-  locationPincode = '638301';
-  locationCity = 'Chennai';
+  locationPincode = '';
+  locationCity = '';
   locationError = '';
+  locationStatusMessage = 'Enter your pincode to check delivery date.';
+  locationCheckLoading = false;
+  currentLocationLoading = false;
+  deliveryWindowLabel = '';
+  locationSuggestions: Array<{
+    pincode: string;
+    location_name: string;
+    city: string;
+    state: string;
+  }> = [];
 
   @HostListener('window:resize')
   onWindowResize() {
@@ -858,6 +823,7 @@ export class ProductsComponent {
   close(): void {
     this.visible = false;
     this.locationError = '';
+    this.locationSuggestions = [];
   }
 
   onPincodeInput(event?: Event) {
@@ -870,32 +836,90 @@ export class ProductsComponent {
     if (this.locationError) {
       this.locationError = '';
     }
+    this.locationSuggestions = [];
   }
 
-  checkLocation() {
+  async checkLocation() {
     if (this.locationPincode.length !== 6) {
       this.locationError = 'Enter a valid 6-digit pincode.';
       return;
     }
 
     this.locationError = '';
-    this.locationCity = this.locationPincode === '638301' ? 'Chennai' : 'Serviceable area';
+    this.locationSuggestions = [];
+
+    if (this.locationCheckLoading) {
+      return;
+    }
+
+    this.locationCheckLoading = true;
+
+    try {
+      const response = await firstValueFrom(this.pincodeService.checkServiceability(this.locationPincode));
+      this.applyPincodeResponse(response);
+    } catch (error: any) {
+      this.locationCity = '';
+      this.locationStatusMessage = 'Enter your pincode to check delivery date.';
+      this.locationError = typeof error === 'string'
+        ? error
+        : error?.detail || 'Unable to check delivery for this pincode right now.';
+    } finally {
+      this.locationCheckLoading = false;
+    }
   }
 
-  useCurrentLocation() {
-    this.locationPincode = '638301';
-    this.locationCity = 'Chennai';
+  async useCurrentLocation() {
+    if (!isPlatformBrowser(this.platformId) || !navigator.geolocation) {
+      this.locationError = 'Geolocation is not supported on this device.';
+      return;
+    }
+
+    if (this.currentLocationLoading || this.locationCheckLoading) {
+      return;
+    }
+
+    this.currentLocationLoading = true;
     this.locationError = '';
+    this.locationCity = '';
+    this.locationStatusMessage = 'Detecting your current location.';
+    this.locationSuggestions = [];
+
+    try {
+      const position = await this.getCurrentBrowserPosition();
+      const response = await firstValueFrom(
+        this.pincodeService.checkCurrentLocation(
+          position.coords.latitude,
+          position.coords.longitude
+        )
+      );
+
+      this.locationPincode = response.pincode;
+      this.applyPincodeResponse(response);
+    } catch (error: any) {
+      this.locationStatusMessage = 'Enter your pincode to check delivery date.';
+      this.locationError = typeof error === 'string'
+        ? error
+        : error?.detail || 'Unable to use your current location right now.';
+    } finally {
+      this.currentLocationLoading = false;
+    }
   }
 
-  confirmLocation() {
-    this.checkLocation();
+  async confirmLocation() {
+    await this.checkLocation();
     if (this.locationError) {
       return;
     }
 
     this.message.success(`Delivery location updated to ${this.locationCity}.`);
     this.close();
+  }
+
+  applySuggestedPincode(pincode: string) {
+    this.locationPincode = pincode;
+    this.locationError = '';
+    this.locationSuggestions = [];
+    this.checkLocation();
   }
 
   private updateDrawerPlacement() {
@@ -908,6 +932,108 @@ export class ProductsComponent {
 
   private getSelectedDetail() {
     return this.productDetailsMain?.find((item: any) => item.id == this.selectedGramId) ?? this.currentPriceData ?? null;
+  }
+
+  private applyPincodeResponse(response: PincodeServiceabilityResponse) {
+    const cityParts = [
+      response.location_name,
+      response.city,
+      response.state
+    ].filter((value, index, values) => Boolean(value) && values.indexOf(value) === index);
+
+    this.locationCity = cityParts.join(', ') || response.pincode;
+
+    if (!response.serviceable) {
+      this.locationStatusMessage = 'This pincode is currently outside the serviceable delivery area.';
+      this.locationSuggestions = response.suggested_pincodes || [];
+      this.deliveryWindowLabel = '';
+      this.locationError = this.locationSuggestions.length
+        ? `Pincode not found in the official India directory. Did you mean ${this.locationSuggestions[0].pincode}?`
+        : 'Delivery is not available for this pincode yet.';
+      return;
+    }
+
+    const etaLabel = response.eta_min_days && response.eta_max_days
+      ? `Estimated delivery in ${response.eta_min_days}-${response.eta_max_days} days.`
+      : 'Delivery support is available for this location.';
+
+    this.locationStatusMessage = etaLabel;
+    this.deliveryWindowLabel = this.buildDeliveryWindowLabel(response.eta_min_days, response.eta_max_days);
+    this.persistCheckedPincode(response.pincode);
+  }
+
+  private buildDeliveryWindowLabel(minDays: number | null, maxDays: number | null) {
+    if (!minDays || !maxDays) {
+      return '';
+    }
+
+    const startDate = this.addDays(new Date(), minDays);
+    const endDate = this.addDays(new Date(), maxDays);
+    const formatDate = (value: Date) => value.toLocaleDateString('en-IN', {
+      weekday: 'short',
+      day: 'numeric',
+      month: 'short',
+    });
+
+    const startLabel = formatDate(startDate);
+    const endLabel = formatDate(endDate);
+    return startLabel === endLabel ? startLabel : `${startLabel} - ${endLabel}`;
+  }
+
+  private addDays(baseDate: Date, days: number) {
+    const value = new Date(baseDate);
+    value.setDate(value.getDate() + days);
+    return value;
+  }
+
+  private initializeSavedPincode() {
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
+
+    const savedPincode = localStorage.getItem(this.savedPincodeStorageKey);
+    if (!savedPincode || this.locationPincode === savedPincode) {
+      return;
+    }
+
+    this.locationPincode = savedPincode;
+    this.checkLocation();
+  }
+
+  private persistCheckedPincode(pincode: string) {
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
+
+    localStorage.setItem(this.savedPincodeStorageKey, pincode);
+  }
+
+  private getCurrentBrowserPosition(): Promise<GeolocationPosition> {
+    return new Promise((resolve, reject) => {
+      navigator.geolocation.getCurrentPosition(
+        (position) => resolve(position),
+        (error) => {
+          switch (error.code) {
+            case error.PERMISSION_DENIED:
+              reject('Location permission was denied.');
+              break;
+            case error.POSITION_UNAVAILABLE:
+              reject('Current location is unavailable.');
+              break;
+            case error.TIMEOUT:
+              reject('Location request timed out.');
+              break;
+            default:
+              reject('Unable to access current location.');
+          }
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 300000,
+        }
+      );
+    });
   }
 
   private getSelectedProductForCart() {

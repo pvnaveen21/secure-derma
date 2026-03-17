@@ -123,7 +123,7 @@
                 @for (product of productsData?.products?.results; track product.id) {
                 <nz-card class="product-card" [nzCover]="coverTemplate" [nzHoverable]="true">
                     <ng-template #coverTemplate>
-                        <div class="product-image-wrapper" (click)="productView(product.product_name)">
+                        <div class="product-image-wrapper" (click)="productView(product)">
                             @if (product.badge) {
                             <div class="product-badge" [class.best-seller]="product.badge === 'BEST SELLER'"
                                 [class.new]="product.badge === 'NEW'">
