@@ -21,7 +21,7 @@
             <span class="checkout-step__index">1</span>
             <div>
                 <h3 class="checkout-step__title mb-0">Delivery Details</h3>
-                <p class="checkout-step__copy mb-0">Enter name, address, postal code, email, and mobile number.</p>
+                <p class="checkout-step__copy mb-0">Enter name, address, postal code, mobile number, and optional email.</p>
             </div>
         </div>
         <div class="checkout-step" [class.checkout-step--active]="currentStep === 2">
@@ -64,7 +64,7 @@
                         <label class="checkout-form__label" for="checkout-email">Email</label>
                         <input id="checkout-email" nz-input type="email" [ngModel]="checkoutCustomer.email"
                             (ngModelChange)="onCheckoutFieldChange('email', $event)" (blur)="onCheckoutFieldBlur('email')"
-                            placeholder="you@example.com" class="checkout-form__input"
+                            placeholder="you@example.com (optional)" class="checkout-form__input"
                             [class.checkout-form__input--error]="!!checkoutErrors.email" />
                         <span class="checkout-form__error" *ngIf="checkoutErrors.email">{{ checkoutErrors.email }}</span>
                     </div>
@@ -154,7 +154,7 @@
                     </div>
                     <div class="payment-card__row">
                         <span class="payment-card__label">Email</span>
-                        <strong>{{ checkoutCustomer.email }}</strong>
+                        <strong>{{ checkoutCustomer.email || 'Not provided' }}</strong>
                     </div>
                     <nz-divider></nz-divider>
                     <div class="payment-card__row payment-card__row--total">

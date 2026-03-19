@@ -165,6 +165,47 @@ class RazorpayPaymentFlowTests(TestCase):
         {"RAZORPAY_KEY_ID": "rzp_test_123", "RAZORPAY_KEY_SECRET": "secret_123"},
         clear=False,
     )
+    @patch("secure_derma.views.send_order_confirmation_email")
+    @patch("secure_derma.views.requests.post")
+    def test_create_order_allows_missing_customer_email(self, mock_post, mock_send_order_email):
+        self.client.force_authenticate(user=self.user)
+        mock_post.return_value = Mock(
+            status_code=200,
+            json=lambda: {
+                "id": "order_razorpay_optional_email",
+                "currency": "INR",
+                "receipt": "securederma_testreceipt",
+            },
+            content=b"{}",
+        )
+
+        response = self.client.post(
+            "/api/payments/create-order/",
+            {
+                "items": [
+                    {
+                        "detailId": self.detail.id,
+                        "quantity": 1,
+                    }
+                ],
+                "customer": {
+                    **self.customer_payload,
+                    "email": "",
+                },
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        order = SecureDermaOrder.objects.get(razorpay_order_id="order_razorpay_optional_email")
+        self.assertEqual(order.customer_email, "")
+        mock_send_order_email.assert_not_called()
+
+    @patch.dict(
+        "os.environ",
+        {"RAZORPAY_KEY_ID": "rzp_test_123", "RAZORPAY_KEY_SECRET": "secret_123"},
+        clear=False,
+    )
     def test_create_order_requires_complete_customer_details(self):
         self.client.force_authenticate(user=self.user)
 
@@ -195,7 +236,8 @@ class RazorpayPaymentFlowTests(TestCase):
         clear=False,
     )
     @patch("secure_derma.views.requests.post")
-    def test_verify_payment_marks_order_paid(self, mock_post):
+    @patch("secure_derma.views.send_order_confirmation_email")
+    def test_verify_payment_marks_order_paid(self, mock_send_order_email, mock_post):
         self.client.force_authenticate(user=self.user)
         mock_post.return_value = Mock(
             status_code=200,
@@ -257,6 +299,63 @@ class RazorpayPaymentFlowTests(TestCase):
                 status=PaymentStatus.VERIFIED,
             ).exists()
         )
+        mock_send_order_email.assert_called_once()
+
+    @patch.dict(
+        "os.environ",
+        {"RAZORPAY_KEY_ID": "rzp_test_123", "RAZORPAY_KEY_SECRET": "secret_123"},
+        clear=False,
+    )
+    @patch("secure_derma.views.requests.post")
+    @patch("secure_derma.views.get_order_recipient", return_value="")
+    @patch("secure_derma.views.send_order_confirmation_email")
+    def test_verify_payment_skips_email_when_order_has_no_email(self, mock_send_order_email, mock_get_recipient, mock_post):
+        self.client.force_authenticate(user=self.user)
+        mock_post.return_value = Mock(
+            status_code=200,
+            json=lambda: {
+                "id": "order_razorpay_no_email",
+                "currency": "INR",
+                "receipt": "securederma_testreceipt",
+            },
+            content=b'{}',
+        )
+
+        create_response = self.client.post(
+            "/api/payments/create-order/",
+            {
+                "items": [
+                    {
+                        "detailId": self.detail.id,
+                        "quantity": 1,
+                    }
+                ],
+                "customer": self.customer_payload,
+            },
+            format="json",
+        )
+
+        self.assertEqual(create_response.status_code, 200)
+        razorpay_order_id = create_response.data["order_id"]
+        razorpay_payment_id = "pay_skip_email_123"
+        razorpay_signature = hmac.new(
+            b"secret_123",
+            f"{razorpay_order_id}|{razorpay_payment_id}".encode(),
+            hashlib.sha256,
+        ).hexdigest()
+
+        verify_response = self.client.post(
+            "/api/payments/verify/",
+            {
+                "razorpay_order_id": razorpay_order_id,
+                "razorpay_payment_id": razorpay_payment_id,
+                "razorpay_signature": razorpay_signature,
+            },
+            format="json",
+        )
+
+        self.assertEqual(verify_response.status_code, 200)
+        mock_send_order_email.assert_not_called()
 
 
 class SecureDermaCartAPIViewTests(TestCase):

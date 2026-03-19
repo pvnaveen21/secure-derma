@@ -2,11 +2,25 @@ from django.db import models
 from django.utils import timezone
 import datetime
 import secrets
+import os
+
+
+OTP_EXPIRY_SECONDS = int(os.getenv("OTP_EXPIRY_SECONDS", "600"))
 
 
 class OTPRecord(models.Model):
+    CHANNEL_PHONE = "phone"
+    CHANNEL_EMAIL = "email"
+    CHANNEL_CHOICES = (
+        (CHANNEL_PHONE, "Phone"),
+        (CHANNEL_EMAIL, "Email"),
+    )
+
+    channel      = models.CharField(max_length=16, choices=CHANNEL_CHOICES, default=CHANNEL_PHONE)
     phone        = models.CharField(max_length=15)
+    email        = models.EmailField(blank=True, null=True)
     otp          = models.CharField(max_length=6)
+    request_id   = models.CharField(max_length=64, blank=True, null=True)
     created_at   = models.DateTimeField(auto_now_add=True)
     is_used      = models.BooleanField(default=False)
     attempts     = models.IntegerField(default=0)
@@ -23,11 +37,11 @@ class OTPRecord(models.Model):
         self.save()
 
     def is_valid(self):
-        expiry = self.created_at + datetime.timedelta(seconds=60)
+        expiry = self.created_at + datetime.timedelta(seconds=OTP_EXPIRY_SECONDS)
         return not self.is_used and timezone.now() < expiry
 
     def seconds_remaining(self):
-        expiry = self.created_at + datetime.timedelta(seconds=60)
+        expiry = self.created_at + datetime.timedelta(seconds=OTP_EXPIRY_SECONDS)
         remaining = (expiry - timezone.now()).total_seconds()
         return max(0, int(remaining))
 
@@ -48,4 +62,5 @@ class OTPRecord(models.Model):
         return ''.join(secrets.choice("0123456789") for _ in range(6))
 
     def __str__(self):
-        return f"{self.phone} | OTP:{self.otp} | attempts:{self.attempts} | resend:{self.resend_count}"
+        destination = self.phone or self.email or ""
+        return f"{self.channel}:{destination} | OTP:{self.otp} | attempts:{self.attempts} | resend:{self.resend_count}"

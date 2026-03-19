@@ -126,6 +126,8 @@
 
 // Main Content Wrapper
 .content-wrapper {
+    --collections-sticky-offset: 6.4rem;
+    --collections-sidebar-width: 16.5rem;
     display: flex;
     align-items: flex-start;
     gap: 2rem;
@@ -140,7 +142,7 @@
 
 // Sidebar Filter
 .sidebar-filter {
-    width: 15rem;
+    width: var(--collections-sidebar-width);
     flex-shrink: 0;
     align-self: flex-start;
     border: 0.0625rem solid color-mix(in srgb, var(--filter-border) 78%, transparent);
@@ -148,11 +150,11 @@
     background: color-mix(in srgb, var(--card-bg) 95%, #ffffff 5%);
     padding: 1rem 0.9rem;
     height: fit-content;
-    max-height: calc(100vh - 8.5rem);
+    max-height: calc(100dvh - var(--collections-sticky-offset) - 1rem);
     overflow-y: auto;
     scrollbar-width: thin;
     position: sticky;
-    top: 7rem;
+    top: var(--collections-sticky-offset);
     z-index: 5;
     box-shadow: 0 0.25rem 0.9rem rgba(15, 23, 42, 0.05);
 
@@ -170,6 +172,12 @@
     margin-bottom: 1rem;
     padding-bottom: 0.85rem;
     border-bottom: 0.0625rem solid var(--filter-border);
+}
+
+.active-filters--sidebar {
+    margin-bottom: 1rem;
+    padding-bottom: 0.95rem;
+    border-bottom: 0.0625rem solid color-mix(in srgb, var(--filter-border) 75%, transparent);
 }
 
 .filter-heading-group {
@@ -289,6 +297,24 @@
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
+}
+
+.filter-list-toggle {
+    margin-top: 0.15rem;
+    align-self: flex-start;
+    border: none;
+    background: transparent;
+    color: var(--brand-primary);
+    font-size: 0.78rem;
+    font-weight: 700;
+    padding: 0.2rem 0.1rem;
+    cursor: pointer;
+    transition: color 0.18s ease, transform 0.18s ease;
+
+    &:hover {
+        color: color-mix(in srgb, var(--brand-primary) 80%, var(--brand-secondary) 20%);
+        transform: translateX(0.12rem);
+    }
 }
 
 .filter-item {
@@ -423,6 +449,12 @@
     border-radius: 0.7rem;
     padding: 0.7rem 0.75rem;
     background: color-mix(in srgb, var(--card-bg) 95%, #ffffff 5%);
+}
+
+@media only screen and (min-width: 64.0625rem) {
+    .filter-tags-row {
+        display: none;
+    }
 }
 
 .filter-tags-header {
@@ -1179,6 +1211,7 @@
     }
 
     .filter-tags-row {
+        display: flex;
         margin-bottom: 0.8rem;
         padding: 0.6rem 0.65rem;
     }

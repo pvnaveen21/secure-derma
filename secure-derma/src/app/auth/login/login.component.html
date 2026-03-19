@@ -31,7 +31,7 @@
                         <span class="login-showcase__panel-badge">Professional care, simplified</span>
                         <h2 class="login-showcase__panel-title">A cleaner portal for repeat purchases, follow-ups, and routine continuity.</h2>
                         <ul class="login-showcase__list">
-                            <li>Fast access with Google or email OTP</li>
+                            <li>Fast access with Google, email OTP, or mobile OTP</li>
                             <li>Built for desktop and mobile from the same flow</li>
                             <li>Consistent with the Secure Derma brand system</li>
                         </ul>
@@ -44,7 +44,7 @@
                         </div>
                         <div class="floating-note floating-note--bottom">
                             <span class="floating-note__label">Easy sign-in</span>
-                            <strong class="floating-note__value">Use Google or email OTP to continue</strong>
+                            <strong class="floating-note__value">Use Google, email OTP, or mobile OTP to continue</strong>
                         </div>
                     </div>
                 </div>
@@ -85,7 +85,7 @@
                     <h3 class="login-copy__title">Continue to your account</h3>
                     <p class="login-copy__text">
                         @if(authMode === 'email'){
-                        Use Google for instant access or continue with your email to receive a one-time code.
+                        Enter your email to receive a one-time code and continue securely.
                         } @else {
                         Enter your mobile number to receive a one-time code and continue securely.
                         }
@@ -112,7 +112,7 @@
                         <p class="google-login-status m-0">Signing you in with Google...</p>
                         }
                         <div class="google-divider">
-                            <span>or continue with {{ authMode === 'email' ? 'email' : 'phone' }}</span>
+                            <span>or continue with {{ authMode === 'email' ? 'email OTP' : 'mobile OTP' }}</span>
                         </div>
                     </div>
 
@@ -145,8 +145,10 @@
                         @if(authMode === 'email' && emailError){
                         <p class="field-error m-0">{{ emailError }}</p>
                         }
-                        @if(authMode === 'phone' && phoneError){
+                        @if(phoneError){
+                        @if(authMode === 'phone'){
                         <p class="field-error m-0">{{ phoneError }}</p>
+                        }
                         }
                     </div>
 
@@ -154,8 +156,8 @@
                         <label nz-checkbox [(ngModel)]="sendUpdates">Send me updates and exclusive offers</label>
                     </div>
 
-                    <button nz-button nzType="primary" nzBlock class="submit-btn" (click)="sendOtp()">
-                        Send OTP
+                    <button nz-button nzType="primary" nzBlock class="submit-btn" (click)="sendOtp()" [disabled]="isSendingOtp">
+                        {{ isSendingOtp ? 'Sending OTP...' : 'Send OTP' }}
                         <lucide-angular class="btn-icon d-flex" [img]="icons.auth.action" [size]="18"></lucide-angular>
                     </button>
 
@@ -168,9 +170,10 @@
                     </div>
                 </div>
 
-                <button nz-button nzType="link" class="phone-login" (click)="switchAuthMode(authMode === 'email' ? 'phone' : 'email')">
+                <button nz-button nzType="link" class="phone-login" type="button"
+                    (click)="switchAuthMode(authMode === 'email' ? 'phone' : 'email')">
                     <lucide-angular class="phone-icon d-flex" [img]="icons.auth.phone" [size]="18"></lucide-angular>
-                    {{ authMode === 'email' ? 'LOGIN WITH PHONE' : 'CONTINUE WITH EMAIL' }}
+                    {{ authMode === 'email' ? 'CONTINUE WITH PHONE' : 'CONTINUE WITH EMAIL' }}
                 </button>
                 }
                 @else{
@@ -203,7 +206,7 @@
 
                     <nz-flex nzVertical [nzGap]="16" class="otp-field">
                         <nz-flex nzVertical>
-                            <nz-input-otp [nzFormatter]="formatter" (ngModelChange)="onOtpChange($event)"></nz-input-otp>
+                            <nz-input-otp [ngModel]="otpValue" [nzFormatter]="formatter" (ngModelChange)="onOtpChange($event)"></nz-input-otp>
                         </nz-flex>
                     </nz-flex>
                     @if(otpError){
@@ -211,8 +214,8 @@
                     }
 
                     <div class="otp-actions">
-                        <button nz-button nzType="primary" nzBlock class="submit-btn" (click)="verifyOtp()">
-                            Verify & Continue
+                        <button nz-button nzType="primary" nzBlock class="submit-btn" (click)="verifyOtp()" [disabled]="isVerifyingOtp">
+                            {{ isVerifyingOtp ? 'Verifying...' : 'Verify & Continue' }}
                             <lucide-angular class="btn-icon d-flex" [img]="icons.auth.action" [size]="18"></lucide-angular>
                         </button>
 

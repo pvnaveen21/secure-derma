@@ -14,7 +14,7 @@ import { NzSelectModule } from 'ng-zorro-antd/select';
 import { NzPaginationModule } from 'ng-zorro-antd/pagination';
 import { NzDrawerModule } from 'ng-zorro-antd/drawer';
 import { NzMessageService } from 'ng-zorro-antd/message';
-import { distinctUntilChanged, map } from 'rxjs';
+import { combineLatest, distinctUntilChanged, map } from 'rxjs';
 import { Icons } from '../shared/icons';
 import { CollectionsService } from '../services/collections.service';
 import { CommonModule, DOCUMENT, isPlatformBrowser } from '@angular/common';
@@ -39,7 +39,23 @@ interface Product {
 
 interface FilterItem {
   name: string;
-  value?: string;
+  slug: string;
+  applicable?: boolean;
+  count?: number;
+}
+
+interface FilterPanel {
+  key: string;
+  title: string;
+  apiParam: string;
+  items: FilterItem[];
+}
+
+interface SelectedFilterTag {
+  panelKey: string;
+  panelTitle: string;
+  itemSlug: string;
+  displayName: string;
 }
 
 @Component({
@@ -90,7 +106,7 @@ export class CollectionsComponent implements OnInit {
   allProducts: Product[] = [];
   filteredProducts: Product[] = [];
   productsData: any = {};
-  filterPanels: any[] = [];
+  filterPanels: FilterPanel[] = [];
   totalProducts = 0;
   pageIndex = 1;
   pageSize = 5;
@@ -106,6 +122,16 @@ export class CollectionsComponent implements OnInit {
   recentlyAddedProductId: number | null = null;
   private addToCartFeedbackTimeout?: ReturnType<typeof setTimeout>;
   private cartSubscription?: Subscription;
+  private readonly defaultVisibleFilterItems = 6;
+  private previousCollectionSlug: string | null = null;
+  expandedFilterPanels = new Set<string>();
+  private readonly filterPanelConfig: Array<{ key: string; title: string; apiParam: string }> = [
+    { key: 'product_types', title: 'Product Type', apiParam: 'product_type' },
+    { key: 'hair_concerns', title: 'Hair Concerns', apiParam: 'hair_concern' },
+    { key: 'skin_concerns', title: 'Skin Concerns', apiParam: 'skin_concern' },
+    { key: 'ingredients', title: 'Ingredients', apiParam: 'ingredient' },
+    { key: 'brands', title: 'Brand', apiParam: 'brand' },
+  ];
 
   ngOnInit() {
     this.syncViewportState();
@@ -120,40 +146,40 @@ export class CollectionsComponent implements OnInit {
       }, 0);
     });
 
-    this.route.paramMap
-      .pipe(
-        map(params => params.get('slug')),
-        distinctUntilChanged()
-      )
-      .subscribe(slug => {
-        if (!slug) return;
+    combineLatest([this.route.paramMap, this.route.queryParamMap]).subscribe(([params, queryParams]) => {
+      const slug = params.get('slug');
+      if (!slug) {
+        return;
+      }
 
-        this.filterProduectValue = this.slugChangesValues[slug] ?? slug;
-        this.bannerType = slug;
+      this.filterProduectValue = this.slugChangesValues[slug] ?? slug;
+      this.bannerType = slug;
 
-        if (isPlatformBrowser(this.platformId)) {
-          const shouldScrollToTop = Boolean(history.state?.scrollToTop);
+      if (isPlatformBrowser(this.platformId)) {
+        const shouldScrollToTop = Boolean(history.state?.scrollToTop);
+        const isCollectionRouteChange = this.previousCollectionSlug !== null && this.previousCollectionSlug !== slug;
 
-          if (shouldScrollToTop) {
-            requestAnimationFrame(() => {
-              window.scrollTo({
-                top: 0,
-                behavior: 'auto'
-              });
+        if (shouldScrollToTop || isCollectionRouteChange) {
+          requestAnimationFrame(() => {
+            window.scrollTo({
+              top: 0,
+              behavior: 'auto'
             });
-          }
+          });
         }
+      }
 
-        // Reset filters on route change
-        this.selectedFilters.clear();
-        this.pageIndex = this.getPageFromQueryParam();
-        this.isFilterDrawerVisible = false;
-        this.isSortDrawerVisible = false;
-        this.updatePaginationSeoTags();
-        this.getBanner();
-        this.getProductsList();
-        this.getProductSideMenu();
-      });
+      this.selectedFilters = this.readFiltersFromQueryParams();
+      this.draftSelectedFilters = this.cloneFiltersMap(this.selectedFilters);
+      this.pageIndex = this.getPageFromQueryParam();
+      this.isFilterDrawerVisible = false;
+      this.isSortDrawerVisible = false;
+      this.updatePaginationSeoTags();
+      this.getBanner();
+      this.loadProductsForCurrentRoute();
+      this.getProductSideMenu();
+      this.previousCollectionSlug = slug;
+    });
   }
 
   ngOnDestroy() {
@@ -203,14 +229,8 @@ export class CollectionsComponent implements OnInit {
           }
         };
 
-        const filters = response.filters;
-        this.filterPanels = []
-        this.filterPanels = [
-          { key: 'product_types', title: 'Product Type', items: filters.product_types || [] },
-          { key: 'hair_concerns', title: 'Hair Concerns', items: filters.hair_concerns || [] },
-          { key: 'skin_concerns', title: 'Skin Concerns', items: filters.skin_concerns || [] },
-          { key: 'ingredients', title: 'Ingredients', items: filters.ingredients || [] },
-        ];
+        this.filterPanels = this.buildFilterPanels(response.filters);
+        this.validateSelectedFilters();
 
         this.applySorting();
         if (this.shouldScrollToProductsTop) {
@@ -245,13 +265,8 @@ export class CollectionsComponent implements OnInit {
             results: this.allProducts
           }
         };
-        const filters = response.filters;
-        this.filterPanels = [
-          { key: 'product_types', title: 'Product Type', items: filters.product_types || [] },
-          { key: 'hair_concerns', title: 'Hair Concerns', items: filters.hair_concerns || [] },
-          { key: 'skin_concerns', title: 'Skin Concerns', items: filters.skin_concerns || [] },
-          { key: 'ingredients', title: 'Ingredients', items: filters.ingredients || [] },
-        ];
+        this.filterPanels = this.buildFilterPanels(response.filters);
+        this.validateSelectedFilters();
 
         this.applySorting();
         if (this.shouldScrollToProductsTop) {
@@ -270,19 +285,11 @@ export class CollectionsComponent implements OnInit {
   buildFilterQueryParams(): any {
     const params: any = {};
 
-    // Convert filter panel keys to API parameter names
-    const filterKeyMapping: any = {
-      'product_types': 'product_type',
-      'hair_concerns': 'hair_concern',
-      'skin_concerns': 'skin_concern',
-      'ingredients': 'ingredient'
-    };
-
     this.selectedFilters.forEach((items, panelKey) => {
       if (items.size > 0) {
-        const apiParamName = filterKeyMapping[panelKey] || panelKey;
-        // Convert Set to array and join with commas, then slugify each value
-        const values = Array.from(items).map(item => this.slugify(item));
+        const panel = this.filterPanels.find((entry) => entry.key === panelKey);
+        const apiParamName = panel?.apiParam || panelKey;
+        const values = Array.from(items).filter(Boolean);
         params[apiParamName] = values.join(',');
       }
     });
@@ -291,21 +298,44 @@ export class CollectionsComponent implements OnInit {
   }
 
   // Check if a filter item is selected
-  isFilterSelected(panelKey: string, itemName: string): boolean {
+  isFilterSelected(panelKey: string, itemSlug: string): boolean {
     return this.selectedFilters.has(panelKey) &&
-      this.selectedFilters.get(panelKey)!.has(itemName);
+      this.selectedFilters.get(panelKey)!.has(itemSlug);
+  }
+
+  isFilterDisabled(panelKey: string, itemSlug: string): boolean {
+    const panel = this.filterPanels.find((entry) => entry.key === panelKey);
+    if (!panel) {
+      return true;
+    }
+
+    const item = panel.items.find((entry) => entry.slug === itemSlug);
+    if (!item) {
+      return true;
+    }
+
+    if (this.isFilterSelected(panelKey, itemSlug)) {
+      return false;
+    }
+
+    return item.applicable === false;
   }
 
   // Handle filter change
-  onFilterChange(panelKey: string, itemName: string, checked: boolean) {
+  onFilterChange(panelKey: string, itemSlug: string, checked: boolean) {
+    if (!this.isValidFilterSelection(panelKey, itemSlug)) {
+      this.message.warning('This filter is no longer available. Please choose another option.');
+      return;
+    }
+
     if (checked) {
       if (!this.selectedFilters.has(panelKey)) {
         this.selectedFilters.set(panelKey, new Set());
       }
-      this.selectedFilters.get(panelKey)!.add(itemName);
+      this.selectedFilters.get(panelKey)!.add(itemSlug);
     } else {
       if (this.selectedFilters.has(panelKey)) {
-        this.selectedFilters.get(panelKey)!.delete(itemName);
+        this.selectedFilters.get(panelKey)!.delete(itemSlug);
         if (this.selectedFilters.get(panelKey)!.size === 0) {
           this.selectedFilters.delete(panelKey);
         }
@@ -313,20 +343,18 @@ export class CollectionsComponent implements OnInit {
     }
     this.pageIndex = 1;
     this.updatePageQueryParam();
-    this.fetchProductsWithFilters();
   }
 
   // Remove a specific filter
-  removeFilter(panelKey: string, itemName: string) {
+  removeFilter(panelKey: string, itemSlug: string) {
     if (this.selectedFilters.has(panelKey)) {
-      this.selectedFilters.get(panelKey)!.delete(itemName);
+      this.selectedFilters.get(panelKey)!.delete(itemSlug);
       if (this.selectedFilters.get(panelKey)!.size === 0) {
         this.selectedFilters.delete(panelKey);
       }
     }
     this.pageIndex = 1;
     this.updatePageQueryParam();
-    this.fetchProductsWithFilters();
   }
 
   // Clear all filters
@@ -334,18 +362,20 @@ export class CollectionsComponent implements OnInit {
     this.selectedFilters.clear();
     this.pageIndex = 1;
     this.updatePageQueryParam();
-    this.fetchProductsWithFilters();
   }
 
   // Get all selected filters as a flat array for display
-  getAllSelectedFilters(): Array<{ panelKey: string, itemName: string, displayName: string }> {
-    const filters: Array<{ panelKey: string, itemName: string, displayName: string }> = [];
+  getAllSelectedFilters(): SelectedFilterTag[] {
+    const filters: SelectedFilterTag[] = [];
     this.selectedFilters.forEach((items, panelKey) => {
-      items.forEach(itemName => {
+      const panel = this.filterPanels.find((entry) => entry.key === panelKey);
+      items.forEach(itemSlug => {
+        const filterItem = panel?.items.find((item) => item.slug === itemSlug);
         filters.push({
           panelKey,
-          itemName,
-          displayName: itemName
+          panelTitle: panel?.title || this.toTitleCase(panelKey.replace(/_/g, ' ')),
+          itemSlug,
+          displayName: filterItem?.name || this.toTitleCase(itemSlug.replace(/-/g, ' '))
         });
       });
     });
@@ -411,11 +441,11 @@ export class CollectionsComponent implements OnInit {
   }
 
   // Get count of products for each filter item
-  getItemCount(panelKey: string, itemName: string): number {
+  getItemCount(panelKey: string, itemSlug: string): number {
     // Return count from filter data if available
     const panel = this.filterPanels.find(p => p.key === panelKey);
     if (panel) {
-      const item = panel.items.find((i: any) => i.name === itemName);
+      const item = panel.items.find((i) => i.slug === itemSlug);
       if (item && item.count !== undefined) {
         return item.count;
       }
@@ -425,8 +455,8 @@ export class CollectionsComponent implements OnInit {
     return this.allProducts.filter(product => {
       const productValues = this.getProductFilterValues(product, panelKey);
       return productValues.some(value =>
-        value.toLowerCase().includes(itemName.toLowerCase()) ||
-        itemName.toLowerCase().includes(value.toLowerCase())
+        this.slugify(value) === itemSlug ||
+        value.toLowerCase().includes(itemSlug.replace(/-/g, ' '))
       );
     }).length;
   }
@@ -500,14 +530,12 @@ export class CollectionsComponent implements OnInit {
     this.pageIndex = page;
     this.updatePageQueryParam();
     this.shouldScrollToProductsTop = true;
-    this.fetchProductsWithFilters();
   }
 
   onPageSizeChange(size: number) {
     this.pageSize = size;
     this.pageIndex = 1;
     this.updatePageQueryParam();
-    this.fetchProductsWithFilters();
   }
 
   openFilterDrawer() {
@@ -527,7 +555,6 @@ export class CollectionsComponent implements OnInit {
     this.selectedFilters = this.cloneFiltersMap(this.draftSelectedFilters);
     this.pageIndex = 1;
     this.updatePageQueryParam();
-    this.fetchProductsWithFilters();
     this.closeFilterDrawer();
   }
 
@@ -618,10 +645,13 @@ export class CollectionsComponent implements OnInit {
   }
 
   private updatePageQueryParam() {
+    const filterParams = this.buildFilterQueryParams();
     this.router.navigate([], {
       relativeTo: this.route,
-      queryParams: { page: this.pageIndex > 1 ? this.pageIndex : null },
-      queryParamsHandling: 'merge',
+      queryParams: {
+        ...filterParams,
+        page: this.pageIndex > 1 ? this.pageIndex : null,
+      },
       replaceUrl: true
     });
     this.updatePaginationSeoTags();
@@ -672,20 +702,43 @@ export class CollectionsComponent implements OnInit {
     }
   }
 
-  isDraftFilterSelected(panelKey: string, itemName: string): boolean {
+  isDraftFilterSelected(panelKey: string, itemSlug: string): boolean {
     return this.draftSelectedFilters.has(panelKey) &&
-      this.draftSelectedFilters.get(panelKey)!.has(itemName);
+      this.draftSelectedFilters.get(panelKey)!.has(itemSlug);
   }
 
-  onDraftFilterChange(panelKey: string, itemName: string, checked: boolean) {
+  isDraftFilterDisabled(panelKey: string, itemSlug: string): boolean {
+    const panel = this.filterPanels.find((entry) => entry.key === panelKey);
+    if (!panel) {
+      return true;
+    }
+
+    const item = panel.items.find((entry) => entry.slug === itemSlug);
+    if (!item) {
+      return true;
+    }
+
+    if (this.isDraftFilterSelected(panelKey, itemSlug)) {
+      return false;
+    }
+
+    return item.applicable === false;
+  }
+
+  onDraftFilterChange(panelKey: string, itemSlug: string, checked: boolean) {
+    if (!this.isValidFilterSelection(panelKey, itemSlug)) {
+      this.message.warning('This filter is no longer available. Please choose another option.');
+      return;
+    }
+
     if (checked) {
       if (!this.draftSelectedFilters.has(panelKey)) {
         this.draftSelectedFilters.set(panelKey, new Set());
       }
-      this.draftSelectedFilters.get(panelKey)!.add(itemName);
+      this.draftSelectedFilters.get(panelKey)!.add(itemSlug);
     } else {
       if (this.draftSelectedFilters.has(panelKey)) {
-        this.draftSelectedFilters.get(panelKey)!.delete(itemName);
+        this.draftSelectedFilters.get(panelKey)!.delete(itemSlug);
         if (this.draftSelectedFilters.get(panelKey)!.size === 0) {
           this.draftSelectedFilters.delete(panelKey);
         }
@@ -705,12 +758,137 @@ export class CollectionsComponent implements OnInit {
     return total;
   }
 
+  getVisibleFilterItems(panel: FilterPanel): FilterItem[] {
+    if (this.expandedFilterPanels.has(panel.key)) {
+      return panel.items;
+    }
+
+    return panel.items.slice(0, this.defaultVisibleFilterItems);
+  }
+
+  canToggleFilterPanel(panel: FilterPanel): boolean {
+    return panel.items.length > this.defaultVisibleFilterItems;
+  }
+
+  isFilterPanelExpanded(panelKey: string): boolean {
+    return this.expandedFilterPanels.has(panelKey);
+  }
+
+  toggleFilterPanel(panelKey: string) {
+    if (this.expandedFilterPanels.has(panelKey)) {
+      this.expandedFilterPanels.delete(panelKey);
+      return;
+    }
+
+    this.expandedFilterPanels.add(panelKey);
+  }
+
   private cloneFiltersMap(source: Map<string, Set<string>>): Map<string, Set<string>> {
     const clone = new Map<string, Set<string>>();
     source.forEach((items, key) => {
       clone.set(key, new Set(items));
     });
     return clone;
+  }
+
+  private buildFilterPanels(filters: Record<string, FilterItem[]> | undefined): FilterPanel[] {
+    if (!filters) {
+      return [];
+    }
+
+    return this.filterPanelConfig
+      .map((config) => ({
+        key: config.key,
+        title: config.title,
+        apiParam: config.apiParam,
+        items: (filters[config.key] || [])
+          .filter((item) => item?.slug && item?.name)
+          .map((item) => ({
+            name: item.name,
+            slug: item.slug,
+            applicable: item.applicable !== false,
+            count: item.count,
+          })),
+      }))
+      .filter((panel) => panel.items.length > 0);
+  }
+
+  private validateSelectedFilters() {
+    let removedAny = false;
+    const cleanedFilters = new Map<string, Set<string>>();
+
+    this.selectedFilters.forEach((items, panelKey) => {
+      const panel = this.filterPanels.find((entry) => entry.key === panelKey);
+      if (!panel) {
+        removedAny = true;
+        return;
+      }
+
+      const validApplicableSlugs = new Set(
+        panel.items
+          .filter((item) => item.applicable !== false)
+          .map((item) => item.slug)
+      );
+      const retained = new Set(
+        Array.from(items).filter((itemSlug) => validApplicableSlugs.has(itemSlug))
+      );
+
+      if (retained.size > 0) {
+        cleanedFilters.set(panelKey, retained);
+      }
+
+      if (retained.size !== items.size) {
+        removedAny = true;
+      }
+    });
+
+    this.selectedFilters = cleanedFilters;
+    this.draftSelectedFilters = this.cloneFiltersMap(cleanedFilters);
+
+    if (removedAny) {
+      this.updatePageQueryParam();
+    }
+  }
+
+  private isValidFilterSelection(panelKey: string, itemSlug: string): boolean {
+    const panel = this.filterPanels.find((entry) => entry.key === panelKey);
+    return Boolean(panel?.items.some((item) => item.slug === itemSlug));
+  }
+
+  private toTitleCase(value: string): string {
+    return value.replace(/\b\w/g, (char) => char.toUpperCase());
+  }
+
+  private readFiltersFromQueryParams(): Map<string, Set<string>> {
+    const result = new Map<string, Set<string>>();
+    const queryParams = this.route.snapshot.queryParamMap;
+
+    this.filterPanelConfig.forEach((panel) => {
+      const rawValue = queryParams.get(panel.apiParam);
+      if (!rawValue) {
+        return;
+      }
+
+      const slugs = rawValue
+        .split(',')
+        .map((item) => item.trim())
+        .filter(Boolean);
+
+      if (slugs.length) {
+        result.set(panel.key, new Set(slugs));
+      }
+    });
+
+    return result;
+  }
+
+  private loadProductsForCurrentRoute() {
+    if (this.selectedFilterCount > 0) {
+      this.fetchProductsWithFilters();
+      return;
+    }
+
+    this.getProductsList();
   }
 
   private scrollToProductsTop() {

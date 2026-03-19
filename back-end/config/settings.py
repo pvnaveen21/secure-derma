@@ -166,3 +166,8 @@ if not DEBUG:
 
 # AUTH_USER_MODEL = 'user.User'
 AUTH_USER_MODEL = "user.User"
+
+SENDGRID_API_KEY = os.getenv('SENDGRID_API_KEY', '')
+SENDGRID_FROM_EMAIL = os.getenv('SENDGRID_FROM_EMAIL', '')
+SENDGRID_FROM_NAME = os.getenv('SENDGRID_FROM_NAME', 'Secure Derma')
+DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', SENDGRID_FROM_EMAIL or 'noreply@securederma.local')
