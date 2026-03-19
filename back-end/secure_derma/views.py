@@ -31,6 +31,7 @@ from .pincode_service import (
     check_pincode_serviceability,
     check_pincode_serviceability_for_coordinates,
 )
+from .order_email import get_order_recipient, send_order_confirmation_email
 
 
 def _build_media_url(request, image_field):
@@ -142,10 +143,11 @@ def _normalize_customer_payload(raw_customer):
     if not name_pattern.fullmatch(normalized_customer["name"]):
         raise ValueError("Enter a valid customer name.")
 
-    try:
-        validate_email(normalized_customer["email"])
-    except ValidationError as exc:
-        raise ValueError("Enter a valid customer email address.") from exc
+    if normalized_customer["email"]:
+        try:
+            validate_email(normalized_customer["email"])
+        except ValidationError as exc:
+            raise ValueError("Enter a valid customer email address.") from exc
 
     if not re.fullmatch(r"^[6-9]\d{9}$", normalized_customer["contact"]):
         raise ValueError("Enter a valid 10-digit mobile number.")
@@ -907,6 +909,9 @@ class RazorpayVerifyPaymentAPIView(APIView):
                 ]
             )
 
+            if get_order_recipient(order):
+                transaction.on_commit(lambda confirmed_order_id=order.id: _send_order_email_after_commit(confirmed_order_id))
+
             return Response(
                 {
                     "verified": True,
@@ -915,6 +920,22 @@ class RazorpayVerifyPaymentAPIView(APIView):
                     "razorpay_payment_id": razorpay_payment_id,
                 }
             )
+
+
+def _send_order_email_after_commit(order_id):
+    order = (
+        SecureDermaOrder.objects.select_related("user")
+        .prefetch_related("items")
+        .filter(id=order_id, status=OrderStatus.PAID)
+        .first()
+    )
+    if not order:
+        return
+
+    try:
+        send_order_confirmation_email(order)
+    except Exception:
+        return
 
 
 class AdminOrderSummaryAPIView(APIView):
@@ -1968,6 +1989,8 @@ class ProductListWithFiltersAPIView(APIView):
                     status=404
                 )
 
+        filter_scope_products = products
+
         # =====================================================
         # EXISTING MULTI FILTERS (UNCHANGED)
         # =====================================================
@@ -1976,6 +1999,19 @@ class ProductListWithFiltersAPIView(APIView):
         current_ingredient = get_list("ingredient")
         current_product_type = get_list("product_type")
         current_brand = get_list("brand")
+
+        if search_text:
+            search_query = (
+                Q(product_name__icontains=search_text)
+                | Q(brand__brand_name__icontains=search_text)
+                | Q(product_type__product_type__icontains=search_text)
+                | Q(categorie__categorie__icontains=search_text)
+                | Q(skin_concern__skin_concern__icontains=search_text)
+                | Q(hair_concern__hair_concern__icontains=search_text)
+                | Q(ingredient__ingredient__icontains=search_text)
+            )
+            products = products.filter(search_query)
+            filter_scope_products = filter_scope_products.filter(search_query)
 
         if current_hair:
             products = products.filter(hair_concern__slug__in=current_hair)
@@ -1991,17 +2027,6 @@ class ProductListWithFiltersAPIView(APIView):
 
         if current_brand:
             products = products.filter(brand__slug__in=current_brand)
-
-        if search_text:
-            products = products.filter(
-                Q(product_name__icontains=search_text)
-                | Q(brand__brand_name__icontains=search_text)
-                | Q(product_type__product_type__icontains=search_text)
-                | Q(categorie__categorie__icontains=search_text)
-                | Q(skin_concern__skin_concern__icontains=search_text)
-                | Q(hair_concern__hair_concern__icontains=search_text)
-                | Q(ingredient__ingredient__icontains=search_text)
-            )
 
         # =====================================================
         # PRICE FILTER (SAFE)
@@ -2022,6 +2047,7 @@ class ProductListWithFiltersAPIView(APIView):
             ).values_list("product_id", flat=True)
 
             products = products.filter(id__in=product_ids)
+            filter_scope_products = filter_scope_products.filter(id__in=product_ids)
 
         # =====================================================
         # ANNOTATIONS + PREFETCH (SAME AS FILTER API)
@@ -2078,8 +2104,8 @@ class ProductListWithFiltersAPIView(APIView):
             Always returns all options (never hides any).
             """
 
-            # Base queryset: all non-deleted products
-            base_qs = Product.objects.filter(is_deleted=False)
+            # Base queryset must stay inside the current collection/search scope
+            base_qs = filter_scope_products
 
             # Apply ALL other current filters (except the one we're calculating)
             qs = base_qs
@@ -2126,11 +2152,6 @@ class ProductListWithFiltersAPIView(APIView):
 
                 # If no filters are applied at all → everything is applicable
                 if not request.GET:
-                    is_applicable = True
-
-                # Crucial: If this option is currently selected, keep it applicable
-                # (prevents disabling the last selected filter)
-                if current_selections and obj.slug in current_selections:
                     is_applicable = True
 
                 options.append({

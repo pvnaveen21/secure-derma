@@ -117,6 +117,42 @@ export class AuthService extends InterfaceService {
     })
   }
 
+  sendOtp(payload: { phone?: string; email?: string; }): Promise<any> {
+    return new Promise((resolve, reject) => {
+      this.http.post(
+        this.getApiUrl('/auth/sendotp/'),
+        payload,
+        this.getHttpOptions('json', { auth: false })
+      ).subscribe({
+        next: (response: any) => resolve(response),
+        error: (error) => reject(error.error),
+      });
+    });
+  }
+
+  verifyOtp(payload: { phone?: string; email?: string; otp: string; }): Promise<any> {
+    return new Promise((resolve, reject) => {
+      this.http.post(
+        this.getApiUrl('/auth/otp-verify/'),
+        payload,
+        this.getHttpOptions('json', { auth: false })
+      ).subscribe({
+        next: (response: any) => {
+          setToken(response.access, ACCESS_TOKEN);
+          setToken(response.refresh, REFRESH_TOKEN);
+          this.cartService.syncGuestCartToServer()
+            .then(() => this.getUserDetails())
+            .then(user => resolve(user))
+            .catch(error => reject(error));
+        },
+        error: (error) => {
+          unsetToken();
+          reject(error.error);
+        }
+      });
+    });
+  }
+
   changePassword(data: any) {
     return this.http
       .post(this.getApiUrl('/users/user/change-password/'), data, this.getHttpOptions('json', { auth: true }))

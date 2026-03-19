@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<body style="margin:0; padding:0; background:#f3f6fb; font-family:Arial, Helvetica, sans-serif; color:#1e293b;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f3f6fb; padding:32px 12px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:680px; background:#ffffff; border-radius:24px; overflow:hidden; box-shadow:0 20px 60px rgba(15, 23, 42, 0.08);">
+          <tr>
+            <td style="background:linear-gradient(135deg, #0f766e 0%, #164e63 100%); padding:32px 36px;">
+              <table role="presentation" cellspacing="0" cellpadding="0" style="margin:0 0 18px;">
+                <tr>
+                  <td align="center" valign="middle" style="width:54px; height:54px; border-radius:18px; background:rgba(255,255,255,0.16); border:1px solid rgba(255,255,255,0.22); color:#ffffff; font-size:20px; font-weight:700; letter-spacing:0.08em;">SD</td>
+                  <td style="padding-left:12px;">
+                    <p style="margin:0; font-size:12px; letter-spacing:0.18em; text-transform:uppercase; color:#ccfbf1; font-weight:700;">Secure Derma</p>
+                    <p style="margin:6px 0 0; font-size:13px; line-height:1.6; color:#99f6e4;">Trusted care. Confirmed order.</p>
+                  </td>
+                </tr>
+              </table>
+              <h1 style="margin:0; font-size:30px; line-height:1.2; color:#ffffff; font-weight:700;">Your order has been confirmed</h1>
+              <p style="margin:14px 0 0; font-size:15px; line-height:1.7; color:#d1fae5; max-width:460px;">Thank you for shopping with Secure Derma. We have received your payment and started processing your order.</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:36px;">
+              <p style="margin:0 0 20px; font-size:16px; line-height:1.8; color:#475569;">Hi {{ recipient_name }}, here is your order summary.</p>
+
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:0 0 24px; border:1px solid #e2e8f0; border-radius:18px; overflow:hidden;">
+                <tr>
+                  <td style="padding:18px 20px; background:#f8fafc; border-bottom:1px solid #e2e8f0;">
+                    <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                      <tr>
+                        <td>
+                          <p style="margin:0; font-size:12px; text-transform:uppercase; letter-spacing:0.12em; color:#64748b;">Order Number</p>
+                          <p style="margin:8px 0 0; font-size:18px; font-weight:700; color:#0f172a;">{{ order.order_number }}</p>
+                        </td>
+                        <td align="right">
+                          <p style="margin:0; font-size:12px; text-transform:uppercase; letter-spacing:0.12em; color:#64748b;">Paid Amount</p>
+                          <p style="margin:8px 0 0; font-size:18px; font-weight:700; color:#0f172a;">Rs. {{ grand_total }}</p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:20px;">
+                    <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                      <tr>
+                        <td style="padding:0 0 14px;">
+                          <p style="margin:0; font-size:14px; color:#475569;"><strong style="color:#0f172a;">Payment ID:</strong> {{ order.razorpay_payment_id }}</p>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td>
+                          <p style="margin:0; font-size:14px; color:#475569;"><strong style="color:#0f172a;">Delivery To:</strong> {{ order.customer_name }}, {{ order.customer_address }}{% if order.customer_address_line_2 %}, {{ order.customer_address_line_2 }}{% endif %}, {{ order.customer_city }}, {{ order.customer_state }} - {{ order.customer_postal_code }}</p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:0 0 24px; border:1px solid #e2e8f0; border-radius:18px; overflow:hidden;">
+                <tr>
+                  <td style="padding:16px 20px; background:#f8fafc; border-bottom:1px solid #e2e8f0;">
+                    <p style="margin:0; font-size:14px; font-weight:700; color:#0f172a;">Items Ordered ({{ item_count }})</p>
+                  </td>
+                </tr>
+                {% for item in order.items.all %}
+                <tr>
+                  <td style="padding:16px 20px; border-bottom:{% if not forloop.last %}1px solid #eef2f7{% else %}0{% endif %};">
+                    <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                      <tr>
+                        <td>
+                          <p style="margin:0; font-size:15px; font-weight:700; color:#0f172a;">{{ item.product_name }}</p>
+                          <p style="margin:6px 0 0; font-size:13px; color:#64748b;">Quantity: {{ item.quantity }}</p>
+                        </td>
+                        <td align="right">
+                          <p style="margin:0; font-size:15px; font-weight:700; color:#0f172a;">Rs. {{ item.line_total }}</p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                {% endfor %}
+              </table>
+
+              <div style="padding:18px 20px; border-radius:18px; background:#f8fafc; border:1px solid #e2e8f0;">
+                <p style="margin:0; font-size:14px; line-height:1.8; color:#475569;">We will notify you as your order progresses. If you need help, reply to this email or contact the Secure Derma support team.</p>
+              </div>
+
+              <p style="margin:28px 0 0; font-size:13px; line-height:1.8; color:#94a3b8;">Secure Derma<br>Trusted access for your skin, hair, and wellness journey.</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

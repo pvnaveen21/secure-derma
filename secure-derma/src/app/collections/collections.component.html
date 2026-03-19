@@ -31,24 +31,40 @@
                 </div>
             </div>
 
+            @if (getAllSelectedFilters().length > 0) {
+            <div class="active-filters active-filters--sidebar">
+                @for (filter of getAllSelectedFilters(); track filter.panelKey + filter.itemSlug) {
+                <nz-tag [nzColor]="'default'" [nzMode]="'closeable'"
+                    (nzOnClose)="removeFilter(filter.panelKey, filter.itemSlug)">
+                    {{ filter.displayName }}
+                </nz-tag>
+                }
+            </div>
+            }
+
             <!-- Filter Panels -->
             <div class="filter-panels">
-                <nz-collapse [nzBordered]="false" [nzExpandIconPosition]="'end'">
+                    <nz-collapse [nzBordered]="false" [nzExpandIconPosition]="'end'">
                     @for (panel of filterPanels; track panel.key) {
                     @if (panel.items && panel.items.length > 0) {
                     <nz-collapse-panel [nzHeader]="panel.title" [nzActive]="true">
                         <div class="filter-list">
-                            @for (item of panel.items; track item.name) {
+                            @for (item of getVisibleFilterItems(panel); track item.slug) {
                             <div class="filter-item">
-                                <label nz-checkbox [ngModel]="isFilterSelected(panel.key, item.name)"
-                                    (ngModelChange)="onFilterChange(panel.key, item.name, $event)"
-                                    [nzDisabled]="!item.applicable">
+                                <label nz-checkbox [ngModel]="isFilterSelected(panel.key, item.slug)"
+                                    (ngModelChange)="onFilterChange(panel.key, item.slug, $event)"
+                                    [nzDisabled]="isFilterDisabled(panel.key, item.slug)">
                                     <span class="filter-text">{{ item.name }}</span>
                                 </label>
-                                @if (getItemCount(panel.key, item.name) > 0) {
-                                <span class="item-count">{{ getItemCount(panel.key, item.name) }}</span>
+                                @if (getItemCount(panel.key, item.slug) > 0) {
+                                <span class="item-count">{{ getItemCount(panel.key, item.slug) }}</span>
                                 }
                             </div>
+                            }
+                            @if (canToggleFilterPanel(panel)) {
+                            <button type="button" class="filter-list-toggle" (click)="toggleFilterPanel(panel.key)">
+                                {{ isFilterPanelExpanded(panel.key) ? 'Show less' : 'Show more' }}
+                            </button>
                             }
                         </div>
                     </nz-collapse-panel>
@@ -70,10 +86,10 @@
                     </div>
                 </div>
                 <div class="filter-tags-chips">
-                    @for (filter of getAllSelectedFilters(); track filter.panelKey + filter.itemName) {
+                    @for (filter of getAllSelectedFilters(); track filter.panelKey + filter.itemSlug) {
                     <nz-tag [nzColor]="'default'" [nzMode]="'closeable'"
-                        (nzOnClose)="removeFilter(filter.panelKey, filter.itemName)">
-                        {{ filter.displayName }}
+                        (nzOnClose)="removeFilter(filter.panelKey, filter.itemSlug)">
+                        {{ filter.panelTitle }}: {{ filter.displayName }}
                     </nz-tag>
                     }
                 </div>
@@ -269,17 +285,22 @@
                         @if (panel.items && panel.items.length > 0) {
                         <nz-collapse-panel [nzHeader]="panel.title" [nzActive]="true">
                             <div class="filter-list">
-                                @for (item of panel.items; track item.name) {
+                                @for (item of getVisibleFilterItems(panel); track item.slug) {
                                 <div class="filter-item">
-                                    <label nz-checkbox [ngModel]="isDraftFilterSelected(panel.key, item.name)"
-                                        (ngModelChange)="onDraftFilterChange(panel.key, item.name, $event)"
-                                        [nzDisabled]="!item.applicable">
+                                    <label nz-checkbox [ngModel]="isDraftFilterSelected(panel.key, item.slug)"
+                                        (ngModelChange)="onDraftFilterChange(panel.key, item.slug, $event)"
+                                        [nzDisabled]="isDraftFilterDisabled(panel.key, item.slug)">
                                         <span class="filter-text">{{ item.name }}</span>
                                     </label>
-                                    @if (getItemCount(panel.key, item.name) > 0) {
-                                    <span class="item-count">{{ getItemCount(panel.key, item.name) }}</span>
+                                    @if (getItemCount(panel.key, item.slug) > 0) {
+                                    <span class="item-count">{{ getItemCount(panel.key, item.slug) }}</span>
                                     }
                                 </div>
+                                }
+                                @if (canToggleFilterPanel(panel)) {
+                                <button type="button" class="filter-list-toggle" (click)="toggleFilterPanel(panel.key)">
+                                    {{ isFilterPanelExpanded(panel.key) ? 'Show less' : 'Show more' }}
+                                </button>
                                 }
                             </div>
                         </nz-collapse-panel>
