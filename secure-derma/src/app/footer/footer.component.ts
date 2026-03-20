@@ -1,4 +1,7 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
+import { Router } from '@angular/router';
+import { ThemeType } from '../interfaces/theme';
+import { SettingsService } from '../services/settings/settings.service';
 
 @Component({
   selector: 'app-footer',
@@ -7,5 +10,52 @@ import { Component } from '@angular/core';
   styleUrl: './footer.component.scss'
 })
 export class FooterComponent {
+  private readonly router = inject(Router);
+  private readonly settingsService = inject(SettingsService);
 
+  get footerLogoSrc(): string {
+    const theme = this.settingsService.currentTheme;
+    const isDarkVariant = theme === ThemeType.dark || theme === ThemeType.coloured;
+    return isDarkVariant
+      ? 'assets/secure-derma/SecureDerma_DarkMode.png'
+      : 'assets/secure-derma/SecureDerma_LightMode.png';
+  }
+
+  navigateToCollection(value: string): void {
+    const slug = this.slugify(value);
+    if (!slug) {
+      return;
+    }
+
+    void this.router.navigate([`/collections/${slug}`], {
+      state: {
+        scrollToTop: true
+      }
+    });
+  }
+
+  navigateToHome(): void {
+    void this.router.navigate(['/'], {
+      state: {
+        scrollToTop: true
+      }
+    });
+  }
+
+  navigateToAccountSection(section: string): void {
+    void this.router.navigate(['/account', section], {
+      state: {
+        scrollToTop: true
+      }
+    });
+  }
+
+  private slugify(value: string): string {
+    return value
+      .toLowerCase()
+      .replace(/\./g, '')
+      .replace(/[^a-z0-9\s-]/g, '')
+      .trim()
+      .replace(/\s+/g, '-');
+  }
 }

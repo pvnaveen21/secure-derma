@@ -8,8 +8,16 @@
 
                 <div class="logo-container">
                     <div class="app-logo" (click)="homeLocation()">
-                        <h2 class="logo-title">Secure</h2>
-                        <p class="logo-subtitle m-0">Derma</p>
+                        <img
+                            class="logo-image logo-image--desktop"
+                            [src]="headerLogoSrc"
+                            alt="Secure Derma"
+                        />
+                        <img
+                            class="logo-image logo-image--mobile"
+                            [src]="mobileLogoSrc"
+                            alt="Secure Derma"
+                        />
                     </div>
                 </div>
             </div>
@@ -46,6 +54,7 @@
                             <div class="brand-list-wrapper">
                                 <div class="brand-list-wrapper">
                                     @if(allBrands){
+                                    @if(hasBrandResults){
                                     <div class="brand-list-container" #brandListContainer>
                                         @for(menu of getBrandKeys(allBrands); track menu) {
                                         <div [attr.data-letter]="menu" class="brand-section">
@@ -68,6 +77,16 @@
                                         </div>
                                         }
                                     </div>
+                                    }
+                                    @else {
+                                    <div class="brand-empty-state">
+                                        <div class="brand-empty-state__visual" aria-hidden="true">
+                                            <span class="brand-empty-state__halo"></span>
+                                            <span class="brand-empty-state__badge">?</span>
+                                        </div>
+                                        Oops! We couldn't find any matching brands. Try a different search.
+                                    </div>
+                                    }
                                     }
                                 </div>
                             </div>
@@ -94,7 +113,7 @@
                                 <p class="skin-v2-subtitle m-0">Build by routine step</p>
                                 <div class="skin-v2-list">
                                     @for(data of skinBannerData?.skin_category?.data;track data ;let i = $index){
-                                    <button class="skin-v2-item" (click)="producetNavigation(data.product_type ,'skin')">
+                                    <button class="secure-btn skin-v2-item" (click)="producetNavigation(data.product_type ,'skin')">
                                         {{data?.product_type}}
                                     </button>
                                     }
@@ -106,7 +125,7 @@
                                 <p class="skin-v2-subtitle m-0">Targeted treatment goals</p>
                                 <div class="skin-v2-list">
                                     @for(data of skinBannerData?.skin_concerns?.data;track data ;let i = $index){
-                                    <button class="skin-v2-item" (click)="producetNavigation(data.skin_concern ,'skin')">
+                                    <button class="secure-btn skin-v2-item" (click)="producetNavigation(data.skin_concern ,'skin')">
                                         {{data?.skin_concern}}
                                     </button>
                                     }
@@ -146,7 +165,7 @@
                                 <p class="hair-v2-subtitle m-0">Core haircare steps</p>
                                 <div class="hair-v2-list">
                                     @for(data of hairBannerData?.hair_category?.data;track data ;let i = $index){
-                                    <button class="hair-v2-item" (click)="producetNavigation(data.product_type ,'hair')">
+                                    <button class="secure-btn hair-v2-item" (click)="producetNavigation(data.product_type ,'hair')">
                                         {{data?.product_type}}
                                     </button>
                                     }
@@ -158,7 +177,7 @@
                                 <p class="hair-v2-subtitle m-0">Scalp and strand goals</p>
                                 <div class="hair-v2-list">
                                     @for(data of hairBannerData?.hair_concerns?.data;track data ;let i = $index){
-                                    <button class="hair-v2-item" (click)="producetNavigation(data.hair_concern ,'hair')">
+                                    <button class="secure-btn hair-v2-item" (click)="producetNavigation(data.hair_concern ,'hair')">
                                         {{data?.hair_concern}}
                                     </button>
                                     }
@@ -198,7 +217,7 @@
                                 <p class="supplement-v2-subtitle m-0">Wellness and nutrition support</p>
                                 <div class="supplement-v2-list">
                                     @for(data of supplementBannerData?.supplements?.data;track data ;let i = $index){
-                                    <button class="supplement-v2-item" (click)="producetNavigation(data.product_type ,'supplements')">
+                                    <button class="secure-btn supplement-v2-item" (click)="producetNavigation(data.product_type ,'supplements')">
                                         {{data?.product_type}}
                                     </button>
                                     }
@@ -253,7 +272,7 @@
                     </ng-template>
 
                     <ng-template #desktopSearchClear>
-                        <button *ngIf="globalSearchTerm" type="button" class="search-clear-btn" (click)="clearGlobalSearch()" aria-label="Clear search">
+                        <button *ngIf="globalSearchTerm" type="button" class="secure-btn search-clear-btn" (click)="clearGlobalSearch()" aria-label="Clear search">
                             <lucide-angular class="d-flex" [img]="icons.header.close" [size]="16"></lucide-angular>
                         </button>
                     </ng-template>
@@ -271,7 +290,7 @@
                                         <span>{{ group.title }}</span>
                                     </div>
                                     <button type="button"
-                                        class="header-search-item"
+                                        class="secure-btn header-search-item"
                                         [class.header-search-item--product]="group.type === 'product'"
                                         *ngFor="let item of group.items"
                                         (click)="navigateToSuggestion(item)">
@@ -307,7 +326,7 @@
 
 
             <div class="user-bag">
-                <button class="theme-toggle-btn" (click)="toggleTheme()" [title]="isDark ? 'Switch to Light mode' : 'Switch to Dark mode'" aria-label="Toggle theme">
+                <button class="secure-btn theme-toggle-btn" (click)="toggleTheme()" [title]="isDark ? 'Switch to Light mode' : 'Switch to Dark mode'" aria-label="Toggle theme">
                     <lucide-angular class="icon-display theme-icon" [img]="isDark ? icons.theme.light : icons.theme.dark" [size]="22"></lucide-angular>
                 </button>
                 <div class="cart-icon" (click)="openCartDrawer()">
@@ -351,7 +370,7 @@
         </nz-input-group>
 
         <ng-template #mobileSearchClear>
-            <button *ngIf="globalSearchTerm" type="button" class="search-clear-btn" (click)="clearGlobalSearch()" aria-label="Clear search">
+            <button *ngIf="globalSearchTerm" type="button" class="secure-btn search-clear-btn" (click)="clearGlobalSearch()" aria-label="Clear search">
                 <lucide-angular class="d-flex" [img]="icons.header.close" [size]="16"></lucide-angular>
             </button>
         </ng-template>
@@ -369,7 +388,7 @@
                             <span>{{ group.title }}</span>
                         </div>
                         <button type="button"
-                            class="header-search-item"
+                            class="secure-btn header-search-item"
                             [class.header-search-item--product]="group.type === 'product'"
                             *ngFor="let item of group.items"
                             (click)="navigateToSuggestion(item)">
@@ -452,6 +471,7 @@
                             [img]="icons.header.search"></lucide-angular>
                     </ng-template>
                     @if(allBrands){
+                    @if(hasBrandResults){
                     <div class="side-menu-brand-list-wrapper pb-1">
                         <div class="brand-list-container px-1" #mobileBrandListContainer>
                             @for(menu of getBrandKeys(allBrands); track menu) {
@@ -476,6 +496,16 @@
                         </div>
                     </div>
                     }
+                    @else {
+                    <div class="brand-empty-state brand-empty-state--mobile px-2">
+                        <div class="brand-empty-state__visual" aria-hidden="true">
+                            <span class="brand-empty-state__halo"></span>
+                            <span class="brand-empty-state__badge">?</span>
+                        </div>
+                        Oops! We couldn't find any matching brands. Try a different search.
+                    </div>
+                    }
+                    }
                 </div>
                 }
                 @else{
@@ -496,7 +526,7 @@
                                     <div class="mobile-panel-overlay">
                                         <p class="mobile-panel-overlay__kicker m-0">{{ panel.name }} Care Guide</p>
                                         <h4 class="mobile-panel-overlay__title m-0">{{ getMobilePanelTitle(panel.key) }}</h4>
-                                        <button class="mobile-section-cta mobile-section-cta--overlay"
+                                        <button class="secure-btn mobile-section-cta mobile-section-cta--overlay"
                                             (click)="producetNavigation(panel.routeValue, panel.routeType); closeSideMenu()">
                                             Explore {{ panel.name }}
                                         </button>
@@ -507,7 +537,7 @@
                                     <nz-divider class="mt-1 mb-1"></nz-divider>
                                     <div class="skin-section mobile-link-list">
                                         @for(item of panel.categoryItems; track item.value) {
-                                        <button class="mobile-link-item"
+                                        <button class="secure-btn mobile-link-item"
                                             (click)="producetNavigation(item.value, panel.routeType); closeSideMenu()">
                                             {{ item.label }}
                                         </button>
@@ -523,7 +553,7 @@
                                     <nz-divider class="mt-1 mb-1"></nz-divider>
                                     <div class="skin-section mobile-link-list">
                                         @for(item of panel.concernItems; track item.value) {
-                                        <button class="mobile-link-item"
+                                        <button class="secure-btn mobile-link-item"
                                             (click)="producetNavigation(item.value, panel.routeType); closeSideMenu()">
                                             {{ item.label }}
                                         </button>
@@ -619,7 +649,7 @@
                             </div>
 
                             <button nz-button nzType="text" nzDanger nzSize="small" (click)="removeItem(item.detailId ?? item.productId)"
-                                class="remove-btn">
+                                class="secure-btn remove-btn">
                                 <span nz-icon nzType="delete" nzTheme="outline"></span>
                             </button>
                         </div>
@@ -667,7 +697,7 @@
 
             <button nz-button nzType="primary" nzSize="large" nzBlock (click)="proceedToCheckout()"
                 [disabled]="checkoutLoading"
-                class="checkout-btn">
+                class="secure-btn checkout-btn">
                 {{ checkoutLoading ? 'Opening Checkout...' : 'Proceed to Checkout' }}
             </button>
 

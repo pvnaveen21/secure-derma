@@ -20,6 +20,7 @@ import { CartService } from '../services/cart.service';
 import { PaymentService } from '../services/payment.service';
 import { AuthService } from '../services/auth/auth.service';
 import { PincodeService, PincodeServiceabilityResponse } from '../services/pincode.service';
+import { SeoService } from '../services/seo.service';
 @Component({
   selector: 'app-products',
   imports: [
@@ -41,7 +42,15 @@ import { PincodeService, PincodeServiceabilityResponse } from '../services/pinco
 })
 export class ProductsComponent {
   private readonly savedPincodeStorageKey = 'secure_derma_last_checked_pincode';
+  readonly minPurchaseQuantity = 1;
+  readonly maxPurchaseQuantity = 10;
+  readonly reviewsPerPage = 6;
   readonly reviewPreviewCharacterLimit = 220;
+  readonly reviewRatingOptions = [5, 4, 3, 2, 1];
+  readonly reviewSortOptions = [
+    { label: 'Top reviews', value: 'top' },
+    { label: 'Latest reviews', value: 'latest' }
+  ] as const;
   expandedReviews = new Set<number>();
   icons = Icons
   assets = Assets
@@ -161,6 +170,7 @@ export class ProductsComponent {
     private pincodeService: PincodeService,
     private authService: AuthService,
     private message: NzMessageService,
+    private seoService: SeoService,
     @Inject(PLATFORM_ID) private platformId: Object
     // private cdr: ChangeDetectorRef,
   ) { }
@@ -203,6 +213,7 @@ export class ProductsComponent {
   productData: any = []
   productDetailsMain: any = []
   currentPriceData: any = []
+  selectedQuantity = 1;
   sideImages: any = []
   productInfoSections: {
     key: string;
@@ -261,6 +272,7 @@ export class ProductsComponent {
     this.productService.getProducetDetail(this.selectedProduectValue).subscribe({
       next: (response: any) => {
         this.productData = response?.product;
+        this.resetReviewFilters();
         this.buildProductInfoSections();
         this.prepareRatingSummary();
 
@@ -278,6 +290,7 @@ export class ProductsComponent {
         this.selectedImgId = 0;
         this.currentImageIndex = 0;
         this.mainViewImage = this.sideImages[0] || response?.product?.thumbnail_image || '';
+        this.updateProductSeo();
 
         this.productDetailsMain = response?.product?.product_details;
 
@@ -349,6 +362,80 @@ export class ProductsComponent {
     return Array.isArray(apiReviews) ? apiReviews : [];
   }
 
+  reviewPage = 1;
+  selectedReviewRatings: number[] = [];
+  selectedReviewSort: 'top' | 'latest' = 'top';
+  reviewsWithImagesOnly = false;
+
+  get filteredCustomerReviews() {
+    const filteredReviews = this.customerReviews.filter((review: any) => {
+      if (this.selectedReviewRatings.length) {
+        const roundedRating = Math.round(this.getReviewRating(review));
+        if (!this.selectedReviewRatings.includes(roundedRating)) {
+          return false;
+        }
+      }
+
+      if (this.reviewsWithImagesOnly && !this.getReviewImages(review).length) {
+        return false;
+      }
+
+      return true;
+    });
+
+    return filteredReviews.sort((left: any, right: any) => {
+      if (this.selectedReviewSort === 'latest') {
+        return this.getReviewTimestamp(right) - this.getReviewTimestamp(left);
+      }
+
+      const ratingDifference = this.getReviewRating(right) - this.getReviewRating(left);
+      if (ratingDifference !== 0) {
+        return ratingDifference;
+      }
+
+      const imageDifference = this.getReviewImages(right).length - this.getReviewImages(left).length;
+      if (imageDifference !== 0) {
+        return imageDifference;
+      }
+
+      return this.getReviewTimestamp(right) - this.getReviewTimestamp(left);
+    });
+  }
+
+  get filteredReviewEntries() {
+    return this.filteredCustomerReviews.map((review: any) => ({
+      review,
+      index: this.customerReviews.indexOf(review)
+    }));
+  }
+
+  get totalReviewPages() {
+    return Math.max(1, Math.ceil(this.filteredCustomerReviews.length / this.reviewsPerPage));
+  }
+
+  get paginatedCustomerReviews() {
+    const start = (this.reviewPage - 1) * this.reviewsPerPage;
+    return this.filteredReviewEntries.slice(start, start + this.reviewsPerPage);
+  }
+
+  get reviewRangeStart() {
+    if (!this.filteredCustomerReviews.length) {
+      return 0;
+    }
+
+    return (this.reviewPage - 1) * this.reviewsPerPage + 1;
+  }
+
+  get reviewRangeEnd() {
+    return Math.min(this.reviewPage * this.reviewsPerPage, this.filteredCustomerReviews.length);
+  }
+
+  get hasActiveReviewFilters() {
+    return this.selectedReviewRatings.length > 0
+      || this.selectedReviewSort !== 'top'
+      || this.reviewsWithImagesOnly;
+  }
+
   get totalReviewCount() {
     return this.productData?.reviews?.total_count || this.productData?.review_count || this.customerReviews.length || 0;
   }
@@ -386,8 +473,64 @@ export class ProductsComponent {
     const getProductData = this.productDetailsMain?.find((item: any) => item.id == value);
     this.selectedGramId = value
     this.currentPriceData = getProductData
+    this.selectedQuantity = this.minPurchaseQuantity;
     this.updateUrlWithVariant(value);
 
+  }
+
+  decreaseQuantity(): void {
+    this.selectedQuantity = Math.max(this.minPurchaseQuantity, this.selectedQuantity - 1);
+  }
+
+  increaseQuantity(): void {
+    this.selectedQuantity = Math.min(this.maxPurchaseQuantity, this.selectedQuantity + 1);
+  }
+
+  goToPreviousReviewPage(): void {
+    if (this.reviewPage <= 1) {
+      return;
+    }
+
+    this.reviewPage -= 1;
+  }
+
+  goToNextReviewPage(): void {
+    if (this.reviewPage >= this.totalReviewPages) {
+      return;
+    }
+
+    this.reviewPage += 1;
+  }
+
+  toggleReviewRatingFilter(rating: number): void {
+    if (this.selectedReviewRatings.includes(rating)) {
+      this.selectedReviewRatings = this.selectedReviewRatings.filter((value) => value !== rating);
+    } else {
+      this.selectedReviewRatings = [...this.selectedReviewRatings, rating].sort((left, right) => right - left);
+    }
+
+    this.resetReviewPagination();
+  }
+
+  setReviewSort(value: 'top' | 'latest'): void {
+    if (this.selectedReviewSort === value) {
+      return;
+    }
+
+    this.selectedReviewSort = value;
+    this.resetReviewPagination();
+  }
+
+  toggleReviewImageFilter(): void {
+    this.reviewsWithImagesOnly = !this.reviewsWithImagesOnly;
+    this.resetReviewPagination();
+  }
+
+  resetReviewFilters(): void {
+    this.selectedReviewRatings = [];
+    this.selectedReviewSort = 'top';
+    this.reviewsWithImagesOnly = false;
+    this.resetReviewPagination();
   }
 
   async addSelectedProductToCart(): Promise<void> {
@@ -404,7 +547,7 @@ export class ProductsComponent {
     this.addToCartLoading = true;
 
     try {
-      const result = await this.cartService.addToCart(normalizedProduct);
+      const result = await this.cartService.addToCart(normalizedProduct, this.selectedQuantity);
 
       switch (result.status) {
         case 'added':
@@ -439,7 +582,7 @@ export class ProductsComponent {
         {
           productId: this.productData.id,
           detailId: selectedDetail.id,
-          quantity: 1,
+          quantity: this.selectedQuantity,
           productName: this.productData?.product_name || 'Product',
           thumbnail: this.productData?.thumbnail_image || this.mainViewImage || '',
           productWeight: selectedDetail.product_weight,
@@ -447,7 +590,7 @@ export class ProductsComponent {
           qualityLabel: [selectedDetail.product_weight, selectedDetail.weight_type].filter(Boolean).join(' '),
           unitPrice: selectedDetail.selling_price,
           originalPrice: selectedDetail.original_price,
-          lineTotal: selectedDetail.selling_price,
+          lineTotal: selectedDetail.selling_price * this.selectedQuantity,
         }
       ]
     });
@@ -649,6 +792,28 @@ export class ProductsComponent {
     return path.split('.').reduce((acc, key) => acc?.[key], source);
   }
 
+  private updateProductSeo(): void {
+    const productName = this.productData?.product_name || 'Product';
+    const brandName = this.productData?.brand?.brand_name || this.productData?.brand_name || 'Secure Derma';
+    const categoryName = this.productData?.product_type?.name || this.productData?.product_type || this.breadcrumbCollectionLabel || 'Skin Care';
+    const descriptionSource = this.cleanText(
+      this.productData?.product_description
+      || this.productData?.description
+      || this.productData?.short_description
+      || ''
+    );
+    const description = (descriptionSource || `Buy ${productName} from ${brandName} on Secure Derma.`).slice(0, 155);
+
+    this.seoService.updateSeo({
+      title: `${productName} by ${brandName}`,
+      description,
+      canonicalPath: `/products/${this.selectedProduectValue}`,
+      image: this.productData?.thumbnail_image || this.mainViewImage || undefined,
+      type: 'product',
+      keywords: `${productName.toLowerCase()}, ${brandName.toLowerCase()}, ${categoryName.toLowerCase()}, secure derma`
+    });
+  }
+
   getReviewRating(review: any) {
     const value = Number(
       review?.rating ??
@@ -753,6 +918,21 @@ export class ProductsComponent {
     });
   }
 
+  getReviewTimestamp(review: any) {
+    const rawValue =
+      review?.review_date ??
+      review?.date ??
+      review?.created_at ??
+      review?.createdAt;
+
+    if (!rawValue) {
+      return 0;
+    }
+
+    const timestamp = new Date(rawValue).getTime();
+    return Number.isNaN(timestamp) ? 0 : timestamp;
+  }
+
   getReviewImages(review: any) {
     const sourceImages = review?.images;
 
@@ -769,6 +949,11 @@ export class ProductsComponent {
         return image?.image ?? image?.url ?? image?.src ?? '';
       })
       .filter((image: string) => Boolean(image));
+  }
+
+  private resetReviewPagination(): void {
+    this.reviewPage = 1;
+    this.expandedReviews.clear();
   }
 
   get activeProductInfoSection() {

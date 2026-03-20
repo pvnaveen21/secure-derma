@@ -26,6 +26,22 @@
     background-color: var(--white);
 }
 
+.banner-section__header {
+    margin-bottom: 1rem;
+}
+
+.banner-section__title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--ant-primary-color);
+}
+
+.banner-section__grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+}
+
 .main-thumbnail-conatiner {
     display: grid;
     grid-template-columns: 1fr 1fr;

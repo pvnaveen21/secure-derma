@@ -23,6 +23,7 @@ import { NzMessageService } from 'ng-zorro-antd/message';
 import { SettingsService } from '../services/settings/settings.service';
 import { PaymentService } from '../services/payment.service';
 import { AuthService } from '../services/auth/auth.service';
+import { ThemeType } from '../interfaces/theme';
 interface MobilePanelItem {
   label: string;
   value: string;
@@ -255,6 +256,10 @@ export class HeaderComponent {
 
   get isLoggedIn(): boolean {
     return !!this.authService.isLoggedIn();
+  }
+
+  get hasBrandResults(): boolean {
+    return Object.keys(this.allBrands || {}).length > 0;
   }
 
   logout(): void {
@@ -817,6 +822,18 @@ export class HeaderComponent {
 
   get isDark(): boolean {
     return this.settingsService.isDarkTheme();
+  }
+
+  get headerLogoSrc(): string {
+    const theme = this.settingsService.currentTheme;
+    const isDarkVariant = theme === ThemeType.dark || theme === ThemeType.coloured;
+    return isDarkVariant
+      ? 'assets/secure-derma/SecureDerma_DarkMode.png'
+      : 'assets/secure-derma/SecureDerma_LightMode.png';
+  }
+
+  get mobileLogoSrc(): string {
+    return this.headerLogoSrc;
   }
 
   toggleTheme(): void {

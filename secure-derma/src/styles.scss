@@ -8,6 +8,11 @@ html {
     background-color: var(--background);
 }
 
+:root {
+    --app-max-width: 80rem;
+    --app-max-width-wide: 85rem;
+}
+
 html.cdk-global-scrollblock {
     background-color: var(--background);
 }

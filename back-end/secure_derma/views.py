@@ -25,13 +25,14 @@ from rest_framework.generics import ListAPIView
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from .models import OrderStatus, PaymentStatus, SecureDermaCartItem, SecureDermaOrder, SecureDermaOrderItem, SecureDermaPayment
+from .models import OrderStatus, PaymentStatus, SecureDermaCartItem, SecureDermaNewsletterSubscriber, SecureDermaOrder, SecureDermaOrderItem, SecureDermaPayment
 from .pincode_service import (
     PincodeLookupError,
     check_pincode_serviceability,
     check_pincode_serviceability_for_coordinates,
 )
 from .order_email import get_order_recipient, send_order_confirmation_email
+from .serializers import NewsletterSubscriberSerializer
 
 
 def _build_media_url(request, image_field):
@@ -1648,6 +1649,7 @@ class CollectionBannerAPIView(ListAPIView):
     def get(self, request, *args, **kwargs):
         # Get banner_type from query parameters
         banner_type = request.GET.get('bannerType')
+        device = request.GET.get('device')
         
         if not banner_type:
             return Response({
@@ -1686,13 +1688,26 @@ class CollectionBannerAPIView(ListAPIView):
                 if banners.exists():
                     banner_type = resolved_type # Update for response info
 
-        # 3. Last resort fallback to 'default_banner'
-        if not banners.exists() and banner_type != 'default_banner':
-            banners = ImageFile.objects.filter(
-                type='default_banner',
-                is_deleted=False
-            ).order_by('-created_at')
-            banner_type = 'default_banner'
+        # 3. Last resort fallback to device-specific default banner, then legacy default banner
+        if not banners.exists():
+            fallback_types = []
+            if device in ('web', 'mobile'):
+                fallback_types.append(f'default_banner_{device}')
+            fallback_types.append('default_banner')
+
+            for fallback_type in fallback_types:
+                if banner_type == fallback_type:
+                    continue
+
+                candidate_banners = ImageFile.objects.filter(
+                    type=fallback_type,
+                    is_deleted=False
+                ).order_by('-created_at')
+
+                if candidate_banners.exists():
+                    banners = candidate_banners
+                    banner_type = fallback_type
+                    break
 
         # Build response data
         banner_list = []
@@ -1747,8 +1762,13 @@ class ConcernProductsAPIView(APIView):
             "brand_name": product.brand.brand_name,
             "thumbnail_image": thumbnail_url,
             "hover_image": hover_url,
+            "detail_id": detail.id if detail else None,
             "price": detail.selling_price if detail else 0,
             "original_price": detail.original_price if detail else 0,
+            "discount_price": detail.discount_price if detail else 0,
+            "product_weight": detail.product_weight if detail else "",
+            "weight_type": detail.weight_type if detail else "",
+            "combo": detail.combo if detail else 1,
             "avg_rating": round(product.avg_rating, 1) if product.avg_rating else 0,
             "review_count": product.review_count or 0,
             "product_type": product.product_type.product_type,
@@ -1815,6 +1835,36 @@ class ConcernProductsAPIView(APIView):
                 "limit": limit,
                 "products": [self._product_payload(request, p) for p in products],
             }
+        )
+
+
+class NewsletterSubscriptionAPIView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        serializer = NewsletterSubscriberSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        email = serializer.validated_data["email"].strip().lower()
+        subscriber, created = SecureDermaNewsletterSubscriber.objects.get_or_create(
+            email=email,
+            defaults={
+                "source": "home_newsletter",
+                "is_active": True,
+            },
+        )
+
+        if not created and not subscriber.is_active:
+            subscriber.is_active = True
+            subscriber.save(update_fields=["is_active", "updated_at"])
+
+        return Response(
+            {
+                "success": True,
+                "created": created,
+                "message": "Subscription saved successfully." if created else "You're already subscribed.",
+            },
+            status=status.HTTP_201_CREATED if created else status.HTTP_200_OK,
         )
 
 

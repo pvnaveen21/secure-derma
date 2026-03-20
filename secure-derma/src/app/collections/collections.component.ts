@@ -11,7 +11,6 @@ import { NzCarouselModule } from 'ng-zorro-antd/carousel';
 import { NzDividerModule } from 'ng-zorro-antd/divider';
 import { NzTagModule } from 'ng-zorro-antd/tag';
 import { NzSelectModule } from 'ng-zorro-antd/select';
-import { NzPaginationModule } from 'ng-zorro-antd/pagination';
 import { NzDrawerModule } from 'ng-zorro-antd/drawer';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { combineLatest, distinctUntilChanged, map } from 'rxjs';
@@ -20,6 +19,7 @@ import { CollectionsService } from '../services/collections.service';
 import { CommonModule, DOCUMENT, isPlatformBrowser } from '@angular/common';
 import { CartItem, CartService } from '../services/cart.service';
 import { Subscription } from 'rxjs';
+import { SeoService } from '../services/seo.service';
 
 interface Product {
   id: number;
@@ -72,7 +72,6 @@ interface SelectedFilterTag {
     NzRateModule,
     NzTagModule,
     NzSelectModule,
-    NzPaginationModule,
     NzDrawerModule,
   ],
   templateUrl: './collections.component.html',
@@ -87,7 +86,8 @@ export class CollectionsComponent implements OnInit {
     @Inject(DOCUMENT) private document: Document,
     private cdr: ChangeDetectorRef,
     private cartService: CartService,
-    private message: NzMessageService
+    private message: NzMessageService,
+    private seoService: SeoService
   ) { }
 
   bannerType: any;
@@ -108,9 +108,9 @@ export class CollectionsComponent implements OnInit {
   productsData: any = {};
   filterPanels: FilterPanel[] = [];
   totalProducts = 0;
-  pageIndex = 1;
-  pageSize = 5;
+  pageSize = 10;
   isProductsLoading = false;
+  isLoadingMore = false;
   isFilterDrawerVisible = false;
   isSortDrawerVisible = false;
   private readonly mobileBreakpoint = 1024;
@@ -171,7 +171,6 @@ export class CollectionsComponent implements OnInit {
 
       this.selectedFilters = this.readFiltersFromQueryParams();
       this.draftSelectedFilters = this.cloneFiltersMap(this.selectedFilters);
-      this.pageIndex = this.getPageFromQueryParam();
       this.isFilterDrawerVisible = false;
       this.isSortDrawerVisible = false;
       this.updatePaginationSeoTags();
@@ -192,6 +191,9 @@ export class CollectionsComponent implements OnInit {
   @HostListener('window:resize')
   onWindowResize() {
     this.syncViewportState();
+    if (this.bannerType) {
+      this.getBanner();
+    }
   }
 
   getProductSideMenu() {
@@ -204,7 +206,8 @@ export class CollectionsComponent implements OnInit {
 
   getBanner() {
     this.bannerImages = [];
-    this.collectionsService.getBanner(this.bannerType).subscribe({
+    const device: 'web' | 'mobile' = this.isDesktopViewport() ? 'web' : 'mobile';
+    this.collectionsService.getBanner(this.bannerType, device).subscribe({
       next: (response: any) => {
         this.bannerImages = response.data;
       }
@@ -212,73 +215,79 @@ export class CollectionsComponent implements OnInit {
   }
 
   getProductsList() {
-    this.isProductsLoading = true;
+    this.fetchProducts(false);
+  }
+
+  fetchProductsWithFilters() {
+    this.fetchProducts(false);
+  }
+
+  loadMoreProducts() {
+    if (!this.hasMoreProducts || this.isProductsLoading || this.isLoadingMore) {
+      return;
+    }
+
+    this.shouldScrollToProductsTop = false;
+    this.fetchProducts(true);
+  }
+
+  private fetchProducts(append: boolean) {
+    const filterParams = this.buildFilterQueryParams();
+    const pagination = this.getPagination(append);
+
+    if (append) {
+      this.isLoadingMore = true;
+    } else {
+      this.isProductsLoading = true;
+    }
+
     this.collectionsService.getProductsList(
       this.filterProduectValue,
-      undefined,
-      this.getPagination()
+      Object.keys(filterParams).length ? filterParams : undefined,
+      pagination
     ).subscribe({
       next: (response: any) => {
-        this.allProducts = response.products?.results || [];
+        const incomingProducts = response.products?.results || [];
+        const mergedProducts = append
+          ? [...(this.productsData?.products?.results || []), ...incomingProducts]
+          : incomingProducts;
+
+        this.allProducts = mergedProducts;
         this.totalProducts = response.products?.count || 0;
         this.productsData = {
           ...response,
           products: {
             ...response.products,
-            results: this.allProducts
+            results: mergedProducts
           }
         };
 
         this.filterPanels = this.buildFilterPanels(response.filters);
         this.validateSelectedFilters();
 
-        this.applySorting();
-        if (this.shouldScrollToProductsTop) {
+        if (!append) {
+          this.applySorting();
+        }
+        if (!append && this.shouldScrollToProductsTop) {
           this.scrollToProductsTop();
           this.shouldScrollToProductsTop = false;
         }
         this.isProductsLoading = false;
+        this.isLoadingMore = false;
       },
       error: () => {
         this.isProductsLoading = false;
+        this.isLoadingMore = false;
       }
     });
   }
 
-  // Fetch products with filter query parameters
-  fetchProductsWithFilters() {
-    const filterParams = this.buildFilterQueryParams();
-    this.isProductsLoading = true;
+  get displayedProductsCount(): number {
+    return this.productsData?.products?.results?.length || 0;
+  }
 
-    this.collectionsService.getProductsList(
-      this.filterProduectValue,
-      filterParams,
-      this.getPagination()
-    ).subscribe({
-      next: (response: any) => {
-        this.allProducts = response.products?.results || [];
-        this.totalProducts = response.products?.count || 0;
-        this.productsData = {
-          ...response,
-          products: {
-            ...response.products,
-            results: this.allProducts
-          }
-        };
-        this.filterPanels = this.buildFilterPanels(response.filters);
-        this.validateSelectedFilters();
-
-        this.applySorting();
-        if (this.shouldScrollToProductsTop) {
-          this.scrollToProductsTop();
-          this.shouldScrollToProductsTop = false;
-        }
-        this.isProductsLoading = false;
-      },
-      error: () => {
-        this.isProductsLoading = false;
-      }
-    });
+  get hasMoreProducts(): boolean {
+    return this.displayedProductsCount < this.totalProducts;
   }
 
   // Build query parameters from selected filters
@@ -287,8 +296,7 @@ export class CollectionsComponent implements OnInit {
 
     this.selectedFilters.forEach((items, panelKey) => {
       if (items.size > 0) {
-        const panel = this.filterPanels.find((entry) => entry.key === panelKey);
-        const apiParamName = panel?.apiParam || panelKey;
+        const apiParamName = this.getApiParamForPanelKey(panelKey);
         const values = Array.from(items).filter(Boolean);
         params[apiParamName] = values.join(',');
       }
@@ -341,7 +349,6 @@ export class CollectionsComponent implements OnInit {
         }
       }
     }
-    this.pageIndex = 1;
     this.updatePageQueryParam();
   }
 
@@ -353,14 +360,12 @@ export class CollectionsComponent implements OnInit {
         this.selectedFilters.delete(panelKey);
       }
     }
-    this.pageIndex = 1;
     this.updatePageQueryParam();
   }
 
   // Clear all filters
   clearAllFilters() {
     this.selectedFilters.clear();
-    this.pageIndex = 1;
     this.updatePageQueryParam();
   }
 
@@ -526,18 +531,6 @@ export class CollectionsComponent implements OnInit {
     }
   }
 
-  onPageIndexChange(page: number) {
-    this.pageIndex = page;
-    this.updatePageQueryParam();
-    this.shouldScrollToProductsTop = true;
-  }
-
-  onPageSizeChange(size: number) {
-    this.pageSize = size;
-    this.pageIndex = 1;
-    this.updatePageQueryParam();
-  }
-
   openFilterDrawer() {
     if (this.isDesktopViewport()) {
       return;
@@ -553,7 +546,6 @@ export class CollectionsComponent implements OnInit {
 
   applyFilterChanges() {
     this.selectedFilters = this.cloneFiltersMap(this.draftSelectedFilters);
-    this.pageIndex = 1;
     this.updatePageQueryParam();
     this.closeFilterDrawer();
   }
@@ -632,16 +624,11 @@ export class CollectionsComponent implements OnInit {
     }
   }
 
-  private getPagination() {
+  private getPagination(append = false) {
     return {
       limit: this.pageSize,
-      offset: (this.pageIndex - 1) * this.pageSize
+      offset: append ? this.displayedProductsCount : 0
     };
-  }
-
-  private getPageFromQueryParam(): number {
-    const pageValue = Number(this.route.snapshot.queryParamMap.get('page'));
-    return Number.isInteger(pageValue) && pageValue > 0 ? pageValue : 1;
   }
 
   private updatePageQueryParam() {
@@ -650,7 +637,6 @@ export class CollectionsComponent implements OnInit {
       relativeTo: this.route,
       queryParams: {
         ...filterParams,
-        page: this.pageIndex > 1 ? this.pageIndex : null,
       },
       replaceUrl: true
     });
@@ -663,43 +649,18 @@ export class CollectionsComponent implements OnInit {
     }
 
     const slug = this.route.snapshot.paramMap.get('slug') || '';
-    const pageSuffix = this.pageIndex > 1 ? `?page=${this.pageIndex}` : '';
-    const canonicalHref = `${this.document.location.origin}/collections/${slug}${pageSuffix}`;
-    const prevHref = this.pageIndex > 2
-      ? `${this.document.location.origin}/collections/${slug}?page=${this.pageIndex - 1}`
-      : `${this.document.location.origin}/collections/${slug}`;
-    const nextHref = `${this.document.location.origin}/collections/${slug}?page=${this.pageIndex + 1}`;
-
-    this.upsertLinkTag('canonical', canonicalHref);
-    if (this.pageIndex > 1) {
-      this.upsertLinkTag('prev', prevHref);
-    } else {
-      this.removeLinkTag('prev');
-    }
-    this.upsertLinkTag('next', nextHref);
-
     const collectionName = slug.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()) || 'Collections';
-    this.document.title = this.pageIndex > 1
-      ? `${collectionName} - Page ${this.pageIndex} | Secure Derma`
-      : `${collectionName} | Secure Derma`;
-  }
+    const filterSummary = this.getAllSelectedFilters().map((filter) => filter.displayName).join(', ');
 
-  private upsertLinkTag(rel: string, href: string) {
-    const head = this.document.head;
-    let link = head.querySelector(`link[rel="${rel}"]`) as HTMLLinkElement | null;
-    if (!link) {
-      link = this.document.createElement('link');
-      link.setAttribute('rel', rel);
-      head.appendChild(link);
-    }
-    link.setAttribute('href', href);
-  }
-
-  private removeLinkTag(rel: string) {
-    const link = this.document.head.querySelector(`link[rel="${rel}"]`);
-    if (link) {
-      link.remove();
-    }
+    this.seoService.updateSeo({
+      title: `${collectionName} Collection`,
+      description: filterSummary
+        ? `Browse ${collectionName} products on Secure Derma. Active filters: ${filterSummary}.`
+        : `Browse ${collectionName} products on Secure Derma by type, concern, ingredients, and brand.`,
+      canonicalPath: `/collections/${slug}`,
+      type: 'website',
+      keywords: `${collectionName.toLowerCase()}, secure derma collection, dermatology products`
+    });
   }
 
   isDraftFilterSelected(panelKey: string, itemSlug: string): boolean {
@@ -857,6 +818,10 @@ export class CollectionsComponent implements OnInit {
 
   private toTitleCase(value: string): string {
     return value.replace(/\b\w/g, (char) => char.toUpperCase());
+  }
+
+  private getApiParamForPanelKey(panelKey: string): string {
+    return this.filterPanelConfig.find((panel) => panel.key === panelKey)?.apiParam || panelKey;
   }
 
   private readFiltersFromQueryParams(): Map<string, Set<string>> {

@@ -11,6 +11,7 @@ import { Icons } from '../shared/icons';
 import { User } from '../models/users';
 import { AccountOrder, OrdersService } from '../services/orders.service';
 import { CartService } from '../services/cart.service';
+import { SeoService } from '../services/seo.service';
 
 interface AccountSection {
   id: string;
@@ -117,6 +118,7 @@ export class AccountComponent implements OnInit, OnDestroy {
     private readonly route: ActivatedRoute,
     private readonly router: Router,
     private readonly message: NzMessageService,
+    private readonly seoService: SeoService,
   ) {
     this.savedAddress = this.paymentService.loadCheckoutCustomer();
     this.addressForm = this.paymentService.normalizeCheckoutCustomer(this.savedAddress);
@@ -157,6 +159,8 @@ export class AccountComponent implements OnInit, OnDestroy {
           this.isOrderDetailLoading = false;
         }
       }
+
+      this.updateSeo();
     });
   }
 
@@ -614,10 +618,12 @@ export class AccountComponent implements OnInit, OnDestroy {
       next: (order) => {
         this.selectedOrder = order;
         this.isOrderDetailLoading = false;
+        this.updateSeo();
       },
       error: (error) => {
         this.orderDetailError = typeof error === 'string' ? error : 'Unable to load this order right now.';
         this.isOrderDetailLoading = false;
+        this.updateSeo();
       }
     });
   }
@@ -673,6 +679,24 @@ export class AccountComponent implements OnInit, OnDestroy {
 
     window.requestAnimationFrame(() => {
       window.scrollTo({ top: 0, behavior: 'auto' });
+    });
+  }
+
+  private updateSeo(): void {
+    const section = this.sections.find((item) => item.id === this.activeSection);
+    const title = this.activeOrderId
+      ? `Order ${this.selectedOrder?.order_number || this.activeOrderId}`
+      : section?.title || 'My Account';
+    const description = this.activeOrderId
+      ? 'Track your Secure Derma order status, delivery details, and purchased items.'
+      : section?.description || 'Manage your Secure Derma account details, addresses, and orders.';
+
+    this.seoService.updateSeo({
+      title,
+      description,
+      canonicalPath: this.activeOrderId ? `/account/orders/${this.activeOrderId}` : `/account/${this.activeSection}`,
+      robots: 'noindex,nofollow',
+      type: 'website'
     });
   }
 

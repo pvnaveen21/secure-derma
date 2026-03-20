@@ -94,7 +94,7 @@
 
                 <div class="form-container">
                     <div class="google-login-block">
-                        <button type="button" class="google-custom-btn" (click)="continueWithGoogle()" [disabled]="googleLoading">
+                        <button type="button" class="secure-btn google-custom-btn" (click)="continueWithGoogle()" [disabled]="googleLoading">
                             <span class="google-custom-btn__mark" aria-hidden="true">
                                 <svg viewBox="0 0 48 48" class="google-custom-btn__logo">
                                     <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"></path>
@@ -117,11 +117,11 @@
                     </div>
 
                     <div class="auth-mode-switch" [class.auth-mode-switch--phone]="authMode === 'phone'">
-                        <button type="button" class="auth-mode-switch__btn" [class.auth-mode-switch__btn--active]="authMode === 'email'"
+                        <button type="button" class="secure-btn auth-mode-switch__btn" [class.auth-mode-switch__btn--active]="authMode === 'email'"
                             (click)="switchAuthMode('email')">
                             Email
                         </button>
-                        <button type="button" class="auth-mode-switch__btn" [class.auth-mode-switch__btn--active]="authMode === 'phone'"
+                        <button type="button" class="secure-btn auth-mode-switch__btn" [class.auth-mode-switch__btn--active]="authMode === 'phone'"
                             (click)="switchAuthMode('phone')">
                             Phone
                         </button>
@@ -156,7 +156,7 @@
                         <label nz-checkbox [(ngModel)]="sendUpdates">Send me updates and exclusive offers</label>
                     </div>
 
-                    <button nz-button nzType="primary" nzBlock class="submit-btn" (click)="sendOtp()" [disabled]="isSendingOtp">
+                    <button nz-button nzType="primary" nzBlock class="secure-btn submit-btn" (click)="sendOtp()" [disabled]="isSendingOtp">
                         {{ isSendingOtp ? 'Sending OTP...' : 'Send OTP' }}
                         <lucide-angular class="btn-icon d-flex" [img]="icons.auth.action" [size]="18"></lucide-angular>
                     </button>
@@ -170,7 +170,7 @@
                     </div>
                 </div>
 
-                <button nz-button nzType="link" class="phone-login" type="button"
+                <button nz-button nzType="link" class="secure-btn phone-login" type="button"
                     (click)="switchAuthMode(authMode === 'email' ? 'phone' : 'email')">
                     <lucide-angular class="phone-icon d-flex" [img]="icons.auth.phone" [size]="18"></lucide-angular>
                     {{ authMode === 'email' ? 'CONTINUE WITH PHONE' : 'CONTINUE WITH EMAIL' }}
@@ -185,7 +185,7 @@
                 </div>
 
                 <div class="otp-card">
-                    <button nz-button nzType="link" class="back-button" (click)="back()">
+                    <button nz-button nzType="link" class="secure-btn back-button" (click)="back()">
                         <lucide-angular class="back-icon d-flex" [img]="icons.auth.back" [size]="18"></lucide-angular>
                         Change {{ authMode === 'email' ? 'Email' : 'Phone' }}
                     </button>
@@ -214,12 +214,12 @@
                     }
 
                     <div class="otp-actions">
-                        <button nz-button nzType="primary" nzBlock class="submit-btn" (click)="verifyOtp()" [disabled]="isVerifyingOtp">
+                        <button nz-button nzType="primary" nzBlock class="secure-btn submit-btn" (click)="verifyOtp()" [disabled]="isVerifyingOtp">
                             {{ isVerifyingOtp ? 'Verifying...' : 'Verify & Continue' }}
                             <lucide-angular class="btn-icon d-flex" [img]="icons.auth.action" [size]="18"></lucide-angular>
                         </button>
 
-                        <button nz-button nzType="link" class="resend-button" [disabled]="timer > 0" (click)="resendCode()">
+                        <button nz-button nzType="link" class="secure-btn resend-button" [disabled]="timer > 0" (click)="resendCode()">
                             <lucide-angular class="resend-icon d-flex" [img]="icons.auth.resend" [size]="17"></lucide-angular>
                             {{ timer > 0 ? 'Resend code in ' + timer + 's' : 'Resend code' }}
                         </button>

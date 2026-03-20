@@ -16,10 +16,16 @@ export class CollectionsService extends InterfaceService {
     super('', http);
   }
 
-  getBanner(type: any) {
+  getBanner(type: any, device?: 'web' | 'mobile') {
+    let params = new HttpParams().set('bannerType', type);
+
+    if (device) {
+      params = params.set('device', device);
+    }
+
     return this.http.get(
-      this.getApiUrl(`/collection-banner/?bannerType=${type}`),
-      this.getHttpOptions()
+      this.getApiUrl(`/collection-banner/`),
+      { ...this.getHttpOptions(), params }
     ).pipe(
       map(res => res),
       catchError(this.handleError)
