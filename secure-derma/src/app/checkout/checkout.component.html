@@ -116,7 +116,7 @@
                 </div>
 
                 <div class="checkout-panel__actions">
-                    <button nz-button nzType="primary" class="checkout-panel__btn" [disabled]="validatingDetails" (click)="continueToPayment()">
+                    <button nz-button nzType="primary" class="secure-btn checkout-panel__btn" [disabled]="validatingDetails" (click)="continueToPayment()">
                         {{ validatingDetails ? 'Checking details...' : 'Next: Payment' }}
                     </button>
                 </div>
@@ -127,7 +127,7 @@
                     <span class="checkout-panel__eyebrow">Step 2</span>
                     <div class="checkout-panel__header-row">
                         <h2 class="checkout-panel__title mb-0">Payment</h2>
-                        <button type="button" class="checkout-panel__edit-link" (click)="backToDetails()">
+                        <button type="button" class="secure-btn checkout-panel__edit-link" (click)="backToDetails()">
                             Edit Delivery Details
                         </button>
                     </div>
@@ -139,7 +139,7 @@
                             <span class="payment-card__label">Deliver to</span>
                             <strong class="payment-card__name">{{ checkoutCustomer.name }}</strong>
                         </div>
-                        <button type="button" class="payment-card__edit-btn" (click)="backToDetails()">
+                        <button type="button" class="secure-btn payment-card__edit-btn" (click)="backToDetails()">
                             Edit
                         </button>
                     </div>
@@ -164,10 +164,10 @@
                 </div>
 
                 <div class="checkout-panel__actions">
-                    <button nz-button nzType="default" class="checkout-panel__btn checkout-panel__btn--ghost" (click)="backToDetails()">
+                    <button nz-button nzType="default" class="secure-btn checkout-panel__btn checkout-panel__btn--ghost" (click)="backToDetails()">
                         Back
                     </button>
-                    <button nz-button nzType="primary" class="checkout-panel__btn" [disabled]="paymentLoading" (click)="payNow()">
+                    <button nz-button nzType="primary" class="secure-btn checkout-panel__btn" [disabled]="paymentLoading" (click)="payNow()">
                         {{ paymentLoading ? 'Starting Payment...' : 'Pay Now' }}
                     </button>
                 </div>
@@ -199,13 +199,13 @@
                             </div>
                             <div class="checkout-item__actions item-controls">
                                 <div class="checkout-item__quantity quantity-list">
-                                    <button type="button" class="checkout-item__qty-btn" [disabled]="item.quantity <= 1"
+                                    <button type="button" class="secure-btn checkout-item__qty-btn" [disabled]="item.quantity <= 1"
                                         (click)="updateItemQuantity(item, -1)">-</button>
                                     <span class="checkout-item__qty-value">{{ item.quantity }}</span>
-                                    <button type="button" class="checkout-item__qty-btn" [disabled]="item.quantity >= 10"
+                                    <button type="button" class="secure-btn checkout-item__qty-btn" [disabled]="item.quantity >= 10"
                                         (click)="updateItemQuantity(item, 1)">+</button>
                                 </div>
-                                <button type="button" class="checkout-item__remove" (click)="removeItem(item)">Delete</button>
+                                <button type="button" class="secure-btn checkout-item__remove" (click)="removeItem(item)">Delete</button>
                             </div>
                         </div>
                         <div class="checkout-item__price item-price">

@@ -7,6 +7,7 @@ from product_type.models import ProductType
 from skin_concern.models import SkinConcerns
 from product.models import Product, ProductDetails, ProductImage, ProductReview
 from django.conf import settings
+from .models import SecureDermaNewsletterSubscriber
 
 
 class ProductImageSerializer(serializers.ModelSerializer):
@@ -131,3 +132,11 @@ class ProductTypeSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProductType
         fields = ["id", "name", "slug"]
+
+
+class NewsletterSubscriberSerializer(serializers.ModelSerializer):
+    email = serializers.EmailField()
+
+    class Meta:
+        model = SecureDermaNewsletterSubscriber
+        fields = ["email"]

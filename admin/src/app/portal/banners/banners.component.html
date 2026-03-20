@@ -1,30 +1,32 @@
-@for (item of bannerTypes; track item.key) {
-<div class="mt-3">
-    <div class="banner-main rounded-xl p-3">
+@for (section of bannerSections; track section.title) {
+<section class="banner-section mt-4">
+    <div class="banner-section__header">
+        <h1 class="banner-section__title m-0">{{ section.title }}</h1>
+    </div>
 
-        <div class="flex-box">
-            <div>
-                <h2 class="m-0">{{ item.label }}</h2>
-                @if(item.type =='single'){
-                <span> <small class="text-warning"> Allow only one image</small></span>
-                }
+    <div class="banner-section__grid">
+        @for (item of section.items; track item.key) {
+        <div class="banner-main rounded-xl p-3">
+            <div class="flex-box">
+                <div>
+                    <h2 class="m-0">{{ item.label }}</h2>
+                    @if(item.type =='single'){
+                    <span><small class="text-warning">Allow only one image</small></span>
+                    }
+                </div>
             </div>
 
-            <!-- <div class="clickable text-primary" (click)="addBanner(item.key)">
-                Add Banner
-            </div> -->
+            <div class="mt-3 main-thumbnail-conatiner">
+                @for (data of groupedBanners[item.key]; track data.id; let i = $index) {
+                <app-thumbnail-upload [label]="item.uploadLabel" [showLabel]="false"
+                    [allowedTypes]="['image/png', 'image/jpeg' ,'image/webp']" [fileUrl]="data?.image ? data : null"
+                    (thumbnailSelected)="onThumbnailSelected($event, i, item.key)"
+                    (deleteImgValue)="deleteImgValue($event, item.key)" [download]="'true'">
+                </app-thumbnail-upload>
+                }
+            </div>
         </div>
-
-        <div class="mt-3 main-thumbnail-conatiner">
-            @for (data of groupedBanners[item.key]; track data.id; let i = $index) {
-            <app-thumbnail-upload [label]="['Upload Image Size 1270x240','File Type: PNG, JPEG']" [showLabel]="false"
-                [allowedTypes]="['image/png', 'image/jpeg' ,'image/webp']" [fileUrl]="data?.image ? data : null"
-                (thumbnailSelected)="onThumbnailSelected($event, i, item.key)"
-                (deleteImgValue)="deleteImgValue($event, item.key)" [download]="'true'">
-            </app-thumbnail-upload>
-            }
-        </div>
-
+        }
     </div>
-</div>
+</section>
 }

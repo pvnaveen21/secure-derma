@@ -13,7 +13,7 @@
 
 // Main Container
 .secure-home-container {
-    max-width: 90rem;
+    max-width: var(--app-max-width);
     margin: auto;
 
     .header-menu {
@@ -80,30 +80,42 @@
 .menu-web-name {
     display: flex;
     align-items: center;
-    gap: 1.4rem;
+    gap: 0.5rem;
 }
 
 // Logo
 .logo-container {
     .app-logo {
         cursor: pointer;
+        display: flex;
+        align-items: center;
 
-        .logo-title {
-            color: color-mix(in srgb, var(--brand-primary) 72%, var(--brand-secondary) 28%);
-            font-family: "Poppins", "Segoe UI", sans-serif;
-            font-style: normal;
-            font-weight: bold;
-            margin: 0;
-            padding: 0;
-            line-height: 1.15;
-            letter-spacing: 0.01em;
-            font-size: 2.5rem;
+        .logo-image {
+            display: block;
+            height: auto;
+            object-fit: contain;
         }
 
-        .logo-subtitle {
-            color: var(--brand-secondary);
-            // line-height: 0.1rem;
-            font-size: 1.2rem;
+        .logo-image--desktop {
+            width: clamp(10rem, 14vw, 13rem);
+            max-height: 4rem;
+        }
+
+        .logo-image--mobile {
+            display: none;
+            width: clamp(8.5rem, 32vw, 11rem);
+            max-height: 2.6rem;
+        }
+
+        @media only screen and (max-width:76.8rem) {
+            .logo-image--desktop {
+                display: none;
+            }
+
+            .logo-image--mobile {
+                display: block;
+                max-height: 3.2rem;
+            }
         }
     }
 }
@@ -1226,6 +1238,60 @@ nz-input-group {
     overflow-y: auto;
     padding-right: 4rem;
     scroll-behavior: smooth;
+}
+
+.brand-empty-state {
+    min-height: 100%;
+    display: grid;
+    place-items: center;
+    gap: 0.7rem;
+    padding: 2rem 1rem;
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    font-weight: 500;
+}
+
+.brand-empty-state--mobile {
+    min-height: 10rem;
+}
+
+.brand-empty-state__visual {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 4.6rem;
+    height: 4.6rem;
+}
+
+.brand-empty-state__halo,
+.brand-empty-state__badge {
+    position: absolute;
+    border-radius: 50%;
+}
+
+.brand-empty-state__halo {
+    inset: 0;
+    background:
+        radial-gradient(circle at center,
+            color-mix(in srgb, var(--brand-primary) 20%, transparent) 0%,
+            color-mix(in srgb, var(--brand-primary) 8%, transparent) 45%,
+            transparent 72%);
+    border: 0.06rem solid color-mix(in srgb, var(--brand-primary) 18%, transparent);
+}
+
+.brand-empty-state__badge {
+    display: grid;
+    place-items: center;
+    width: 2.2rem;
+    height: 2.2rem;
+    background: linear-gradient(135deg,
+            color-mix(in srgb, var(--brand-primary) 84%, #ffffff 16%),
+            color-mix(in srgb, var(--brand-secondary) 68%, var(--brand-primary)));
+    color: #fff;
+    font-size: 1.1rem;
+    font-weight: 700;
+    box-shadow: 0 0.7rem 1.5rem color-mix(in srgb, var(--brand-primary) 18%, transparent);
 }
 
 .alphabet-sidebar {

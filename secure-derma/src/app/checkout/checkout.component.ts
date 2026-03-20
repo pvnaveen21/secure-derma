@@ -17,6 +17,7 @@ import {
   PaymentService
 } from '../services/payment.service';
 import { PincodeService } from '../services/pincode.service';
+import { SeoService } from '../services/seo.service';
 
 @Component({
   selector: 'app-checkout',
@@ -48,11 +49,19 @@ export class CheckoutComponent {
     private pincodeService: PincodeService,
     private router: Router,
     private message: NzMessageService,
+    private seoService: SeoService,
   ) {
     this.checkoutCustomer = this.paymentService.loadCheckoutCustomer();
   }
 
   ngOnInit(): void {
+    this.seoService.updateSeo({
+      title: 'Checkout',
+      description: 'Complete your Secure Derma purchase with secure delivery and payment details.',
+      canonicalPath: '/checkout',
+      robots: 'noindex,nofollow',
+      type: 'website'
+    });
     window.scrollTo({ top: 0, behavior: 'auto' });
 
     if (!this.authService.isLoggedIn()) {

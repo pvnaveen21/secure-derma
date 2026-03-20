@@ -1,11 +1,11 @@
 .account-shell {
-    max-width: 90rem;
+    max-width: var(--app-max-width);
     margin: 0 auto;
     padding: 2rem 1rem 3rem;
 }
 
 .account-shell--detail {
-    max-width: 96rem;
+    max-width: var(--app-max-width-wide);
     padding-top: 1.25rem;
 }
 

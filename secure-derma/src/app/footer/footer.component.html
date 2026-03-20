@@ -2,7 +2,9 @@
     <footer class="footer">
         <section class="footer__row footer__row--primary">
             <div class="footer__brand">
-                <h2 class="logo">Secure <span>Derma</span></h2>
+                <button type="button" class="secure-btn footer__logo-button" (click)="navigateToHome()" aria-label="Secure Derma home">
+                    <img class="footer__logo-image" [src]="footerLogoSrc" alt="Secure Derma" />
+                </button>
                 <p class="footer__tagline">A professional skincare destination designed around clarity, trust, and better daily outcomes.</p>
                 <div class="footer__contact-list">
                     <p><strong>Care Team:</strong> support&#64;securederma.in</p>
@@ -12,30 +14,22 @@
 
             <div class="footer__links">
                 <h4>Shop</h4>
-                <a>Skin Care</a>
-                <a>Hair Care</a>
-                <a>Supplements</a>
-                <a>Pediatric Care</a>
-                <a>Top Brands</a>
+                <button type="button" class="secure-btn footer__link-button" (click)="navigateToCollection('skin-care')">Skin Care</button>
+                <button type="button" class="secure-btn footer__link-button" (click)="navigateToCollection('hair-care')">Hair Care</button>
+                <button type="button" class="secure-btn footer__link-button" (click)="navigateToCollection('supplements')">Supplements</button>
+                <button type="button" class="secure-btn footer__link-button" (click)="navigateToCollection('pediatric')">Pediatric Care</button>
+                <button type="button" class="secure-btn footer__link-button" (click)="navigateToCollection('all')">Top Brands</button>
             </div>
 
             <div class="footer__links">
                 <h4>Resources</h4>
-                <a>Ingredient Guide</a>
-                <a>Routine Builder</a>
-                <a>Skin Concern Hub</a>
-                <a>Order Support</a>
-                <a>FAQs</a>
+                <button type="button" class="secure-btn footer__link-button" (click)="navigateToCollection('all')">Ingredient Guide</button>
+                <button type="button" class="secure-btn footer__link-button" (click)="navigateToHome()">Routine Builder</button>
+                <button type="button" class="secure-btn footer__link-button" (click)="navigateToCollection('skin-care')">Skin Concern Hub</button>
+                <button type="button" class="secure-btn footer__link-button" (click)="navigateToAccountSection('contact-us')">Order Support</button>
+                <button type="button" class="secure-btn footer__link-button" (click)="navigateToAccountSection('contact-us')">FAQs</button>
             </div>
 
-            <div class="footer__newsletter">
-                <h4>Newsletter</h4>
-                <p>Get new launches, routine tips, and dermatologist-backed skincare updates.</p>
-                <div class="newsletter-input">
-                    <input type="email" placeholder="Your email" />
-                    <button>Subscribe</button>
-                </div>
-            </div>
         </section>
 
         <section class="footer__row footer__row--secondary">

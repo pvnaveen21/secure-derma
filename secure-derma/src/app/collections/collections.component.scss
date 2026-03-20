@@ -60,7 +60,7 @@
 
 // Collections Container
 .collections-container {
-    max-width: 90rem;
+    max-width: var(--app-max-width);
     margin: 0 auto;
     padding: 0 1rem;
 }
@@ -593,6 +593,7 @@
 
 .sort-select {
     min-width: 13.5rem;
+    font-size: 0.88rem;
 
     @media only screen and (max-width: 48rem) {
         min-width: 11.5rem;
@@ -619,7 +620,7 @@
 
 .products-content-shell.is-updating {
     .products-grid,
-    .products-pagination-wrap,
+    .products-load-more-wrap,
     .no-products {
         filter: blur(0.1rem);
         opacity: 0.42;
@@ -714,13 +715,13 @@
     }
 }
 
-.products-pagination-wrap {
+.products-load-more-wrap {
     margin-top: 1.35rem;
     display: flex;
     justify-content: center;
 }
 
-.products-pagination-shell {
+.products-load-more-shell {
     width: 100%;
     max-width: 28rem;
     display: flex;
@@ -734,45 +735,28 @@
     box-shadow: 0 0.2rem 0.75rem rgba(15, 23, 42, 0.06);
 }
 
-.pagination-meta {
+.load-more-meta {
     font-size: 0.75rem;
     letter-spacing: 0.02rem;
     color: var(--text-secondary);
 }
 
-::ng-deep .products-pagination-shell .ant-pagination {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: center;
-    gap: 0.2rem;
-}
-
-::ng-deep .products-pagination-shell .ant-pagination-item {
-    border-radius: 0.5rem;
-    border-color: color-mix(in srgb, var(--filter-border) 72%, transparent);
-    transition: all 0.2s ease;
-}
-
-::ng-deep .products-pagination-shell .ant-pagination-item:hover {
-    border-color: color-mix(in srgb, var(--brand-primary) 45%, var(--filter-border));
-}
-
-::ng-deep .products-pagination-shell .ant-pagination-item-active {
-    border-color: color-mix(in srgb, var(--brand-primary) 88%, var(--brand-secondary) 12%);
-    background: color-mix(in srgb, var(--brand-primary) 90%, var(--brand-secondary) 10%);
-}
-
-::ng-deep .products-pagination-shell .ant-pagination-item-active a {
+.products-load-more-btn {
+    min-width: 8.5rem;
+    min-height: 2.8rem;
+    border-radius: 99.9rem;
+    background: var(--brand-primary);
     color: #ffffff;
+    font-weight: 600;
 }
 
-::ng-deep .products-pagination-shell .ant-pagination-options {
-    margin-left: 0.5rem;
+.products-load-more-btn:disabled {
+    cursor: wait;
+    opacity: 0.75;
 }
 
 @media only screen and (max-width: 48rem) {
-    .products-pagination-shell {
+    .products-load-more-shell {
         max-width: 100%;
     }
 }
@@ -786,12 +770,7 @@
     height: 100%;
     display: flex;
     flex-direction: column;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-
-    &:hover {
-        box-shadow: 0 0.22rem 0.7rem rgba(15, 23, 42, 0.1);
-        transform: translateY(-0.12rem);
-    }
+    transition: border-color 0.2s ease;
 
     ::ng-deep .ant-card-body {
         padding: 1rem;
@@ -838,29 +817,28 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1),
-        transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: opacity 0.22s ease;
 }
 
 .product-image-main {
     opacity: 1;
     z-index: 1;
+    transform: none;
 }
 
 .product-image-hover {
     opacity: 0;
     z-index: 2;
+    transform: none;
 }
 
-.product-card:hover {
+.product-image-wrapper:hover {
     .product-image-main {
         opacity: 0;
-        transform: scale(1.05);
     }
 
     .product-image-hover {
         opacity: 1;
-        transform: scale(1.05);
     }
 }
 
@@ -904,10 +882,6 @@
     color: #ffffff;
     background: color-mix(in srgb, var(--brand-primary) 78%, var(--brand-secondary) 22%);
     box-shadow: 0 0.2rem 0.55rem color-mix(in srgb, var(--brand-primary) 30%, transparent);
-}
-
-.product-card:hover .product-badge {
-    transform: scale(1.05);
 }
 
 .product-footer {
@@ -957,50 +931,6 @@
     font-weight: 600;
     color: var(--text-primary);
     margin: 0;
-}
-
-.product-image-main {
-    opacity: 1;
-    transform: translateX(0);
-}
-
-.product-image-hover {
-    opacity: 0;
-    transform: translateX(100%);
-}
-
-.product-card:hover {
-    .product-image-main {
-        opacity: 0;
-        transform: translateX(-100%);
-    }
-
-    .product-image-hover {
-        opacity: 1;
-        transform: translateX(0);
-    }
-}
-
-.product-image-main {
-    opacity: 1;
-    transform: scale(1);
-}
-
-.product-image-hover {
-    opacity: 0;
-    transform: scale(1.1);
-}
-
-.product-card:hover {
-    .product-image-main {
-        opacity: 0;
-        transform: scale(0.95);
-    }
-
-    .product-image-hover {
-        opacity: 1;
-        transform: scale(1);
-    }
 }
 
 // Tag Styling
@@ -1313,6 +1243,29 @@
     color: var(--text-primary);
     font-size: 0.88rem;
     font-weight: 600;
+}
+
+::ng-deep .sort-select .ant-select-selector,
+::ng-deep .sort-select .ant-select-selection-item,
+::ng-deep .sort-select .ant-select-selection-placeholder,
+::ng-deep .sort-select .ant-select-arrow {
+    font-size: 0.88rem;
+}
+
+::ng-deep .sort-select .ant-select-selector {
+    min-height: 2.5rem !important;
+    padding-inline: 0.75rem !important;
+    border-radius: 0.55rem !important;
+}
+
+::ng-deep .sort-select .ant-select-selection-item,
+::ng-deep .sort-select .ant-select-selection-placeholder {
+    line-height: 2.375rem !important;
+}
+
+::ng-deep .sort-select .ant-select-arrow {
+    font-size: 0.8rem !important;
+    inset-inline-end: 0.75rem !important;
 }
 
 .mobile-sort-item.active {

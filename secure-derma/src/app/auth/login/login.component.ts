@@ -12,6 +12,7 @@ import { environment } from '../../../environments/environment';
 import { Assets } from '../../shared/assets';
 import { Icons } from '../../shared/icons';
 import { LucideAngularModule } from 'lucide-angular';
+import { SeoService } from '../../services/seo.service';
 
 declare const google: any;
 
@@ -50,7 +51,8 @@ export class LoginComponent implements AfterViewInit {
 
   constructor(
     private authService: AuthService,
-    private message: NzMessageService
+    private message: NzMessageService,
+    private seoService: SeoService
   ) {}
 
   resendCode() {
@@ -62,6 +64,13 @@ export class LoginComponent implements AfterViewInit {
   }
   phone = '';
   ngOnInit() {
+    this.seoService.updateSeo({
+      title: 'Login',
+      description: 'Sign in to your Secure Derma account to manage orders, checkout faster, and continue your care journey.',
+      canonicalPath: '/account/login',
+      robots: 'noindex,nofollow',
+      type: 'website'
+    });
   }
   ngAfterViewInit() {
     this.initializeGoogleLogin();

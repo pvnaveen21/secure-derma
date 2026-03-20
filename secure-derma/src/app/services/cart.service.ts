@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { BehaviorSubject, firstValueFrom, map } from 'rxjs';
-import { ACCESS_TOKEN, getToken, isTokenExpired } from '@app/core/token';
+import { ACCESS_TOKEN, getToken } from '@app/core/token';
 import { GetApiUrl } from './core/config';
 
 export interface CartItem {
@@ -95,14 +95,14 @@ export class CartService {
     }
   }
 
-  async addToCart(product: any): Promise<AddToCartResult> {
+  async addToCart(product: any, quantity = 1): Promise<AddToCartResult> {
     const selectedDetail = product.details?.[0];
-    if (!selectedDetail) {
+    if (!selectedDetail || quantity < 1) {
       return { status: 'missing_details' };
     }
 
     if (!this.isAuthenticated()) {
-      return this.addGuestItem(product, selectedDetail);
+      return this.addGuestItem(product, selectedDetail, quantity);
     }
 
     try {
@@ -111,7 +111,7 @@ export class CartService {
           GetApiUrl('/cart/items/'),
           {
             detailId: selectedDetail.id,
-            quantity: 1
+            quantity
           },
           this.getHttpOptions()
         )
@@ -120,8 +120,8 @@ export class CartService {
       this.cartItems.next(response.items || []);
       const updatedItem = (response.items || []).find((item) => item.detailId === selectedDetail.id);
       return {
-        status: updatedItem?.quantity && updatedItem.quantity > 1 ? 'updated' : 'added',
-        quantity: updatedItem?.quantity || 1
+        status: updatedItem?.quantity && updatedItem.quantity > quantity ? 'updated' : 'added',
+        quantity: updatedItem?.quantity || quantity
       };
     } catch (error: any) {
       if (error?.status === 400 || error?.status === 409) {
@@ -231,7 +231,7 @@ export class CartService {
     }
   }
 
-  private addGuestItem(product: any, selectedDetail: any): AddToCartResult {
+  private addGuestItem(product: any, selectedDetail: any, quantity = 1): AddToCartResult {
     const currentCart = [...this.cartItems.value];
     const existingItem = currentCart.find((item) => (item.detailId ?? item.productId) === selectedDetail.id);
 
@@ -239,7 +239,7 @@ export class CartService {
       if (existingItem.quantity >= 10) {
         return { status: 'limit_reached', quantity: existingItem.quantity };
       }
-      existingItem.quantity += 1;
+      existingItem.quantity = Math.min(existingItem.quantity + quantity, 10);
     } else {
       currentCart.push({
         productId: product.id,
@@ -252,7 +252,7 @@ export class CartService {
         originalPrice: selectedDetail.original_price,
         discountPrice: selectedDetail.discount_price,
         detailId: selectedDetail.id,
-        quantity: 1
+        quantity: Math.min(quantity, 10)
       });
     }
 
@@ -261,7 +261,7 @@ export class CartService {
 
     return {
       status: existingItem ? 'updated' : 'added',
-      quantity: existingItem ? existingItem.quantity : 1
+      quantity: existingItem ? existingItem.quantity : Math.min(quantity, 10)
     };
   }
 
@@ -316,7 +316,7 @@ export class CartService {
   }
 
   private isAuthenticated(): boolean {
-    return this.canUseStorage() && !!getToken(ACCESS_TOKEN) && !isTokenExpired(ACCESS_TOKEN);
+    return this.canUseStorage() && !!getToken(ACCESS_TOKEN);
   }
 
   private getHttpOptions(): { headers: HttpHeaders } {

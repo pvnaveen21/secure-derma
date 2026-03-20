@@ -1,5 +1,7 @@
 from rest_framework import status
 from rest_framework.test import APITestCase
+from django.conf import settings
+from rest_framework_simplejwt.tokens import RefreshToken
 
 from user.models import User
 
@@ -69,3 +71,30 @@ class UserDetailApiViewTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data['detail'], 'Email cannot be changed for Google login accounts.')
+
+
+class UserTokenRefreshViewTests(APITestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            email='refresh@example.com',
+            password='Password123!',
+            username='Refresh User',
+            phone='9988776655',
+        )
+        self.url = '/api/auth/token/refresh/'
+
+    def test_refresh_returns_new_access_token_for_valid_refresh_token(self):
+        refresh = RefreshToken.for_user(self.user)
+
+        response = self.client.post(
+            self.url,
+            {'refresh': str(refresh)},
+            format='json'
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn('access', response.data)
+        self.assertEqual(response.data['message'], 'Token refreshed successfully.')
+
+    def test_refresh_token_lifetime_is_extended_beyond_default_one_day(self):
+        self.assertEqual(settings.SIMPLE_JWT['REFRESH_TOKEN_LIFETIME'].days, 30)

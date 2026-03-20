@@ -30,9 +30,11 @@
     width: 100%;
     height: 25rem;
     border-radius: 0.75rem;
+    overflow: hidden;
 
     @media only screen and (max-width:76.8rem) {
         height: auto;
+        border-radius:unset
     }
 }
 
@@ -157,6 +159,10 @@
             color: #0d9488;
         }
     }
+
+    @media only screen and (max-width:76.8rem) {
+            min-width: 7rem;
+    }
 }
 
 .circle-image-wrapper {
@@ -222,12 +228,12 @@
     }
 
     .circle-image-wrapper {
-        width: 8rem;
-        height: 8rem;
+        width: 7rem;
+        height: 7rem;
     }
 
     .category-scroll-wrapper {
-        gap: 1.5rem;
+        gap: 1rem;
     }
 }
 
@@ -1306,7 +1312,7 @@
     max-width: 100%;
     background: var(--card-bg);
     border-radius: 1rem;
-    padding: 0.9rem;
+    padding: 0.5rem;
     border: 0.0625rem solid rgba(148, 163, 184, 0.2);
     box-shadow: 0 0.45rem 1rem rgba(15, 23, 42, 0.08);
     transition: transform 0.3s ease, box-shadow 0.3s ease;
@@ -1700,7 +1706,7 @@
     }
 
     .concern-strip .concern-product-card {
-        flex-basis: 13.5rem;
-        min-width: 13.5rem;
+        flex-basis: 14.5rem;
+        min-width: 14.5rem;
     }
 }
