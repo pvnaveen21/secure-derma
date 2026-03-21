@@ -22,7 +22,7 @@
         gap: 2.5rem;
         transition: gap 220ms ease;
 
-        @media only screen and (max-width:76.8rem) {
+        @media only screen and (max-width:59.9375rem) {
             padding-block: 1rem;
             padding-inline: 1rem;
             justify-content: space-between;
@@ -34,7 +34,7 @@
     position: relative;
     padding: 0 0 0.7rem;
 
-    @media only screen and (max-width:76.8rem) {
+    @media only screen and (max-width:59.9375rem) {
         padding: 0 1rem 0.7rem;
     }
 }
@@ -81,6 +81,77 @@
     display: flex;
     align-items: center;
     gap: 0.5rem;
+    min-width: 0;
+}
+
+
+.mobile-bottom-nav,
+.mobile-bottom-nav-spacer {
+    display: none;
+}
+
+.mobile-bottom-nav {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 14;
+    display: none;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 0.45rem;
+    align-items: stretch;
+    padding: 0.6rem 0.85rem calc(0.6rem + env(safe-area-inset-bottom));
+    border-top: 0.06rem solid color-mix(in srgb, var(--divider-color) 88%, transparent);
+    background: color-mix(in srgb, var(--header-bg) 92%, rgba(255, 255, 255, 0.78));
+    backdrop-filter: blur(1rem);
+    box-shadow: 0 -0.8rem 2rem rgba(15, 23, 42, 0.08);
+}
+
+.mobile-bottom-nav__item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.28rem;
+    min-width: 0;
+    padding: 0.45rem 0.25rem;
+    border-radius: 1rem;
+    color: var(--text-secondary);
+    transition: color 0.2s ease, background-color 0.2s ease, transform 0.2s ease;
+}
+
+.mobile-bottom-nav__item--active {
+    color: var(--brand-primary);
+    background: color-mix(in srgb, var(--brand-primary) 10%, transparent);
+}
+
+.mobile-bottom-nav__icon {
+    width: 1.15rem;
+    height: 1.15rem;
+}
+
+.mobile-bottom-nav__label {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.66rem;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+}
+
+.mobile-bottom-nav-spacer {
+    height: calc(4.85rem + env(safe-area-inset-bottom));
+}
+
+@media only screen and (max-width:59.9375rem) {
+    .mobile-bottom-nav {
+        display: grid;
+    }
+
+    .mobile-bottom-nav-spacer {
+        display: block;
+    }
 }
 
 // Logo
@@ -107,7 +178,7 @@
             max-height: 2.6rem;
         }
 
-        @media only screen and (max-width:76.8rem) {
+        @media only screen and (max-width:59.9375rem) {
             .logo-image--desktop {
                 display: none;
             }
@@ -141,7 +212,7 @@
         align-items: center;
     }
 
-    @media only screen and (max-width:76.8rem) {
+    @media only screen and (max-width:59.9375rem) {
         display: none;
     }
 }
@@ -151,7 +222,7 @@
     align-items: center;
     gap: 0.5rem;
     cursor: pointer;
-    font-weight: 500;
+    font-weight: 600;
     margin: 0;
     font-size: 1rem;
     transition: color 0.2s ease;
@@ -750,7 +821,7 @@
     }
 }
 
-@media only screen and (min-width:76.81rem) {
+@media only screen and (min-width:59.9376rem) {
     .header-menu--search-active {
         gap: 1.5rem;
     }
@@ -983,6 +1054,10 @@
         cursor: pointer;
         transition: background 0.2s ease, transform 0.2s ease;
 
+        &.user-icon--mobile-auth {
+            display: none;
+        }
+
         &:hover {
             background: var(--hover-bg);
             transform: scale(1.05);
@@ -1142,18 +1217,48 @@ nz-input-group {
 .mobile-view {
     display: none;
 
-    @media only screen and (max-width:76.8rem) {
+    @media only screen and (max-width:59.9375rem) {
         display: block;
     }
 }
 
 .only-web-view {
-    @media only screen and (max-width:76.8rem) {
+    @media only screen and (max-width:59.9375rem) {
         display: none;
     }
 }
 
-@media only screen and (max-width:76.8rem) {
+@media only screen and (max-width:59.9375rem) {
+    .user-bag .user-icon--menu.user-icon--mobile-auth {
+        display: flex;
+    }
+
+    .header-menu {
+        gap: 0.75rem !important;
+        min-width: 0;
+    }
+
+    .menu-web-name {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .logo-container,
+    .app-logo {
+        min-width: 0;
+    }
+
+    .user-bag {
+        gap: 0.75rem;
+        flex-shrink: 0;
+    }
+
+    .theme-toggle-btn,
+    .user-bag .user-icon--menu {
+        width: 2.2rem;
+        height: 2.2rem;
+    }
+
     .header-search-suggestions {
         padding: 0.75rem;
         border-radius: 0.9rem;
@@ -1177,6 +1282,15 @@ nz-input-group {
 }
 
 @media only screen and (max-width:48rem) {
+    .logo-container .app-logo .logo-image--mobile {
+        width: clamp(7.25rem, 28vw, 9.25rem);
+        max-width: 100%;
+    }
+
+    .menu-web-name {
+        gap: 0.35rem;
+    }
+
     .header-search-item__copy strong {
         white-space: normal;
     }
@@ -1260,8 +1374,15 @@ nz-input-group {
     position: relative;
     display: grid;
     place-items: center;
-    width: 4.6rem;
-    height: 4.6rem;
+    width: min(11rem, 100%);
+    height: auto;
+}
+
+.brand-empty-state__image {
+    display: block;
+    width: 100%;
+    height: auto;
+    object-fit: contain;
 }
 
 .brand-empty-state__halo,
@@ -1342,6 +1463,47 @@ nz-input-group {
     }
 }
 
+.mobile-side-menu-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.85rem 0.85rem 0 0.85rem;
+}
+
+.mobile-side-menu-brand {
+    display: inline-flex;
+    align-items: center;
+    cursor: pointer;
+}
+
+.mobile-side-menu-brand__logo {
+    display: block;
+    width: auto;
+    height: 3rem;
+    object-fit: contain;
+}
+
+.mobile-side-menu-close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    justify-content: center;
+    width: 2.4rem;
+    height: 2.4rem;
+    border: 0.06rem solid color-mix(in srgb, var(--border-color) 78%, transparent);
+    border-radius: 999rem;
+    background: color-mix(in srgb, var(--card-bg) 94%, #ffffff 6%);
+    color: var(--text-primary);
+    transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+
+    &:hover {
+        background: color-mix(in srgb, var(--hover-bg) 76%, var(--card-bg));
+        border-color: color-mix(in srgb, var(--brand-primary) 34%, var(--border-color));
+        transform: translateY(-0.05rem);
+    }
+}
+
 .selectedSideMenu {
     color: var(--text-primary) !important;
     box-sizing: border-box;
@@ -1359,6 +1521,49 @@ nz-input-group {
     width: 100%;
     background: var(--surface);
     border-radius: 0.25rem;
+}
+
+.mobile-side-intro {
+    margin: 1rem 1rem 1.1rem;
+    padding: 1rem 1rem 1.1rem;
+    border: 0.06rem solid color-mix(in srgb, var(--brand-primary) 18%, var(--border-color));
+    border-radius: 1rem;
+    background:
+        linear-gradient(145deg,
+            color-mix(in srgb, var(--card-bg) 90%, #ffffff 10%) 0%,
+            color-mix(in srgb, var(--brand-primary) 10%, var(--card-bg)) 100%);
+    box-shadow: 0 0.8rem 2rem color-mix(in srgb, var(--brand-primary) 10%, transparent);
+    opacity: 0;
+    transform: translateY(1rem);
+    transition: opacity 0.42s cubic-bezier(.2, .8, .2, 1), transform 0.42s cubic-bezier(.2, .8, .2, 1);
+}
+
+.mobile-side-intro--visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.mobile-side-intro__eyebrow {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.08rem;
+    text-transform: uppercase;
+    color: color-mix(in srgb, var(--brand-primary) 74%, var(--brand-secondary) 26%);
+}
+
+.mobile-side-intro__title {
+    margin-top: 0.45rem !important;
+    color: var(--text-primary);
+    font-size: 1.18rem;
+    font-weight: 700;
+    line-height: 1.45rem;
+}
+
+.mobile-side-intro__text {
+    margin-top: 0.45rem !important;
+    color: var(--text-secondary);
+    font-size: 0.88rem;
+    line-height: 1.4rem;
 }
 
 .collapse-header {
@@ -1816,6 +2021,13 @@ nz-input-group {
 .your_bag_text{
     line-height: 2.3rem;
     font-weight: 600;
+}
+.empty-bag__image {
+    display: block;
+    width: min(14rem, 100%);
+    height: auto;
+    margin: 0 auto 1rem;
+    object-fit: contain;
 }
 .empty-bag{
     padding-inline: 4rem;

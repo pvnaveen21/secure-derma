@@ -72,4 +72,14 @@ export class CollectionsService extends InterfaceService {
       catchError(this.handleError)
     );
   }
+
+  getBrandsList() {
+    return this.http.get(
+      this.getApiUrl(`/brands/`),
+      this.getHttpOptions('json', { auth: false })
+    ).pipe(
+      map(res => res),
+      catchError(this.handleError)
+    );
+  }
 }

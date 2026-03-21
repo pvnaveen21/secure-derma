@@ -81,8 +81,11 @@
                                     @else {
                                     <div class="brand-empty-state">
                                         <div class="brand-empty-state__visual" aria-hidden="true">
-                                            <span class="brand-empty-state__halo"></span>
-                                            <span class="brand-empty-state__badge">?</span>
+                                            <img
+                                                class="brand-empty-state__image"
+                                                src="/assets/Home/brand_no_search_found.png"
+                                                alt=""
+                                            />
                                         </div>
                                         Oops! We couldn't find any matching brands. Try a different search.
                                     </div>
@@ -338,17 +341,13 @@
                         </div>
                     </nz-badge>
                 </div>
-                <div *ngIf="isLoggedIn" nz-dropdown [nzDropdownMenu]="profileMenu" nzTrigger="click"
-                    class="user-icon user-icon--menu">
+                <button type="button" class="secure-btn user-icon user-icon--menu"
+                    [class.user-icon--mobile-auth]="!isLoggedIn"
+                    [attr.aria-label]="isLoggedIn ? 'Open my account' : 'Sign in'"
+                    (click)="handleHeaderAccountAction()">
                     <lucide-angular class="icon-display" [img]="icons.header.user" [size]="25"></lucide-angular>
-                </div>
+                </button>
             </div>
-            <nz-dropdown-menu #profileMenu="nzDropdownMenu">
-                <ul nz-menu>
-                    <li nz-menu-item (click)="openMyAccount()">My Account</li>
-                    <li nz-menu-item (click)="logout()">Logout</li>
-                </ul>
-            </nz-dropdown-menu>
         </div>
         @if (isSelectionLoading) {
         <div class="header-selection-loader" aria-live="polite">
@@ -422,6 +421,21 @@
     </ng-template>
     <nz-divider class="m-0"></nz-divider>
 
+    <nav *ngIf="shouldShowMobileBottomNav" class="mobile-bottom-nav" aria-label="Primary navigation">
+        <button
+            *ngFor="let item of mobileBottomNavItems"
+            type="button"
+            class="secure-btn mobile-bottom-nav__item"
+            [class.mobile-bottom-nav__item--active]="isMobileBottomNavActive(item)"
+            [attr.aria-current]="isMobileBottomNavActive(item) ? 'page' : null"
+            [attr.aria-label]="getMobileBottomNavLabel(item)"
+            (click)="handleMobileBottomNavAction(item)">
+            <lucide-angular class="mobile-bottom-nav__icon" [img]="icons.header[item.icon]" [size]="20"></lucide-angular>
+            <span class="mobile-bottom-nav__label">{{ getMobileBottomNavLabel(item) }}</span>
+        </button>
+    </nav>
+    <div *ngIf="shouldShowMobileBottomNav" class="mobile-bottom-nav-spacer" aria-hidden="true"></div>
+
 </div>
 
 <!-- sider -->
@@ -444,6 +458,18 @@
     <ng-container *nzDrawerContent>
         <div class="pb-2 mobile-side-menu-conatiner">
             <div>
+                <div class="mobile-side-menu-topbar">
+                    <div class="mobile-side-menu-brand" (click)="homeLocation(); closeSideMenu()">
+                        <img
+                            class="mobile-side-menu-brand__logo"
+                            [src]="mobileLogoSrc"
+                            alt="Secure Derma"
+                        />
+                    </div>
+                    <button class="secure-btn mobile-side-menu-close" type="button" (click)="closeSideMenu()" aria-label="Close menu">
+                        <lucide-angular class="d-flex" [img]="icons.header.close" [size]="20"></lucide-angular>
+                    </button>
+                </div>
                 <div class="side-menu-title-header pt-1">
                     <p class="side-menu-title pb-1 m-0" [ngClass]="{'selectedSideMenu':selectedSideType == 1}"
                         (click)="sideMenuView(1)">Shop By</p>
@@ -499,8 +525,11 @@
                     @else {
                     <div class="brand-empty-state brand-empty-state--mobile px-2">
                         <div class="brand-empty-state__visual" aria-hidden="true">
-                            <span class="brand-empty-state__halo"></span>
-                            <span class="brand-empty-state__badge">?</span>
+                            <img
+                                class="brand-empty-state__image"
+                                src="/assets/Home/brand_no_search_found.png"
+                                alt=""
+                            />
                         </div>
                         Oops! We couldn't find any matching brands. Try a different search.
                     </div>
@@ -509,6 +538,12 @@
                 </div>
                 }
                 @else{
+                <div class="mobile-side-intro" *ngIf="selectedSideType == 1" [class.mobile-side-intro--visible]="isMobileSideIntroVisible">
+                    <p class="mobile-side-intro__eyebrow m-0">Secure Derma</p>
+                    <h3 class="mobile-side-intro__title m-0">Find your next routine by category, concern, or daily need.</h3>
+                    <p class="mobile-side-intro__text m-0">Explore skin, hair, supplements, and quick links built for faster shopping.</p>
+                </div>
+
                 <div class="collapse-container">
                     @for (panel of panels; track panel.key) {
                     <div class="collapse-panel">
@@ -605,7 +640,10 @@
     <!-- Cart Items List Content -->
     <ng-container *nzDrawerContent>
         <div class="cart-items-container" [class.cart-open]="cartDrawerVisible">
-            <nz-empty *ngIf="cartItems.length === 0" nzNotFoundImage="simple" [nzNotFoundContent]="emptyContent">
+            <nz-empty *ngIf="cartItems.length === 0" [nzNotFoundImage]="emptyBagImage" [nzNotFoundContent]="emptyContent">
+                <ng-template #emptyBagImage>
+                    <img class="empty-bag__image" src="/assets/Home/empty_bag.svg" alt="" />
+                </ng-template>
                 <ng-template #emptyContent>
                     <div class="empty-bag">
                         <h2 class="your_bag_text">Your Shopping Bag is Empty</h2>

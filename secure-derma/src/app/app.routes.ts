@@ -12,6 +12,11 @@ export const routes: Routes = [
             },
 
             {
+                path: 'collections',
+                loadComponent: () => import('./collections/collections-landing.component').then(m => m.CollectionsLandingComponent),
+            },
+
+            {
                 path: 'collections/:slug',
                 loadComponent: () => import('./collections/collections.component').then(m => m.CollectionsComponent),
             },
@@ -38,6 +43,10 @@ export const routes: Routes = [
             {
                 path: 'account/:section',
                 loadComponent: () => import('./account/account.component').then(m => m.AccountComponent),
+            },
+            {
+                path: '**',
+                loadComponent: () => import('./not-found/not-found.component').then(m => m.NotFoundComponent),
             },
         ]
     }

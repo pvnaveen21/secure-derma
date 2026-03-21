@@ -60,6 +60,12 @@ interface SearchSuggestionGroup {
   type: SearchSuggestionItem['type'];
   items: SearchSuggestionItem[];
 }
+
+interface MobileBottomNavItem {
+  key: 'home' | 'categories' | 'shop' | 'cart' | 'account';
+  label: string;
+  icon: keyof typeof Icons.header;
+}
 @Component({
   selector: 'app-header',
   imports: [
@@ -83,7 +89,7 @@ interface SearchSuggestionGroup {
   styleUrl: './header.component.scss'
 })
 export class HeaderComponent {
-  private readonly mobileBreakpoint = 768;
+  private readonly mobileBreakpoint = 959;
   private readonly resumeCheckoutStorageKey = 'secure_derma_resume_checkout';
   @ViewChild('brandListContainer') brandListContainer!: ElementRef;
   @ViewChild('mobileBrandListContainer') mobileBrandListContainer?: ElementRef;
@@ -111,11 +117,20 @@ export class HeaderComponent {
     { name: 'Shop All', value: 'all' }
   ];
 
+  mobileBottomNavItems: MobileBottomNavItem[] = [
+    { key: 'home', label: 'Home', icon: 'home' },
+    { key: 'categories', label: 'Categories', icon: 'categories' },
+    { key: 'shop', label: 'Shop', icon: 'shop' },
+    { key: 'cart', label: 'Cart', icon: 'handbag' },
+    { key: 'account', label: 'Account', icon: 'user' },
+  ];
+
   // Add these properties
   isSkinDropdownVisible = false;
   isHairDropdownVisible = false;
   isSupplementDropdownVisible = false;
   isBrandDropdownVisible: any = false
+  isMobileSideIntroVisible = false;
 
   // Search-related properties
   private searchSubject = new Subject<string>();
@@ -189,8 +204,13 @@ export class HeaderComponent {
     });
 
     this.routerEventsSubscription = this.router.events.subscribe((event) => {
-      if (event instanceof NavigationStart && event.url.includes('/collections/')) {
-        this.showSelectionLoader();
+      if (event instanceof NavigationStart) {
+        if (event.url.includes('/collections/')) {
+          this.showSelectionLoader();
+        }
+
+        this.closeSideMenu();
+        this.closeCartDrawer();
       }
 
       if (
@@ -267,6 +287,8 @@ export class HeaderComponent {
   }
 
   openMyAccount(): void {
+    this.closeSideMenu();
+    this.closeCartDrawer();
     void this.router.navigate(['/account']);
   }
 
@@ -662,7 +684,15 @@ export class HeaderComponent {
   }
 
   sideMenuView(type: any) {
+    if (this.selectedSideType === 1 && type !== 1) {
+      this.resetBrandSearch();
+    }
     this.selectedSideType = type;
+    if (type === 1 && this.visible) {
+      this.replayMobileSideIntro();
+    } else {
+      this.isMobileSideIntroVisible = false;
+    }
   }
 
   // Dropdown methods
@@ -692,8 +722,7 @@ export class HeaderComponent {
   closeBrandDropdown() {
     if (this.searchTerm.length != 0) {
       setTimeout(() => {
-        this.searchTerm = ''
-        this.getBrandsList();
+        this.resetBrandSearch();
       }, 1800)
     }
     this.isBrandDropdownVisible = false;
@@ -719,11 +748,16 @@ export class HeaderComponent {
       this.visible = false;
       return;
     }
+    this.resetBrandSearch();
+    this.isMobileSideIntroVisible = false;
     this.visible = true;
     this.selectedSideType = 1;
+    this.replayMobileSideIntro();
   }
 
   closeSideMenu() {
+    this.resetBrandSearch();
+    this.isMobileSideIntroVisible = false;
     this.visible = false;
   }
 
@@ -784,6 +818,80 @@ export class HeaderComponent {
     this.router.navigate(['account/login'])
   }
 
+  handleMobileBottomNavAction(item: MobileBottomNavItem): void {
+    if (item.key === 'home') {
+      this.closeCartDrawer();
+      this.closeSideMenu();
+      this.homeLocation();
+      return;
+    }
+
+    if (item.key === 'categories') {
+      this.closeCartDrawer();
+      this.openSideMenu();
+      return;
+    }
+
+    if (item.key === 'shop') {
+      this.closeCartDrawer();
+      this.closeSideMenu();
+      this.startShop();
+      return;
+    }
+
+    if (item.key === 'cart') {
+      this.closeSideMenu();
+      this.openCartDrawer();
+      return;
+    }
+
+    this.handleHeaderAccountAction();
+  }
+
+  isMobileBottomNavActive(item: MobileBottomNavItem): boolean {
+    const currentPath = this.getCurrentPath();
+
+    if (item.key === 'home') {
+      return currentPath === '/';
+    }
+
+    if (item.key === 'categories') {
+      return this.visible && this.selectedSideType === 1;
+    }
+
+    if (item.key === 'shop') {
+      return currentPath.startsWith('/collections');
+    }
+
+    if (item.key === 'cart') {
+      return this.cartDrawerVisible;
+    }
+
+    return currentPath.startsWith('/account');
+  }
+
+  getMobileBottomNavLabel(item: MobileBottomNavItem): string {
+    if (item.key === 'account') {
+      return this.isLoggedIn ? 'Account' : 'Sign in';
+    }
+
+    return item.label;
+  }
+
+  get shouldShowMobileBottomNav(): boolean {
+    const currentPath = this.getCurrentPath();
+    return currentPath === '/' || currentPath.startsWith('/account');
+  }
+
+  handleHeaderAccountAction(): void {
+    if (this.isLoggedIn) {
+      this.openMyAccount();
+      return;
+    }
+
+    this.signIn();
+  }
+
   onImageError(event: Event): void {
     const imgElement = event.target as HTMLImageElement;
     imgElement.src = 'assets/images/placeholder.png'; // Add a placeholder image
@@ -840,8 +948,30 @@ export class HeaderComponent {
     this.settingsService.toggleLightDark();
   }
 
+  private getCurrentPath(): string {
+    return this.router.url.split('?')[0] || '/';
+  }
+
   private isDesktopView(): boolean {
     return typeof window !== 'undefined' && window.innerWidth > this.mobileBreakpoint;
+  }
+
+  private resetBrandSearch(): void {
+    if (!this.searchTerm.length && this.hasBrandResults) {
+      return;
+    }
+
+    this.searchTerm = '';
+    this.getBrandsList();
+  }
+
+  private replayMobileSideIntro(): void {
+    this.isMobileSideIntroVisible = false;
+    setTimeout(() => {
+      if (this.visible && this.selectedSideType === 1) {
+        this.isMobileSideIntroVisible = true;
+      }
+    }, 30);
   }
 
   get cartDrawerWidth(): string | number | undefined {

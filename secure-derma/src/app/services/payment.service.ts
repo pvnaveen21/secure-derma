@@ -251,7 +251,7 @@ export class PaymentService extends InterfaceService {
     }
 
     if (!/^\d{6}$/.test(normalizedCustomer.postal_code)) {
-      errors.postal_code = 'Enter a valid 6-digit postal code.';
+      errors.postal_code = 'Enter a valid 6-digit postal code to continue.';
     }
 
     return errors;

@@ -59,7 +59,5 @@ export const getTokenExpiration = (flag: string): Date | null => {
 // Check if token is expired
 export const isTokenExpired = (flag: string): boolean => {
     const expiration = getTokenExpiration(flag);
-    console.log(expiration);
-    
     return !expiration || expiration.getTime() <= Date.now();
 };

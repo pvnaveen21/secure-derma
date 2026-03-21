@@ -1,5 +1,5 @@
 import { isPlatformBrowser, NgClass, NgIf } from '@angular/common';
-import { Component, HostListener, Inject, PLATFORM_ID } from '@angular/core';
+import { Component, ElementRef, HostListener, Inject, PLATFORM_ID, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
 import { NzRateModule } from 'ng-zorro-antd/rate';
@@ -52,12 +52,20 @@ export class ProductsComponent {
     { label: 'Latest reviews', value: 'latest' }
   ] as const;
   expandedReviews = new Set<number>();
+  reviewImagePreviewOpen = false;
+  reviewPreviewImages: string[] = [];
+  reviewPreviewIndex = 0;
+  reviewPreviewReview: any = null;
+  private reviewPreviewTriggerElement: HTMLElement | null = null;
+  private reviewPreviewScrollPosition = 0;
   icons = Icons
   assets = Assets
   selectedGramId: any = 0
   selectedImgId: any = 0
   currentImageIndex: any = 0
   mainViewImage: any = ''
+  private imageSwipeStartX: number | null = null;
+  private readonly imageSwipeThreshold = 36;
   categories: any = [{ image: this.assets.secura.aq1 }, { image: this.assets.secura.aq2 }, { image: this.assets.secura.aq1 }, { image: this.assets.secura.aq2 }, { image: this.assets.secura.aq1 }, { image: this.assets.secura.aq2 },]
   reviewsData: any = [
     {
@@ -214,6 +222,8 @@ export class ProductsComponent {
   productDetailsMain: any = []
   currentPriceData: any = []
   selectedQuantity = 1;
+  @ViewChild('reviewsSection') reviewsSection?: ElementRef<HTMLElement>;
+  @ViewChild('thumbnailStrip') thumbnailStrip?: ElementRef<HTMLElement>;
   sideImages: any = []
   productInfoSections: {
     key: string;
@@ -473,7 +483,6 @@ export class ProductsComponent {
     const getProductData = this.productDetailsMain?.find((item: any) => item.id == value);
     this.selectedGramId = value
     this.currentPriceData = getProductData
-    this.selectedQuantity = this.minPurchaseQuantity;
     this.updateUrlWithVariant(value);
 
   }
@@ -492,6 +501,7 @@ export class ProductsComponent {
     }
 
     this.reviewPage -= 1;
+    this.scrollToReviewsSection();
   }
 
   goToNextReviewPage(): void {
@@ -500,6 +510,20 @@ export class ProductsComponent {
     }
 
     this.reviewPage += 1;
+    this.scrollToReviewsSection();
+  }
+
+  private scrollToReviewsSection(): void {
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
+
+    setTimeout(() => {
+      this.reviewsSection?.nativeElement.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start'
+      });
+    });
   }
 
   toggleReviewRatingFilter(rating: number): void {
@@ -622,7 +646,7 @@ export class ProductsComponent {
     }
 
     if (this.currentImageIndex != type) {
-      this.currentImageIndex = type
+      this.currentImageIndex = type;
       // Clear previous timeout to prevent multiple triggers
       if (this.timeoutRef) {
         clearTimeout(this.timeoutRef);
@@ -632,22 +656,138 @@ export class ProductsComponent {
       // Trigger animation flag to true
       this.isImageChanging = true;
       this.selectedImgId = type;
+      this.scrollSelectedThumbnailIntoView();
 
-      // Update image **after** animation class is applied, with slight delay
+      // Update image after animation class is applied.
       setTimeout(() => {
-        // Update the image source
         this.mainViewImage = image;
-      }, 0); // Instant image update after setting the class
+      }, 0);
 
-      // Reset the animation flag after animation duration (400ms)
+      // Reset the animation flag after animation duration.
       this.timeoutRef = setTimeout(() => {
         this.isImageChanging = false;
-        this.timeoutRef = null; // Clear timeout reference
-      }, 400); // 400ms to match the animation duration
+        this.timeoutRef = null;
+      }, 400);
     } else {
       this.selectedImgId = type;
       this.mainViewImage = image;
+      this.scrollSelectedThumbnailIntoView();
     }
+  }
+
+  showPreviousProductImage() {
+    if (!this.sideImages.length) {
+      return;
+    }
+
+    const previousIndex = (this.currentImageIndex - 1 + this.sideImages.length) % this.sideImages.length;
+    this.selectImg(this.sideImages[previousIndex], previousIndex);
+  }
+
+  showNextProductImage() {
+    if (!this.sideImages.length) {
+      return;
+    }
+
+    const nextIndex = (this.currentImageIndex + 1) % this.sideImages.length;
+    this.selectImg(this.sideImages[nextIndex], nextIndex);
+  }
+
+  onProductImageTouchStart(event: TouchEvent) {
+    this.imageSwipeStartX = event.touches[0]?.clientX ?? null;
+  }
+
+  onProductImageTouchEnd(event: TouchEvent) {
+    if (this.imageSwipeStartX === null) {
+      return;
+    }
+
+    const endX = event.changedTouches[0]?.clientX;
+    if (typeof endX !== 'number') {
+      this.imageSwipeStartX = null;
+      return;
+    }
+
+    const deltaX = endX - this.imageSwipeStartX;
+    this.imageSwipeStartX = null;
+
+    if (Math.abs(deltaX) < this.imageSwipeThreshold) {
+      return;
+    }
+
+    if (deltaX > 0) {
+      this.showPreviousProductImage();
+      return;
+    }
+
+    this.showNextProductImage();
+  }
+
+  private scrollSelectedThumbnailIntoView() {
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
+
+    requestAnimationFrame(() => {
+      const content = this.thumbnailStrip?.nativeElement;
+      const selectedThumbnail = content?.querySelector<HTMLElement>('.side-select-img.selected-img');
+      const scrollContainer = content?.parentElement as HTMLElement | null;
+
+      if (!content || !selectedThumbnail || !scrollContainer) {
+        return;
+      }
+
+      const isHorizontal = scrollContainer.scrollWidth > scrollContainer.clientWidth;
+
+      if (isHorizontal) {
+        const maxScrollLeft = Math.max(scrollContainer.scrollWidth - scrollContainer.clientWidth, 0);
+
+        if (this.currentImageIndex === 0) {
+          scrollContainer.scrollTo({ left: 0, behavior: 'smooth' });
+          return;
+        }
+
+        if (this.currentImageIndex === this.sideImages.length - 1) {
+          scrollContainer.scrollTo({ left: maxScrollLeft, behavior: 'smooth' });
+          return;
+        }
+
+        const containerRect = scrollContainer.getBoundingClientRect();
+        const thumbnailRect = selectedThumbnail.getBoundingClientRect();
+        const deltaLeft = thumbnailRect.left - containerRect.left;
+        const centeredLeft = scrollContainer.scrollLeft + deltaLeft
+          - Math.max((scrollContainer.clientWidth - selectedThumbnail.clientWidth) / 2, 0);
+
+        scrollContainer.scrollTo({
+          left: Math.min(Math.max(centeredLeft, 0), maxScrollLeft),
+          behavior: 'smooth'
+        });
+        return;
+      }
+
+      const maxScrollTop = Math.max(scrollContainer.scrollHeight - scrollContainer.clientHeight, 0);
+
+      if (this.currentImageIndex === 0) {
+        scrollContainer.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
+      }
+
+      if (this.currentImageIndex === this.sideImages.length - 1) {
+        scrollContainer.scrollTo({ top: maxScrollTop, behavior: 'smooth' });
+        return;
+      }
+
+      const containerRect = scrollContainer.getBoundingClientRect();
+      const thumbnailRect = selectedThumbnail.getBoundingClientRect();
+      const deltaTop = thumbnailRect.top - containerRect.top;
+      const centeredTop = scrollContainer.scrollTop + deltaTop
+        - Math.max((scrollContainer.clientHeight - selectedThumbnail.clientHeight) / 2, 0);
+
+      scrollContainer.scrollTo({
+        top: Math.min(Math.max(centeredTop, 0), maxScrollTop),
+        behavior: 'smooth'
+      });
+    });
   }
 
   buildProductInfoSections() {
@@ -951,6 +1091,74 @@ export class ProductsComponent {
       .filter((image: string) => Boolean(image));
   }
 
+  get activeReviewPreviewImage() {
+    return this.reviewPreviewImages[this.reviewPreviewIndex] || '';
+  }
+
+  get reviewPreviewPositionLabel() {
+    if (!this.reviewPreviewImages.length) {
+      return '';
+    }
+
+    return `${this.reviewPreviewIndex + 1} / ${this.reviewPreviewImages.length}`;
+  }
+
+  openReviewImagePreview(images: string[], index: number, review: any) {
+    if (!images.length) {
+      return;
+    }
+
+    if (isPlatformBrowser(this.platformId) && document.activeElement instanceof HTMLElement) {
+      this.reviewPreviewTriggerElement = document.activeElement;
+    }
+
+    this.reviewPreviewImages = images;
+    this.reviewPreviewIndex = Math.min(Math.max(index, 0), images.length - 1);
+    this.reviewPreviewReview = review;
+    this.reviewImagePreviewOpen = true;
+    this.toggleReviewPreviewBodyLock(true);
+  }
+
+  closeReviewImagePreview() {
+    this.reviewImagePreviewOpen = false;
+    this.reviewPreviewImages = [];
+    this.reviewPreviewIndex = 0;
+    this.reviewPreviewReview = null;
+    this.toggleReviewPreviewBodyLock(false);
+
+    const triggerElement = this.reviewPreviewTriggerElement;
+    this.reviewPreviewTriggerElement = null;
+
+    if (triggerElement instanceof HTMLElement) {
+      triggerElement.focus({ preventScroll: true });
+    }
+
+  }
+
+  showPreviousReviewImage() {
+    if (!this.reviewPreviewImages.length) {
+      return;
+    }
+
+    this.reviewPreviewIndex = (this.reviewPreviewIndex - 1 + this.reviewPreviewImages.length) % this.reviewPreviewImages.length;
+  }
+
+  showNextReviewImage() {
+    if (!this.reviewPreviewImages.length) {
+      return;
+    }
+
+    this.reviewPreviewIndex = (this.reviewPreviewIndex + 1) % this.reviewPreviewImages.length;
+  }
+
+  setReviewPreviewImage(index: number) {
+    if (index < 0 || index >= this.reviewPreviewImages.length) {
+      return;
+    }
+
+    this.reviewPreviewIndex = index;
+  }
+
   private resetReviewPagination(): void {
     this.reviewPage = 1;
     this.expandedReviews.clear();
@@ -994,6 +1202,30 @@ export class ProductsComponent {
   @HostListener('window:resize')
   onWindowResize() {
     this.updateDrawerPlacement();
+  }
+
+  @HostListener('document:keydown', ['$event'])
+  onDocumentKeydown(event: KeyboardEvent) {
+    if (!this.reviewImagePreviewOpen) {
+      return;
+    }
+
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      this.closeReviewImagePreview();
+      return;
+    }
+
+    if (event.key === 'ArrowLeft') {
+      event.preventDefault();
+      this.showPreviousReviewImage();
+      return;
+    }
+
+    if (event.key === 'ArrowRight') {
+      event.preventDefault();
+      this.showNextReviewImage();
+    }
   }
 
   ngAfterViewInit() {
@@ -1113,6 +1345,38 @@ export class ProductsComponent {
     }
 
     this.drawerPlacement = window.innerWidth < 768 ? 'bottom' : 'right';
+  }
+
+  private toggleReviewPreviewBodyLock(locked: boolean) {
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
+
+    const body = document.body;
+    const documentElement = document.documentElement;
+
+    if (locked) {
+      this.reviewPreviewScrollPosition = window.scrollY || window.pageYOffset || 0;
+      body.style.position = 'fixed';
+      body.style.top = `-${this.reviewPreviewScrollPosition}px`;
+      body.style.left = '0';
+      body.style.right = '0';
+      body.style.width = '100%';
+      body.style.overflow = 'hidden';
+      return;
+    }
+
+    const scrollPosition = this.reviewPreviewScrollPosition;
+
+    body.style.position = '';
+    body.style.top = '';
+    body.style.left = '';
+    body.style.right = '';
+    body.style.width = '';
+    body.style.overflow = '';
+    documentElement.style.scrollBehavior = 'auto';
+    window.scrollTo(0, scrollPosition);
+    documentElement.style.scrollBehavior = '';
   }
 
   private getSelectedDetail() {
@@ -1241,6 +1505,10 @@ export class ProductsComponent {
       .trim()
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-+|-+$/g, '');
+  }
+
+  ngOnDestroy() {
+    this.toggleReviewPreviewBodyLock(false);
   }
 
 }
