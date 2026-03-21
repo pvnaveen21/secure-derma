@@ -11,11 +11,11 @@
     </nav>
 
     <div class="pro-detail-view mt-5">
-        <div style="width: 100%;overflow: auto;">
+        <div class="product-img-wrap">
             <div class="product-img-container">
                 <div>
                     <app-horizontal-scroll [data]="sideImages" scrollDirection="vertical">
-                        <div data-scroll-body class="category-container">
+                        <div #thumbnailStrip data-scroll-body class="category-container">
                             <div class="d-flex flex-column">
                                 @for (category of sideImages; track $index; let i = $index) {
                                 <img [src]="category" alt="" class="clickable rounded-lg side-select-img"
@@ -27,10 +27,23 @@
                     </app-horizontal-scroll>
                 </div>
                 <div class="">
-                    <div class="view-img-main border">
+                    <div class="view-img-main border" (touchstart)="onProductImageTouchStart($event)"
+                        (touchend)="onProductImageTouchEnd($event)">
+                        @if(sideImages.length > 1) {
+                        <button type="button" class="secure-btn product-image-nav product-image-nav--prev"
+                            (click)="showPreviousProductImage()" aria-label="Show previous product image">
+                            <lucide-angular [img]="icons.chevron.leftIcon" [size]="20"></lucide-angular>
+                        </button>
+                        }
                         @if(mainViewImage){
                         <img [src]="mainViewImage" [alt]="productData?.product_name || 'Product image'"
                             class="slide-img" [ngClass]="{'slide-animation': isImageChanging}" />
+                        }
+                        @if(sideImages.length > 1) {
+                        <button type="button" class="secure-btn product-image-nav product-image-nav--next"
+                            (click)="showNextProductImage()" aria-label="Show next product image">
+                            <lucide-angular [img]="icons.chevron.rightIcon" [size]="20"></lucide-angular>
+                        </button>
                         }
                     </div>
                 </div>
@@ -43,7 +56,7 @@
                 <p class="company_name mb-2">{{productData?.brand?.brand_name}}</p>
                 <p class="product_name mb-0">{{productData?.product_name}}</p>
             </div>
-            <div class="star-rating-main mb-1">
+            <div class="star-rating-main">
                 @if(productData?.avg_rating){
                 <nz-rate [ngModel]="productData?.avg_rating" nzAllowHalf nzDisabled class="pro-small-rate"></nz-rate>
                 <span class="rating-value">{{productData?.avg_rating}}/<span class="muted-clr">5</span></span>
@@ -71,7 +84,7 @@
                             <span class="mrp-label">M.R.P</span>
                         </div>
                         <div class="org-price">
-                            <lucide-angular [img]="icons.product.rupee" class="d-flex og-price-icon"></lucide-angular>
+                            <lucide-angular [img]="icons.product.rupee" class="d-flex og-price-icon" style="width: 1rem;"></lucide-angular>
                             {{currentPriceData.original_price}}
                         </div>
                     </div>
@@ -160,7 +173,7 @@
             }
 
             <div class="purchase-panel mt-5">
-                <div class="quantity-selector">
+                <div class="quantity-selector quantity-selector--main">
                     <span class="quantity-selector__label">Quantity</span>
                     <div class="quantity-selector__controls">
                         <button type="button" class="secure-btn quantity-selector__button"
@@ -195,7 +208,7 @@
                 <div class="product-assurance">
                     <div class="product-assurance-card">
                         <div class="product-assurance-icon">
-                            <lucide-angular [img]="icons.product.badge"></lucide-angular>
+                            <lucide-angular [img]="icons.product.badge" style="width: 1rem;height: auto;" ></lucide-angular>
                         </div>
                         <div class="product-assurance-copy">
                             <h5>Authentic Stock</h5>
@@ -204,7 +217,7 @@
                     </div>
                     <div class="product-assurance-card">
                         <div class="product-assurance-icon">
-                            <lucide-angular [img]="icons.product.rupee"></lucide-angular>
+                            <lucide-angular [img]="icons.product.rupee" style="width: 1rem;height: auto;"></lucide-angular>
                         </div>
                         <div class="product-assurance-copy">
                             <h5>Clear Pricing</h5>
@@ -213,7 +226,7 @@
                     </div>
                     <div class="product-assurance-card">
                         <div class="product-assurance-icon">
-                            <lucide-angular [img]="icons.product.truck"></lucide-angular>
+                            <lucide-angular [img]="icons.product.truck" style="width: 1rem;height: auto;"></lucide-angular>
                         </div>
                         <div class="product-assurance-copy">
                             <h5>Shipping Updates</h5>
@@ -411,7 +424,7 @@
             </section>
         </div>
 
-        <div *ngIf="customerReviews.length" class="reviews-section pb-5">
+        <div *ngIf="customerReviews.length" #reviewsSection class="reviews-section pb-5">
             <div class="reviews-section-head">
                 <div>
                     <h4 class="mb-0">Customer reviews</h4>
@@ -504,11 +517,13 @@
                     </div>
 
                     <div *ngIf="getReviewImages(entry.review).length" class="review-card-images">
-                        @for (image of getReviewImages(entry.review); track image) {
-                        <a class="review-card-image-link" [href]="image" target="_blank" rel="noopener noreferrer">
+                        @for (image of getReviewImages(entry.review); track image; let imageIndex = $index) {
+                        <button type="button" class="secure-btn review-card-image-link"
+                            (click)="openReviewImagePreview(getReviewImages(entry.review), imageIndex, entry.review)"
+                            [attr.aria-label]="'Open review image ' + (imageIndex + 1)">
                             <img class="review-card-image" [src]="image"
                                 [alt]="getReviewAuthor(entry.review) + ' review image'" />
-                        </a>
+                        </button>
                         }
                     </div>
 
@@ -570,11 +585,11 @@
                 <h3 class="">{{productData?.product_name}}</h3>
                 <div class=" price-detail">
                     <div class="pro-price text-success">
-                        <lucide-angular [img]="icons.product.rupee" class="d-flex" [size]="18"></lucide-angular>
+                        <lucide-angular [img]="icons.product.rupee" class="d-flex" [size]="18"style="width: 1.4rem;"></lucide-angular>
                         {{currentPriceData.selling_price}}
                     </div>
                     <div class="org-price">
-                        <lucide-angular [img]="icons.product.rupee" class="d-flex" [size]="18"></lucide-angular>
+                        <lucide-angular [img]="icons.product.rupee" class="d-flex" [size]="18" style="width: 1.2rem;"></lucide-angular>
                         {{currentPriceData.original_price}}
                     </div>
                     <div>{{currentPriceData.discount_price}}% off</div>
@@ -606,6 +621,86 @@
                 {{ buyNowLoading ? 'Starting Payment...' : 'Buy Now' }}
             </button>
         </div>
+    </div>
+</div>
+}
+
+@if (reviewImagePreviewOpen) {
+<div class="review-image-preview" (click)="closeReviewImagePreview()">
+    <div class="review-image-preview__dialog" role="dialog" aria-modal="true" aria-label="Review image preview"
+        (click)="$event.stopPropagation()">
+        <div class="review-image-preview__header">
+            <p class="review-image-preview__counter mb-0">{{ reviewPreviewPositionLabel }}</p>
+            <button type="button" class="secure-btn review-image-preview__close" (click)="closeReviewImagePreview()"
+                aria-label="Close review image preview">
+                <lucide-angular [img]="icons.product.close" [size]="20"></lucide-angular>
+            </button>
+        </div>
+
+        <div class="review-image-preview__stage">
+            <div class="review-image-preview__media-shell">
+                @if (reviewPreviewImages.length > 1) {
+                <button type="button" class="secure-btn review-image-preview__nav review-image-preview__nav--prev"
+                    (click)="showPreviousReviewImage()" aria-label="Show previous review image">
+                    <lucide-angular [img]="icons.chevron.leftIcon" [size]="20"></lucide-angular>
+                </button>
+                }
+
+                <div class="review-image-preview__media-wrap">
+                    <img class="review-image-preview__image" [src]="activeReviewPreviewImage" alt="Expanded review image" />
+                </div>
+
+                @if (reviewPreviewImages.length > 1) {
+                <button type="button" class="secure-btn review-image-preview__nav review-image-preview__nav--next"
+                    (click)="showNextReviewImage()" aria-label="Show next review image">
+                    <lucide-angular [img]="icons.chevron.rightIcon" [size]="20"></lucide-angular>
+                </button>
+                }
+            </div>
+
+            <div class="review-image-preview__review">
+                <div class="review-image-preview__review-head">
+                    <div class="review-image-preview__review-rating">
+                        <nz-rate [ngModel]="getReviewRating(reviewPreviewReview)" nzAllowHalf nzDisabled></nz-rate>
+                        <span class="review-image-preview__review-rating-value">{{ getReviewRating(reviewPreviewReview) }}/5</span>
+                    </div>
+                    <p *ngIf="getReviewDateLabel(reviewPreviewReview)" class="review-image-preview__review-date mb-0">
+                        {{ getReviewDateLabel(reviewPreviewReview) }}
+                    </p>
+                </div>
+
+                <div class="review-image-preview__review-author-block">
+                    <div class="review-image-preview__review-author-row">
+                        <p class="review-image-preview__review-author mb-0">{{ getReviewAuthor(reviewPreviewReview) }}</p>
+                        <span *ngIf="isVerifiedReview(reviewPreviewReview)" class="review-image-preview__review-verified">
+                            <lucide-angular [img]="icons.product.badge" class="review-image-preview__review-verified-icon"
+                                [size]="14"></lucide-angular>
+                            Verified buyer
+                        </span>
+                    </div>
+                    <p *ngIf="getReviewLocation(reviewPreviewReview)" class="review-image-preview__review-location mb-0">
+                        From {{ getReviewLocation(reviewPreviewReview) }}
+                    </p>
+                </div>
+
+                <p *ngIf="getReviewTitle(reviewPreviewReview)" class="review-image-preview__review-title mb-0">
+                    {{ getReviewTitle(reviewPreviewReview) }}
+                </p>
+                <p class="review-image-preview__review-copy mb-0">{{ getReviewDescription(reviewPreviewReview) }}</p>
+            </div>
+        </div>
+
+        @if (reviewPreviewImages.length > 1) {
+        <div class="review-image-preview__thumbs">
+            @for (image of reviewPreviewImages; track image; let previewIndex = $index) {
+            <button type="button" class="secure-btn review-image-preview__thumb"
+                [class.review-image-preview__thumb--active]="previewIndex === reviewPreviewIndex"
+                (click)="setReviewPreviewImage(previewIndex)" [attr.aria-label]="'Preview image ' + (previewIndex + 1)">
+                <img [src]="image" alt="Review preview thumbnail" />
+            </button>
+            }
+        </div>
+        }
     </div>
 </div>
 }

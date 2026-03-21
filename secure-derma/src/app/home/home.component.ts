@@ -101,7 +101,6 @@ export class HomeComponent {
   getWhySecureDermaImage(type: any) {
     this.homeService.getImageByType(type).subscribe({
       next: (res: any) => {
-        console.log(res);
         if (res?.images) {
           this.why_secure_derma = res?.images[0].image
         }

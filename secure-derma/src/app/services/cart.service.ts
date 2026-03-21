@@ -125,7 +125,8 @@ export class CartService {
       };
     } catch (error: any) {
       if (error?.status === 400 || error?.status === 409) {
-        return { status: 'limit_reached' };
+        const cappedResult = await this.capExistingServerItemQuantity(selectedDetail.id, quantity);
+        return cappedResult ?? { status: 'limit_reached' };
       }
       throw error;
     }
@@ -160,10 +161,34 @@ export class CartService {
       };
     } catch (error: any) {
       if (error?.status === 400 || error?.status === 409) {
-        return { status: 'limit_reached' };
+        const cappedResult = await this.capExistingServerItemQuantity(detailId, quantity);
+        return cappedResult ?? { status: 'limit_reached' };
       }
       throw error;
     }
+  }
+
+  private async capExistingServerItemQuantity(detailId: number, quantity: number): Promise<AddToCartResult | null> {
+    const existingItem = this.cartItems.value.find((item) => item.detailId === detailId);
+    if (!existingItem) {
+      return null;
+    }
+
+    if (existingItem.quantity >= 10) {
+      return { status: 'limit_reached', quantity: existingItem.quantity };
+    }
+
+    const cappedQuantity = Math.min(existingItem.quantity + quantity, 10);
+    const response = await firstValueFrom(
+      this.http.patch<CartApiResponse>(
+        GetApiUrl('/cart/items/' + detailId + '/'),
+        { quantity: cappedQuantity },
+        this.getHttpOptions()
+      )
+    );
+
+    this.cartItems.next(response.items || []);
+    return { status: 'updated', quantity: cappedQuantity };
   }
 
   async removeItem(itemKey: number): Promise<void> {

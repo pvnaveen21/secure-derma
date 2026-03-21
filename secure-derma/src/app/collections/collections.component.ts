@@ -121,10 +121,13 @@ export class CollectionsComponent implements OnInit {
   cartSavings = 0;
   recentlyAddedProductId: number | null = null;
   private addToCartFeedbackTimeout?: ReturnType<typeof setTimeout>;
+  private productRevealTimeout?: ReturnType<typeof setTimeout>;
   private cartSubscription?: Subscription;
   private readonly defaultVisibleFilterItems = 6;
   private previousCollectionSlug: string | null = null;
   expandedFilterPanels = new Set<string>();
+  private revealedProductIds = new Set<number>();
+  private revealDelayByProductId = new Map<number, string>();
   private readonly filterPanelConfig: Array<{ key: string; title: string; apiParam: string }> = [
     { key: 'product_types', title: 'Product Type', apiParam: 'product_type' },
     { key: 'hair_concerns', title: 'Hair Concerns', apiParam: 'hair_concern' },
@@ -186,6 +189,9 @@ export class CollectionsComponent implements OnInit {
     if (this.addToCartFeedbackTimeout) {
       clearTimeout(this.addToCartFeedbackTimeout);
     }
+    if (this.productRevealTimeout) {
+      clearTimeout(this.productRevealTimeout);
+    }
   }
 
   @HostListener('window:resize')
@@ -199,7 +205,6 @@ export class CollectionsComponent implements OnInit {
   getProductSideMenu() {
     this.collectionsService.getProducetSideMenu().subscribe({
       next: (response: any) => {
-        // console.log(response);
       }
     });
   }
@@ -252,6 +257,12 @@ export class CollectionsComponent implements OnInit {
           ? [...(this.productsData?.products?.results || []), ...incomingProducts]
           : incomingProducts;
 
+        if (append) {
+          this.markProductsForReveal(incomingProducts);
+        } else {
+          this.clearProductRevealState();
+        }
+
         this.allProducts = mergedProducts;
         this.totalProducts = response.products?.count || 0;
         this.productsData = {
@@ -280,6 +291,44 @@ export class CollectionsComponent implements OnInit {
         this.isLoadingMore = false;
       }
     });
+  }
+
+  isProductRevealing(productId: number): boolean {
+    return this.revealedProductIds.has(productId);
+  }
+
+  getProductRevealDelay(productId: number): string {
+    return this.revealDelayByProductId.get(productId) ?? '0ms';
+  }
+
+  private markProductsForReveal(products: Product[]): void {
+    if (!products.length) {
+      this.clearProductRevealState();
+      return;
+    }
+
+    this.revealedProductIds = new Set(products.map((product) => product.id));
+    this.revealDelayByProductId = new Map(
+      products.map((product, index) => [product.id, `${index * 55}ms`])
+    );
+
+    if (this.productRevealTimeout) {
+      clearTimeout(this.productRevealTimeout);
+    }
+
+    this.productRevealTimeout = setTimeout(() => {
+      this.clearProductRevealState();
+    }, 900);
+  }
+
+  private clearProductRevealState(): void {
+    this.revealedProductIds.clear();
+    this.revealDelayByProductId.clear();
+
+    if (this.productRevealTimeout) {
+      clearTimeout(this.productRevealTimeout);
+      this.productRevealTimeout = undefined;
+    }
   }
 
   get displayedProductsCount(): number {
