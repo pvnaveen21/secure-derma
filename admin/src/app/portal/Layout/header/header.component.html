@@ -1,27 +1,21 @@
-<div class="h-100 px-3 d-flex align-items-center gap-5">
+<div class="h-100 px-3 d-flex align-items-center gap-4">
     <div class="rounded-circle border header-menu clickable" (click)="open()">
         <lucide-angular [img]="icons.common.menu" class="d-flex align-items-center"></lucide-angular>
     </div>
-    <div nz-flex nzAlign="center" nzJustify="space-between" class="h-100">
-        <div nz-flex nzAlign="center" nzJustify="start" class="clickable" (click)="navigateToDashboard()">
-            <div class="">
-                <!-- <svg-load [src]="assets.login.emerald_icon"></svg-load> -->
-            </div>
+    <div nz-flex nzAlign="center" nzJustify="space-between" class="h-100 w-100">
+        <div nz-flex nzAlign="center" nzJustify="start" class="clickable header-brand" (click)="navigateToDashboard()">
+            <!-- <img class="header-brand__logo" src="assets/brand/secure-derma-light.png" alt="Secure Derma" /> -->
             <div class="header-title ms-3">
-                <!-- <h3 class="mb-0">Emerlad</h3> -->
-                <h3 class="mb-0">S-D</h3>
-                <div class="mb-0 text-muted b4">Admin App</div>
+                <h3 class="mb-0">Secure Derma</h3>
+                <div class="mb-0 text-muted b4">Admin Console</div>
             </div>
         </div>
-        <div>
-
-        </div>
+        <div></div>
     </div>
 </div>
 
 <nz-drawer [nzClosable]="false" [nzVisible]="visible" [nzPlacement]="placement" (nzOnClose)="close()"
     class="header-menu-drawer">
-    <!-- nzTitle="Basic Drawer" -->
     <ng-container *nzDrawerContent>
         <div class="flex-box px-3 pt-3 header-menu-container">
             <h1 class="m-0">Menu</h1>
@@ -29,8 +23,6 @@
                 <lucide-angular [img]="icons.common.close" class="d-flex align-items-center"></lucide-angular>
             </div>
         </div>
-        <!-- <nz-sider nzWidth="300px" nzTheme="light" class="sider-container"> -->
         <app-side-nav (menuClick)="close()"></app-side-nav>
-        <!-- </nz-sider> -->
     </ng-container>
 </nz-drawer>

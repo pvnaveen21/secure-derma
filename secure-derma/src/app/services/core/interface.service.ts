@@ -3,7 +3,6 @@ import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http
 import { ACCESS_TOKEN, getToken } from '@app/core/token';
 import { catchError, Observable, throwError } from 'rxjs';
 import { GetApiUrl } from './config';
-// import { GetApiUrl } from '@app/core/config';
 
 interface HttpOptionsConfig {
   auth?: boolean; // Default true
@@ -56,8 +55,6 @@ export class InterfaceService {
         }
       }
     } else {
-      // non-HTTP errors
-      console.log('errrr', error)
       errorMessage = error?.detail || error;
     }
     const formattedError = errorMessage ? errorMessage : 'Internel server error.';

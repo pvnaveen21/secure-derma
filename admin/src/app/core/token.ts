@@ -20,7 +20,6 @@ export const unsetToken = (): void => {
 // Get token expiration date
 export const getTokenExpiration = (flag: string): Date | null => {
     const token = getToken(flag);
-    console.log(token);
 
     if (token) {
         try {

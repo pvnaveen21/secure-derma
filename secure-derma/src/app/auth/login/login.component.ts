@@ -12,6 +12,7 @@ import { environment } from '../../../environments/environment';
 import { Assets } from '../../shared/assets';
 import { Icons } from '../../shared/icons';
 import { LucideAngularModule } from 'lucide-angular';
+import { SeoService } from '../../services/seo.service';
 
 declare const google: any;
 
@@ -33,36 +34,44 @@ export class LoginComponent implements AfterViewInit {
   protected readonly assets = Assets;
   protected readonly icons = Icons;
   private readonly googleClientId = environment.GOOGLE_CLIENT_ID;
-  timer = 25;
+  protected readonly isGoogleLoginEnabled = !!this.googleClientId;
+  timer = 3;
   googleReady = false;
   googleLoading = false;
-  authMode: 'email' | 'phone' = 'email';
+  authMode: 'email' | 'phone' = 'phone';
+  email = '';
   emailError = '';
   phoneError = '';
   otpValue = '';
   otpError = '';
+  isSendingOtp = false;
+  isVerifyingOtp = false;
   private googleInitAttempts = 0;
   private readonly maxGoogleInitAttempts = 20;
   private googleRetryTimeout?: ReturnType<typeof setTimeout>;
 
   constructor(
     private authService: AuthService,
-    private message: NzMessageService
+    private message: NzMessageService,
+    private seoService: SeoService
   ) {}
 
   resendCode() {
-    this.otpValue = '';
-    this.otpError = '';
-    this.timer = 25;
-    this.startTimer();
+    if (this.timer > 0 || this.isSendingOtp) {
+      return;
+    }
 
-    // Focus first input
-    const inputs = document.querySelectorAll('.ant-otp-input');
-    (inputs[0] as HTMLInputElement)?.focus();
+    void this.requestPhoneOtp(true);
   }
-  email = '';
   phone = '';
   ngOnInit() {
+    this.seoService.updateSeo({
+      title: 'Login',
+      description: 'Sign in to your Secure Derma account to manage orders, checkout faster, and continue your care journey.',
+      canonicalPath: '/account/login',
+      robots: 'noindex,nofollow',
+      type: 'website'
+    });
   }
   ngAfterViewInit() {
     this.initializeGoogleLogin();
@@ -98,21 +107,13 @@ export class LoginComponent implements AfterViewInit {
   }
 
   sendUpdates = true;
-  showOtp:any  =false
+  showOtp = false;
   sendOtp(){
-    if (!this.validateCurrentInput()) {
-      return;
-    }
-
-    this.otpValue = '';
-    this.otpError = '';
-    this.showOtp =true
-    this.timer = 25;
-    this.startTimer();
+    void this.requestPhoneOtp();
   }
 
   back(){
-    this.showOtp = false
+    this.showOtp = false;
     this.otpValue = '';
     this.otpError = '';
     if (this.intervalId) {
@@ -121,36 +122,36 @@ export class LoginComponent implements AfterViewInit {
 
     this.scheduleGoogleButtonRender();
   }
-  formatter: (value: string) => string = value => value.toUpperCase();
+  formatter: (value: string) => string = value => value.replace(/\D/g, '').slice(0, 6);
+
+  get maskedOtpDestinationLabel() {
+    if (this.authMode === 'email') {
+      return this.maskEmail(this.email);
+    }
+    return this.maskPhone(this.phone);
+  }
 
   switchAuthMode(mode: 'email' | 'phone') {
     this.authMode = mode;
     this.showOtp = false;
-    this.email = '';
-    this.phone = '';
+    this.otpValue = '';
+    this.otpError = '';
     this.clearErrors();
     if (this.intervalId) {
       clearInterval(this.intervalId);
     }
 
     if (mode === 'email') {
-      this.scheduleGoogleButtonRender();
-    }
-  }
-
-  get otpDestinationLabel() {
-    return this.authMode === 'email' ? this.email : this.phone;
-  }
-
-  get maskedOtpDestinationLabel() {
-    if (this.authMode === 'email') {
-      return this.maskEmail(this.email);
+      this.phone = '';
+    } else {
+      this.email = '';
     }
 
-    return this.maskPhone(this.phone);
+    this.scheduleGoogleButtonRender();
   }
 
   onEmailInput() {
+    this.email = this.email.trimStart();
     if (this.emailError) {
       this.validateEmail();
     }
@@ -170,16 +171,20 @@ export class LoginComponent implements AfterViewInit {
   }
 
   onOtpChange(value: string[] | string | Event | null | undefined) {
+    let nextValue = '';
+
     if (Array.isArray(value)) {
-      this.otpValue = value.join('');
+      nextValue = value.join('');
     } else if (typeof value === 'string') {
-      this.otpValue = value;
+      nextValue = value;
     } else if (value && 'target' in value) {
       const input = value.target as HTMLInputElement | null;
-      this.otpValue = input?.value ?? '';
+      nextValue = input?.value ?? '';
     } else {
-      this.otpValue = '';
+      nextValue = '';
     }
+
+    this.otpValue = nextValue.replace(/\D/g, '').slice(0, 6);
 
     if (this.otpError) {
       this.validateOtp();
@@ -191,10 +196,23 @@ export class LoginComponent implements AfterViewInit {
       return;
     }
 
-    this.message.success('OTP verified successfully.');
+    this.isVerifyingOtp = true;
+    this.authService.verifyOtp(this.buildVerifyPayload()).then(() => {
+      this.isVerifyingOtp = false;
+      this.message.success(`${this.authMode === 'email' ? 'Email' : 'Mobile'} login successful.`);
+      this.authService.redirectToHome();
+    }).catch((error) => {
+      this.isVerifyingOtp = false;
+      this.message.error(error?.error || error?.message || 'OTP verification failed.');
+    });
   }
 
   continueWithGoogle() {
+    if (!this.isGoogleLoginEnabled) {
+      this.message.warning('Google sign-in is not configured for this environment.');
+      return;
+    }
+
     const googleButton = document.querySelector('#googleBtn [role="button"]') as HTMLElement | null;
     if (!googleButton) {
       this.message.warning('Google sign-in is not ready yet. Please try again.');
@@ -209,7 +227,7 @@ export class LoginComponent implements AfterViewInit {
   }
 
   private validateEmail() {
-    const normalizedEmail = this.email.trim();
+    const normalizedEmail = this.email.trim().toLowerCase();
     this.email = normalizedEmail;
 
     if (!normalizedEmail) {
@@ -235,8 +253,8 @@ export class LoginComponent implements AfterViewInit {
       return false;
     }
 
-    if (digits.length !== 10) {
-      this.phoneError = 'Phone number must be 10 digits.';
+    if (!/^[6-9]\d{9}$/.test(digits)) {
+      this.phoneError = 'Enter a valid 10-digit mobile number.';
       return false;
     }
 
@@ -250,8 +268,8 @@ export class LoginComponent implements AfterViewInit {
       return false;
     }
 
-    if (!/^[A-Z0-9]{6}$/.test(this.otpValue)) {
-      this.otpError = 'Verification code must be 6 characters.';
+    if (!/^\d{6}$/.test(this.otpValue)) {
+      this.otpError = 'Verification code must be 6 digits.';
       return false;
     }
 
@@ -284,7 +302,7 @@ export class LoginComponent implements AfterViewInit {
   }
 
   private initializeGoogleLogin() {
-    if (typeof window === 'undefined') {
+    if (typeof window === 'undefined' || !this.isGoogleLoginEnabled) {
       return;
     }
 
@@ -368,6 +386,44 @@ export class LoginComponent implements AfterViewInit {
       this.googleLoading = false;
       this.message.error(err?.message || err?.error || 'Google login failed.');
     });
+  }
+
+  private async requestPhoneOtp(isResend = false) {
+    if (!this.validateCurrentInput()) {
+      return;
+    }
+
+    this.isSendingOtp = true;
+    this.otpValue = '';
+    this.otpError = '';
+
+    try {
+      const response = await this.authService.sendOtp(this.buildSendPayload());
+      this.showOtp = true;
+      this.timer = Number(response?.resend_in) || 3;
+      this.startTimer();
+      const destinationLabel = this.authMode === 'email' ? 'email address' : 'mobile number';
+      this.message.success(isResend ? `OTP resent to your ${destinationLabel}.` : `OTP sent to your ${destinationLabel}.`);
+
+      const inputs = document.querySelectorAll('.ant-otp-input');
+      (inputs[0] as HTMLInputElement | undefined)?.focus();
+    } catch (error: any) {
+      this.message.error(error?.error || error?.message || 'Unable to send OTP right now.');
+    } finally {
+      this.isSendingOtp = false;
+    }
+  }
+
+  private buildSendPayload() {
+    return this.authMode === 'email'
+      ? { email: this.email.trim().toLowerCase() }
+      : { phone: this.phone };
+  }
+
+  private buildVerifyPayload() {
+    return this.authMode === 'email'
+      ? { email: this.email.trim().toLowerCase(), otp: this.otpValue }
+      : { phone: this.phone, otp: this.otpValue };
   }
 
 }

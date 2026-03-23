@@ -26,29 +26,45 @@
                 <div class="filter-actions">
                     @if (selectedFilters.size > 0) {
                     <span class="selected-filter-count">{{ selectedFilterCount }} active</span>
-                    <button class="clear-all-btn" (click)="clearAllFilters()">Clear all</button>
+                    <button class="secure-btn clear-all-btn" (click)="clearAllFilters()">Clear all</button>
                     }
                 </div>
             </div>
 
+            @if (getAllSelectedFilters().length > 0) {
+            <div class="active-filters active-filters--sidebar">
+                @for (filter of getAllSelectedFilters(); track filter.panelKey + filter.itemSlug) {
+                <nz-tag [nzColor]="'default'" [nzMode]="'closeable'"
+                    (nzOnClose)="removeFilter(filter.panelKey, filter.itemSlug)">
+                    {{ filter.displayName }}
+                </nz-tag>
+                }
+            </div>
+            }
+
             <!-- Filter Panels -->
             <div class="filter-panels">
-                <nz-collapse [nzBordered]="false" [nzExpandIconPosition]="'end'">
+                    <nz-collapse [nzBordered]="false" [nzExpandIconPosition]="'end'">
                     @for (panel of filterPanels; track panel.key) {
                     @if (panel.items && panel.items.length > 0) {
                     <nz-collapse-panel [nzHeader]="panel.title" [nzActive]="true">
                         <div class="filter-list">
-                            @for (item of panel.items; track item.name) {
+                            @for (item of getVisibleFilterItems(panel); track item.slug) {
                             <div class="filter-item">
-                                <label nz-checkbox [ngModel]="isFilterSelected(panel.key, item.name)"
-                                    (ngModelChange)="onFilterChange(panel.key, item.name, $event)"
-                                    [nzDisabled]="!item.applicable">
+                                <label nz-checkbox [ngModel]="isFilterSelected(panel.key, item.slug)"
+                                    (ngModelChange)="onFilterChange(panel.key, item.slug, $event)"
+                                    [nzDisabled]="isFilterDisabled(panel.key, item.slug)">
                                     <span class="filter-text">{{ item.name }}</span>
                                 </label>
-                                @if (getItemCount(panel.key, item.name) > 0) {
-                                <span class="item-count">{{ getItemCount(panel.key, item.name) }}</span>
+                                @if (getItemCount(panel.key, item.slug) > 0) {
+                                <span class="item-count">{{ getItemCount(panel.key, item.slug) }}</span>
                                 }
                             </div>
+                            }
+                            @if (canToggleFilterPanel(panel)) {
+                            <button type="button" class="secure-btn filter-list-toggle" (click)="toggleFilterPanel(panel.key)">
+                                {{ isFilterPanelExpanded(panel.key) ? 'Show less' : 'Show more' }}
+                            </button>
                             }
                         </div>
                     </nz-collapse-panel>
@@ -66,14 +82,14 @@
                 <div class="filter-tags-header">
                     <p class="filter-tags-title m-0">Selected Filters</p>
                     <div class="filter-tags-actions">
-                        <button class="filter-tags-clear-btn" (click)="clearAllFilters()">Clear all</button>
+                        <button class="secure-btn filter-tags-clear-btn" (click)="clearAllFilters()">Clear all</button>
                     </div>
                 </div>
                 <div class="filter-tags-chips">
-                    @for (filter of getAllSelectedFilters(); track filter.panelKey + filter.itemName) {
+                    @for (filter of getAllSelectedFilters(); track filter.panelKey + filter.itemSlug) {
                     <nz-tag [nzColor]="'default'" [nzMode]="'closeable'"
-                        (nzOnClose)="removeFilter(filter.panelKey, filter.itemName)">
-                        {{ filter.displayName }}
+                        (nzOnClose)="removeFilter(filter.panelKey, filter.itemSlug)">
+                        {{ filter.panelTitle }}: {{ filter.displayName }}
                     </nz-tag>
                     }
                 </div>
@@ -85,14 +101,22 @@
                 @if(productsData?.products?.count !== undefined){
                 <p class="product-count">Showing {{ productsData?.products?.count }} products</p>
                 }
-                <div class="sort-dropdown">
-                    <span class="sort-label">Sort By</span>
-                    <nz-select class="sort-select" [(ngModel)]="sortBy" (ngModelChange)="onSortChange()">
-                        <nz-option nzValue="az" nzLabel="Alphabetically, A-Z"></nz-option>
-                        <nz-option nzValue="za" nzLabel="Alphabetically, Z-A"></nz-option>
-                        <nz-option nzValue="price-low" nzLabel="Price, low to high"></nz-option>
-                        <nz-option nzValue="price-high" nzLabel="Price, high to low"></nz-option>
-                    </nz-select>
+                <div class="products-header__actions">
+                    <button type="button" class="secure-btn tablet-filter-btn" (click)="openFilterDrawer()">
+                        Filters
+                        @if (selectedFilterCount > 0) {
+                        <span class="mobile-fixed-badge">{{ selectedFilterCount }}</span>
+                        }
+                    </button>
+                    <div class="sort-dropdown">
+                        <span class="sort-label">Sort By</span>
+                        <nz-select class="sort-select" [(ngModel)]="sortBy" (ngModelChange)="onSortChange()">
+                            <nz-option nzValue="az" nzLabel="Alphabetically, A-Z"></nz-option>
+                            <nz-option nzValue="za" nzLabel="Alphabetically, Z-A"></nz-option>
+                            <nz-option nzValue="price-low" nzLabel="Price, low to high"></nz-option>
+                            <nz-option nzValue="price-high" nzLabel="Price, high to low"></nz-option>
+                        </nz-select>
+                    </div>
                 </div>
             </div>
             @if (cartItemsCount > 0) {
@@ -121,7 +145,7 @@
             @if (productsData?.products?.results && productsData.products.results.length > 0) {
             <div class="products-grid">
                 @for (product of productsData?.products?.results; track product.id) {
-                <nz-card class="product-card" [nzCover]="coverTemplate" [nzHoverable]="true">
+                <nz-card class="product-card" [class.product-card--revealing]="isProductRevealing(product.id)" [style.--product-delay]="getProductRevealDelay(product.id)" [nzCover]="coverTemplate" [nzHoverable]="false">
                     <ng-template #coverTemplate>
                         <div class="product-image-wrapper" (click)="productView(product)">
                             @if (product.badge) {
@@ -161,18 +185,16 @@
                             : product.product_description }}</p>
                         }
                         @if (product.details) {
-                        <div class="d-flex mb-2" style="gap: 0.5rem;">
+                        <div class="product-price-row">
                             <p class="product-org-price">₹ {{ product.details[0].original_price }}</p>
                             <p class="product-sell-price">₹ {{ product.details[0].selling_price }}</p>
                         </div>
 
                         <div class="add-to-cart-btn">
-                            <div style="flex: 1;">
-                                <button (click)="addToCart(product)" class="secure-btn btn-primary btn-lg signin-btn"
-                                    [class.added]="recentlyAddedProductId === product.id">
-                                    {{ recentlyAddedProductId === product.id ? 'Added to cart' : 'Add to cart' }}
-                                </button>
-                            </div>
+                            <button (click)="addToCart(product)" class="secure-btn btn-primary btn-lg signin-btn"
+                                [class.added]="recentlyAddedProductId === product.id">
+                                {{ recentlyAddedProductId === product.id ? 'Added to cart' : 'Add to cart' }}
+                            </button>
                         </div>
                         }
 
@@ -181,37 +203,25 @@
                 </nz-card>
                 }
             </div>
-            <div class="products-pagination-wrap">
-                <div class="products-pagination-shell">
-                    <p class="pagination-meta m-0">
-                        Page {{ pageIndex }} • {{ totalProducts }} products
+            <div class="products-load-more-wrap" *ngIf="hasMoreProducts">
+                <div class="products-load-more-shell">
+                    <p class="load-more-meta m-0">
+                        Showing {{ displayedProductsCount }} of {{ totalProducts }} products
                     </p>
-                    <nz-pagination [nzTotal]="totalProducts" [nzPageIndex]="pageIndex" [nzPageSize]="pageSize"
-                        [nzShowSizeChanger]="true" [nzPageSizeOptions]="[12, 24, 36]"
-                        (nzPageIndexChange)="onPageIndexChange($event)" (nzPageSizeChange)="onPageSizeChange($event)">
-                    </nz-pagination>
+                    <button type="button" class="secure-btn products-load-more-btn" (click)="loadMoreProducts()"
+                        [disabled]="isLoadingMore">
+                        {{ isLoadingMore ? 'Loading...' : 'Load More' }}
+                    </button>
                 </div>
             </div>
             } @else if (!isProductsLoading) {
             <div class="no-products">
                 <div class="no-products-visual" aria-hidden="true">
-                    <span class="no-products-emoji">🔎</span>
-                    <span class="no-products-spark spark-left">✨</span>
-                    <span class="no-products-spark spark-right">✨</span>
+                    <img class="no-products-image" src="/assets/Collection/no_products_found.svg" alt="" />
                 </div>
                 <h3 class="no-products-title">No matching products found</h3>
                 <p class="no-products-copy">Try clearing a few filters to explore more skin-care options.</p>
-                <!-- <button class="clear-filters-btn" (click)="clearAllFilters()">Clear Filters</button> -->
-            </div>
-            <div class="products-pagination-wrap">
-                <div class="products-pagination-shell">
-                    <p class="pagination-meta m-0">
-                        Page {{ pageIndex }} • 0 products
-                    </p>
-                    <nz-pagination [nzTotal]="0" [nzPageIndex]="1" [nzPageSize]="pageSize" [nzShowSizeChanger]="true"
-                        [nzPageSizeOptions]="[12, 24, 36]" (nzPageSizeChange)="onPageSizeChange($event)">
-                    </nz-pagination>
-                </div>
+                <!-- <button class="secure-btn clear-filters-btn" (click)="clearAllFilters()">Clear Filters</button> -->
             </div>
             } @else {
             <div class="products-initial-loading" aria-live="polite">
@@ -236,9 +246,19 @@
 
     <!-- Mobile fixed action bar -->
     <div class="mobile-fixed-actions">
-        <button class="mobile-fixed-btn" (click)="openSortDrawer()">Sort By: {{ sortByLabel }}</button>
-        <button class="mobile-fixed-btn" (click)="openFilterDrawer()">
-            Filters
+        <button class="secure-btn mobile-fixed-btn mobile-fixed-btn--sort" (click)="openSortDrawer()">
+            <lucide-angular class="mobile-fixed-btn__icon" [size]="15" [img]="icons.feature.sendToBack"></lucide-angular>
+            <span class="mobile-fixed-btn__copy">
+                <span class="mobile-fixed-btn__title">Sort By</span>
+                <span class="mobile-fixed-btn__subtitle">{{ sortByLabel }}</span>
+            </span>
+        </button>
+        <button class="secure-btn mobile-fixed-btn mobile-fixed-btn--filter" (click)="openFilterDrawer()">
+            <lucide-angular class="mobile-fixed-btn__icon" [size]="15" [img]="icons.header.categories"></lucide-angular>
+            <span class="mobile-fixed-btn__copy">
+                <span class="mobile-fixed-btn__title">Filter</span>
+                <span class="mobile-fixed-btn__subtitle">{{ mobileFilterFooterLabel }}</span>
+            </span>
             @if (selectedFilterCount > 0) {
             <span class="mobile-fixed-badge">{{ selectedFilterCount }}</span>
             }
@@ -250,36 +270,43 @@
         [nzTitle]="'Filters'" (nzOnClose)="closeFilterDrawer()">
         <ng-container *nzDrawerContent>
             <div class="drawer-filter-content">
-                <div class="filter-header">
-                    <div class="filter-heading-group">
-                        <h2 class="filter-title">Filters</h2>
-                        <p class="filter-subtitle m-0">Narrow products by concern, type, and ingredients.</p>
-                    </div>
-                    <div class="filter-actions">
-                        @if (draftSelectedFilterCount > 0) {
-                        <span class="selected-filter-count">{{ draftSelectedFilterCount }} active</span>
-                        <button class="clear-all-btn" (click)="clearDraftFilters()">Clear all</button>
-                        }
+                <div class="drawer-filter-top">
+                    <div class="filter-header drawer-filter-header">
+                        <div class="filter-heading-group">
+                            <h2 class="filter-title">Filters</h2>
+                            <p class="filter-subtitle m-0">Narrow products by concern, type, and ingredients.</p>
+                        </div>
+                        <div class="filter-actions">
+                            @if (draftSelectedFilterCount > 0) {
+                            <span class="selected-filter-count">{{ draftSelectedFilterCount }} active</span>
+                            <button class="secure-btn clear-all-btn" (click)="clearDraftFilters()">Clear all</button>
+                            }
+                        </div>
                     </div>
                 </div>
 
-                <div class="filter-panels">
+                <div class="filter-panels drawer-filter-panels">
                     <nz-collapse [nzBordered]="false" [nzExpandIconPosition]="'end'">
                         @for (panel of filterPanels; track panel.key) {
                         @if (panel.items && panel.items.length > 0) {
                         <nz-collapse-panel [nzHeader]="panel.title" [nzActive]="true">
                             <div class="filter-list">
-                                @for (item of panel.items; track item.name) {
+                                @for (item of getVisibleFilterItems(panel); track item.slug) {
                                 <div class="filter-item">
-                                    <label nz-checkbox [ngModel]="isDraftFilterSelected(panel.key, item.name)"
-                                        (ngModelChange)="onDraftFilterChange(panel.key, item.name, $event)"
-                                        [nzDisabled]="!item.applicable">
+                                    <label nz-checkbox [ngModel]="isDraftFilterSelected(panel.key, item.slug)"
+                                        (ngModelChange)="onDraftFilterChange(panel.key, item.slug, $event)"
+                                        [nzDisabled]="isDraftFilterDisabled(panel.key, item.slug)">
                                         <span class="filter-text">{{ item.name }}</span>
                                     </label>
-                                    @if (getItemCount(panel.key, item.name) > 0) {
-                                    <span class="item-count">{{ getItemCount(panel.key, item.name) }}</span>
+                                    @if (getItemCount(panel.key, item.slug) > 0) {
+                                    <span class="item-count">{{ getItemCount(panel.key, item.slug) }}</span>
                                     }
                                 </div>
+                                }
+                                @if (canToggleFilterPanel(panel)) {
+                                <button type="button" class="secure-btn filter-list-toggle" (click)="toggleFilterPanel(panel.key)">
+                                    {{ isFilterPanelExpanded(panel.key) ? 'Show less' : 'Show more' }}
+                                </button>
                                 }
                             </div>
                         </nz-collapse-panel>
@@ -288,8 +315,8 @@
                     </nz-collapse>
                 </div>
                 <div class="drawer-filter-actions">
-                    <button class="drawer-filter-cancel" (click)="closeFilterDrawer()">Cancel</button>
-                    <button class="drawer-filter-apply" (click)="applyFilterChanges()">Apply</button>
+                    <button class="secure-btn drawer-filter-cancel" (click)="closeFilterDrawer()">Cancel</button>
+                    <button class="secure-btn drawer-filter-apply" (click)="applyFilterChanges()">Apply</button>
                 </div>
             </div>
         </ng-container>
@@ -300,17 +327,17 @@
         [nzTitle]="'Sort By'" (nzOnClose)="closeSortDrawer()">
         <ng-container *nzDrawerContent>
             <div class="mobile-sort-list">
-                <button class="mobile-sort-item" [class.active]="sortBy==='az'" (click)="applySortFromDrawer('az')">
+                <button class="secure-btn mobile-sort-item" [class.active]="sortBy==='az'" (click)="applySortFromDrawer('az')">
                     Alphabetically, A-Z
                 </button>
-                <button class="mobile-sort-item" [class.active]="sortBy==='za'" (click)="applySortFromDrawer('za')">
+                <button class="secure-btn mobile-sort-item" [class.active]="sortBy==='za'" (click)="applySortFromDrawer('za')">
                     Alphabetically, Z-A
                 </button>
-                <button class="mobile-sort-item" [class.active]="sortBy==='price-low'"
+                <button class="secure-btn mobile-sort-item" [class.active]="sortBy==='price-low'"
                     (click)="applySortFromDrawer('price-low')">
                     Price, low to high
                 </button>
-                <button class="mobile-sort-item" [class.active]="sortBy==='price-high'"
+                <button class="secure-btn mobile-sort-item" [class.active]="sortBy==='price-high'"
                     (click)="applySortFromDrawer('price-high')">
                     Price, high to low
                 </button>

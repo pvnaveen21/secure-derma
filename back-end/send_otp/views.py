@@ -1,5 +1,4 @@
 from django.contrib.auth import get_user_model
-from django.conf import settings
 from django.utils import timezone
 
 from rest_framework.views import APIView
@@ -7,11 +6,9 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import AllowAny
-# from twilio.rest import Client
-
-from .models import OTPRecord
-
-import datetime
+from .models import OTPRecord, OTP_EXPIRY_SECONDS
+from .email_otp import EmailOTPError, normalize_email, send_email_otp
+from .msg91 import MSG91OTPError, normalize_indian_phone, send_otp
 
 User = get_user_model()
 
@@ -20,36 +17,64 @@ MAX_RESEND      = 3
 RESEND_COOLDOWN = 3   # seconds
 
 
-# def send_sms(phone, otp):
-#     client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
-#     client.messages.create(
-#         body=f"Your OTP is: {otp}. Valid for 60 seconds.",
-#         from_=settings.TWILIO_PHONE,
-#         to=phone
-#     )
+def _resolve_destination(payload):
+    raw_phone = payload.get('phone', '')
+    raw_email = payload.get('email', '')
+
+    if raw_phone:
+        return OTPRecord.CHANNEL_PHONE, normalize_indian_phone(raw_phone)
+
+    if raw_email:
+        return OTPRecord.CHANNEL_EMAIL, normalize_email(raw_email)
+
+    raise ValueError('Phone number or email is required')
 
 
-# ─────────────────────────────────────────────
-# API 1: Send OTP
-# ─────────────────────────────────────────────
+def _record_lookup(channel, destination):
+    if channel == OTPRecord.CHANNEL_PHONE:
+        return {'channel': channel, 'phone': destination, 'is_used': False}
+
+    return {'channel': channel, 'email': destination, 'is_used': False}
+
+
+def _record_create_payload(channel, destination, otp, resend_count=0):
+    payload = {
+        'channel': channel,
+        'phone': '',
+        'email': None,
+        'otp': otp,
+        'resend_count': resend_count,
+    }
+    if channel == OTPRecord.CHANNEL_PHONE:
+        payload['phone'] = destination
+    else:
+        payload['email'] = destination
+    return payload
+
+
+def _destination_label(channel):
+    return 'number' if channel == OTPRecord.CHANNEL_PHONE else 'email'
+
 class SendOTPView(APIView):
     permission_classes  = [AllowAny]
     authentication_classes = []
 
     def post(self, request):
-        phone = request.data.get('phone', '').strip()
-
-        if not phone:
+        try:
+            channel, destination = _resolve_destination(request.data)
+        except (ValueError, MSG91OTPError, EmailOTPError) as exc:
             return Response(
-                {'error': 'Phone number required'},
+                {'error': str(exc)},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        is_existing_user = User.objects.filter(phone=phone).exists()
+        if channel == OTPRecord.CHANNEL_PHONE:
+            is_existing_user = User.objects.filter(phone=destination).exists()
+        else:
+            is_existing_user = User.objects.filter(email__iexact=destination).exists()
 
         existing = OTPRecord.objects.filter(
-            phone=phone,
-            is_used=False
+            **_record_lookup(channel, destination)
         ).order_by('-created_at').first()
 
         if existing:
@@ -88,66 +113,74 @@ class SendOTPView(APIView):
             resend_count = existing.resend_count + 1
             existing.delete()
             otp    = OTPRecord.generate_otp()
-            record = OTPRecord.objects.create(phone=phone, otp=otp, resend_count=resend_count)
+            record = OTPRecord.objects.create(**_record_create_payload(channel, destination, otp, resend_count))
 
         else:
             otp    = OTPRecord.generate_otp()
-            record = OTPRecord.objects.create(phone=phone, otp=otp)
+            record = OTPRecord.objects.create(**_record_create_payload(channel, destination, otp))
 
-        # try:
-        #     send_sms(phone, otp)
-        # except Exception as e:
-        #     record.delete()
-        #     return Response(
-        #         {'error': f'SMS failed: {str(e)}'},
-        #         status=status.HTTP_500_INTERNAL_SERVER_ERROR
-        #     )
-        print(otp)
+        try:
+            if channel == OTPRecord.CHANNEL_PHONE:
+                provider_response = send_otp(destination, otp)
+            else:
+                provider_response = send_email_otp(destination, otp)
+        except (MSG91OTPError, EmailOTPError) as exc:
+            record.delete()
+            return Response(
+                {'error': str(exc)},
+                status=status.HTTP_502_BAD_GATEWAY
+            )
+
+        request_id = provider_response.get('request_id', '')
+        if request_id:
+            record.request_id = request_id
+            record.save(update_fields=['request_id'])
 
         return Response({
             'message'         : 'OTP sent successfully',
             'is_existing_user': is_existing_user,
-            'expires_in'      : 60,
+            'expires_in'      : OTP_EXPIRY_SECONDS,
             'resend_in'       : RESEND_COOLDOWN,
             'resend_left'     : MAX_RESEND - record.resend_count,
+            'request_id'      : request_id,
+            'channel'         : channel,
         }, status=status.HTTP_200_OK)
 
 
-# ─────────────────────────────────────────────
-# API 2: Verify OTP
-# ─────────────────────────────────────────────
 class VerifyOTPView(APIView):
     def post(self, request):
-        phone = request.data.get('phone', '').strip()
         otp   = request.data.get('otp', '').strip()
 
-        if not phone or not otp:
+        if not otp:
             return Response(
-                {'error': 'Phone and OTP required'},
+                {'error': 'OTP required'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # Get OTP record
+        try:
+            channel, destination = _resolve_destination(request.data)
+        except (ValueError, MSG91OTPError, EmailOTPError) as exc:
+            return Response(
+                {'error': str(exc)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
         record = OTPRecord.objects.filter(
-            phone=phone,
-            is_used=False
+            **_record_lookup(channel, destination)
         ).order_by('-created_at').first()
 
-        # No record found
         if not record:
             return Response(
-                {'error': 'No OTP requested for this number'},
+                {'error': f'No OTP requested for this {_destination_label(channel)}'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # Max attempts reached
         if record.is_max_attempts_reached():
             record.delete()
             return Response({
                 'error': 'Too many wrong attempts. Please request a new OTP.'
             }, status=status.HTTP_429_TOO_MANY_REQUESTS)
 
-        # OTP expired
         if not record.is_valid():
             record.delete()
             return Response({
@@ -155,7 +188,6 @@ class VerifyOTPView(APIView):
                 'expired': True,
             }, status=status.HTTP_400_BAD_REQUEST)
 
-        # Wrong OTP
         if record.otp != otp:
             record.attempts += 1
             record.save()
@@ -168,34 +200,33 @@ class VerifyOTPView(APIView):
                 }, status=status.HTTP_429_TOO_MANY_REQUESTS)
 
             return Response({
-                'error'        : f'Wrong OTP. {attempts_left} attempt(s) left.',
+                'error'        : f'Wrong OTP for this {_destination_label(channel)}. {attempts_left} attempt(s) left.',
                 'attempts_left': attempts_left,
             }, status=status.HTTP_400_BAD_REQUEST)
 
-        # ✅ OTP correct → delete record
         record.delete()
 
-        # ─────────────────────────────────────────
-        # Check User table → create only if new
-        # ─────────────────────────────────────────
-        user = User.objects.filter(phone=phone).first()
+        if channel == OTPRecord.CHANNEL_PHONE:
+            user = User.objects.filter(phone=destination).first()
+        else:
+            user = User.objects.filter(email__iexact=destination).first()
 
         if user:
-            # ✅ Existing user — just login, NO create
             is_new_user = False
 
         else:
-            # ✅ New user — create now (only after OTP verified)
-            user = User.objects.create(
-                phone   = phone,
-                email   = f'{phone}@phone.local',   # placeholder email (required field)
-                username= phone,
-            )
-            user.set_unusable_password()            # no password — OTP login only
+            create_payload = {
+                'username': destination.split('@')[0] if channel == OTPRecord.CHANNEL_EMAIL else destination,
+                'email': destination if channel == OTPRecord.CHANNEL_EMAIL else f'{destination}@phone.local',
+            }
+            if channel == OTPRecord.CHANNEL_PHONE:
+                create_payload['phone'] = destination
+
+            user = User.objects.create(**create_payload)
+            user.set_unusable_password()
             user.save()
             is_new_user = True
 
-        # Issue JWT
         refresh = RefreshToken.for_user(user)
 
         return Response({
@@ -203,5 +234,6 @@ class VerifyOTPView(APIView):
             'refresh'    : str(refresh),
             'is_new_user': is_new_user,
             'phone'      : user.phone,
+            'email'      : user.email,
             'message'    : 'Registered successfully' if is_new_user else 'Login success'
         }, status=status.HTTP_200_OK)

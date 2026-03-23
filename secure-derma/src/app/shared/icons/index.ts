@@ -1,4 +1,4 @@
-import { ArrowRightIcon, BadgeCheckIcon, BadgeIndianRupeeIcon, ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon, ChevronUpIcon, HandbagIcon, IndianRupeeIcon, LocateFixed, LogOutIcon, MailIcon, MapPinIcon, MenuIcon, MinusIcon, MoonIcon, PackageIcon, PhoneIcon, PlusIcon, ReceiptIndianRupeeIcon, RotateCcwIcon, SearchIcon, SendToBackIcon, ShieldCheckIcon, SquareArrowLeft, SunIcon, TruckElectricIcon, TruckIcon, UserIcon, XIcon } from 'lucide-angular';
+import { ArrowRightIcon, BadgeCheckIcon, BadgeIndianRupeeIcon, ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon, ChevronUpIcon, HandbagIcon, HouseIcon, IndianRupeeIcon, LayoutGridIcon, LocateFixed, LogOutIcon, MailIcon, MapPinIcon, MenuIcon, MinusIcon, MoonIcon, PackageIcon, PhoneIcon, PlusIcon, ReceiptIndianRupeeIcon, RotateCcwIcon, SearchIcon, SendToBackIcon, ShieldCheckIcon, SquareArrowLeft, SunIcon, TagIcon, TruckElectricIcon, TruckIcon, UserIcon, XIcon } from 'lucide-angular';
 
 export const Icons = {
   theme: {
@@ -15,6 +15,9 @@ export const Icons = {
     menu: MenuIcon,
     plus: PlusIcon,
     minus: MinusIcon,
+    home: HouseIcon,
+    categories: LayoutGridIcon,
+    shop: TagIcon,
 
   },
   feature: {

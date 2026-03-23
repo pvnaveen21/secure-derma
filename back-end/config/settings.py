@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 
 import os
 from pathlib import Path
+from datetime import timedelta
 
 from .env import load_local_env
 from .confiq import *
@@ -155,6 +156,11 @@ REST_FRAMEWORK = {
     ),
 }
 
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=15),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=30),
+}
+
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
@@ -166,3 +172,8 @@ if not DEBUG:
 
 # AUTH_USER_MODEL = 'user.User'
 AUTH_USER_MODEL = "user.User"
+
+SENDGRID_API_KEY = os.getenv('SENDGRID_API_KEY', '')
+SENDGRID_FROM_EMAIL = os.getenv('SENDGRID_FROM_EMAIL', '')
+SENDGRID_FROM_NAME = os.getenv('SENDGRID_FROM_NAME', 'Secure Derma')
+DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', SENDGRID_FROM_EMAIL or 'noreply@securederma.local')

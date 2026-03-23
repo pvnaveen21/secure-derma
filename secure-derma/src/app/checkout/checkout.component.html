@@ -21,7 +21,7 @@
             <span class="checkout-step__index">1</span>
             <div>
                 <h3 class="checkout-step__title mb-0">Delivery Details</h3>
-                <p class="checkout-step__copy mb-0">Enter name, address, postal code, email, and mobile number.</p>
+                <p class="checkout-step__copy mb-0">Enter name, address, postal code, mobile number, and optional email.</p>
             </div>
         </div>
         <div class="checkout-step" [class.checkout-step--active]="currentStep === 2">
@@ -64,7 +64,7 @@
                         <label class="checkout-form__label" for="checkout-email">Email</label>
                         <input id="checkout-email" nz-input type="email" [ngModel]="checkoutCustomer.email"
                             (ngModelChange)="onCheckoutFieldChange('email', $event)" (blur)="onCheckoutFieldBlur('email')"
-                            placeholder="you@example.com" class="checkout-form__input"
+                            placeholder="you@example.com (optional)" class="checkout-form__input"
                             [class.checkout-form__input--error]="!!checkoutErrors.email" />
                         <span class="checkout-form__error" *ngIf="checkoutErrors.email">{{ checkoutErrors.email }}</span>
                     </div>
@@ -116,7 +116,7 @@
                 </div>
 
                 <div class="checkout-panel__actions">
-                    <button nz-button nzType="primary" class="checkout-panel__btn" [disabled]="validatingDetails" (click)="continueToPayment()">
+                    <button nz-button nzType="primary" class="secure-btn checkout-panel__btn" [disabled]="validatingDetails" (click)="continueToPayment()">
                         {{ validatingDetails ? 'Checking details...' : 'Next: Payment' }}
                     </button>
                 </div>
@@ -127,7 +127,7 @@
                     <span class="checkout-panel__eyebrow">Step 2</span>
                     <div class="checkout-panel__header-row">
                         <h2 class="checkout-panel__title mb-0">Payment</h2>
-                        <button type="button" class="checkout-panel__edit-link" (click)="backToDetails()">
+                        <button type="button" class="secure-btn checkout-panel__edit-link" (click)="backToDetails()">
                             Edit Delivery Details
                         </button>
                     </div>
@@ -139,7 +139,7 @@
                             <span class="payment-card__label">Deliver to</span>
                             <strong class="payment-card__name">{{ checkoutCustomer.name }}</strong>
                         </div>
-                        <button type="button" class="payment-card__edit-btn" (click)="backToDetails()">
+                        <button type="button" class="secure-btn payment-card__edit-btn" (click)="backToDetails()">
                             Edit
                         </button>
                     </div>
@@ -154,7 +154,7 @@
                     </div>
                     <div class="payment-card__row">
                         <span class="payment-card__label">Email</span>
-                        <strong>{{ checkoutCustomer.email }}</strong>
+                        <strong>{{ checkoutCustomer.email || 'Not provided' }}</strong>
                     </div>
                     <nz-divider></nz-divider>
                     <div class="payment-card__row payment-card__row--total">
@@ -164,10 +164,10 @@
                 </div>
 
                 <div class="checkout-panel__actions">
-                    <button nz-button nzType="default" class="checkout-panel__btn checkout-panel__btn--ghost" (click)="backToDetails()">
+                    <button nz-button nzType="default" class="secure-btn checkout-panel__btn checkout-panel__btn--ghost" (click)="backToDetails()">
                         Back
                     </button>
-                    <button nz-button nzType="primary" class="checkout-panel__btn" [disabled]="paymentLoading" (click)="payNow()">
+                    <button nz-button nzType="primary" class="secure-btn checkout-panel__btn" [disabled]="paymentLoading" (click)="payNow()">
                         {{ paymentLoading ? 'Starting Payment...' : 'Pay Now' }}
                     </button>
                 </div>
@@ -186,37 +186,45 @@
 
                 <div class="checkout-summary__list cart-items-container">
                     <div class="checkout-item cart-item" *ngFor="let item of session.items">
-                        <div class="checkout-item__media item-image">
+                        <button type="button" class="secure-btn checkout-item__media item-image checkout-item__link" (click)="openProduct(item)" [attr.aria-label]="'Open ' + item.productName">
                             <img *ngIf="item.thumbnail" [src]="item.thumbnail" [alt]="item.productName" class="checkout-item__image" />
-                        </div>
-                        <div class="checkout-item__copy item-details">
-                            <h4 class="checkout-item__title item-name mb-0">{{ item.productName }}</h4>
-                            <div class="checkout-item__meta-row">
-                                <p class="checkout-item__quality mb-0" *ngIf="item.qualityLabel">
-                                    Quality: {{ item.qualityLabel }}
-                                </p>
-                                <p class="checkout-item__meta item-sku mb-0">SKU-{{ item.detailId }}</p>
+                        </button>
+                        <div class="checkout-item__content">
+                            <div class="checkout-item__body">
+                                <div class="checkout-item__copy item-details">
+                                    <div class="checkout-item__header-row">
+                                        <button type="button" class="secure-btn checkout-item__title-link" (click)="openProduct(item)">{{ item.productName }}</button>
+                                        <span class="checkout-item__save save-badge" *ngIf="getDiscountPercent(item) > 0">
+                                            Save {{ getDiscountPercent(item) }}%
+                                        </span>
+                                    </div>
+                                    <div class="checkout-item__meta-row">
+                                        <p class="checkout-item__quality mb-0" *ngIf="item.qualityLabel">
+                                            Quality: {{ item.qualityLabel }}
+                                        </p>
+                                        <p class="checkout-item__meta item-sku mb-0">SKU-{{ item.detailId }}</p>
+                                    </div>
+                                </div>
+                                <div class="checkout-item__price item-price">
+                                    <div class="checkout-item__price-row">
+                                        <strong class="price">₹{{ item.unitPrice }}</strong>
+                                        <span class="original-price" *ngIf="item.originalPrice && item.originalPrice > item.unitPrice">
+                                            ₹{{ item.originalPrice }}
+                                        </span>
+                                    </div>
+                                    <span class="checkout-item__unit-price">Qty {{ item.quantity }} · Total ₹{{ item.lineTotal }}</span>
+                                </div>
                             </div>
                             <div class="checkout-item__actions item-controls">
                                 <div class="checkout-item__quantity quantity-list">
-                                    <button type="button" class="checkout-item__qty-btn" [disabled]="item.quantity <= 1"
+                                    <button type="button" class="secure-btn checkout-item__qty-btn" [disabled]="item.quantity <= 1"
                                         (click)="updateItemQuantity(item, -1)">-</button>
                                     <span class="checkout-item__qty-value">{{ item.quantity }}</span>
-                                    <button type="button" class="checkout-item__qty-btn" [disabled]="item.quantity >= 10"
+                                    <button type="button" class="secure-btn checkout-item__qty-btn" [disabled]="item.quantity >= 10"
                                         (click)="updateItemQuantity(item, 1)">+</button>
                                 </div>
-                                <button type="button" class="checkout-item__remove" (click)="removeItem(item)">Delete</button>
+                                <button type="button" class="secure-btn checkout-item__remove" (click)="removeItem(item)">Delete</button>
                             </div>
-                        </div>
-                        <div class="checkout-item__price item-price">
-                            <span class="checkout-item__save save-badge" *ngIf="getDiscountPercent(item) > 0">
-                                Save {{ getDiscountPercent(item) }}%
-                            </span>
-                            <strong class="price">₹{{ item.unitPrice }}</strong>
-                            <span class="original-price" *ngIf="item.originalPrice && item.originalPrice > item.unitPrice">
-                                ₹{{ item.originalPrice }}
-                            </span>
-                            <span class="checkout-item__unit-price">Qty {{ item.quantity }} · Total ₹{{ item.lineTotal }}</span>
                         </div>
                     </div>
                 </div>

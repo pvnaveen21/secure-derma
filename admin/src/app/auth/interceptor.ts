@@ -11,7 +11,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
     const authService = inject(AuthService);
 
     // Skip adding auth header for token refresh and login requests
-    if (req.url.includes('/auth/token/refresh/') || req.url.includes('/auth/login/') || req.url.includes('/auth/google/')) {
+    if (req.url.includes('/auth/token/refresh/') || req.url.includes('/auth/login/')) {
         return next(req);
     }
 

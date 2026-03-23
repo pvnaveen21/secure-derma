@@ -16,7 +16,6 @@ import { Assets } from '@app/shared/assets';
 import { SvgLoad } from '@app/shared/assets/svg-load';
 import { CommonDataTableComponent } from '@app/shared/directives/common-data-table/common-data-table.component';
 import { DeleteModelComponent } from '@app/shared/directives/delete-model/delete-model.component';
-import { FileUploadComponent } from '@app/shared/directives/file-upload/file-upload.component';
 import { ControlMessagesComponent } from '@app/shared/directives/form-validation/control-messages.component';
 import { InputSanitizeDirective } from '@app/shared/directives/Input-vaildation/input-sanitize.directive';
 import { ThumbnailUploadComponent } from '@app/shared/directives/thumbnail-upload/thumbnail-upload.component';
@@ -40,7 +39,6 @@ import { NzToolTipModule } from 'ng-zorro-antd/tooltip';
     LucideAngularModule,
     NzPaginationModule,
     NzModalModule,
-    FileUploadComponent,
     SvgLoad,
     CommonModule,
     NzEmptyModule,

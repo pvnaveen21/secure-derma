@@ -1,13 +1,12 @@
 import { Injectable } from '@angular/core';
 import { InterfaceService } from '@app/services/core/interface.service';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { BehaviorSubject, Observable, Subject, map, catchError, timer, takeUntil, take, tap } from 'rxjs';
+import { BehaviorSubject, Observable, Subject, map, catchError, timer, takeUntil, take, tap, throwError } from 'rxjs';
 import {
   ACCESS_TOKEN,
   getToken,
   getTokenExpiration,
-  isTokenExpired,
   REFRESH_TOKEN,
   setToken,
   unsetToken
@@ -58,7 +57,6 @@ export class AuthService extends InterfaceService {
         },
 
         error: (error) => {
-          unsetToken();
           reject(error.error);
         }
 
@@ -69,7 +67,7 @@ export class AuthService extends InterfaceService {
 
   loadAppData(): Promise<unknown> {
     return new Promise<unknown>((resolve, reject) => {
-      if (!isTokenExpired(REFRESH_TOKEN)) {
+      if (getToken(REFRESH_TOKEN)) {
         this.getUserData().subscribe({
           next: (response: any) => {
             if (response['access']) {
@@ -85,14 +83,23 @@ export class AuthService extends InterfaceService {
               .catch(error => reject(error));
           },
           error: (error: any) => {
+            if (getToken(ACCESS_TOKEN)) {
+              this.getUserDetails(true, false)
+                .then(user => resolve(user))
+                .catch(() => resolve(error));
+              return;
+            }
+
             this.setUser();
-            unsetToken();
             resolve(error);
           }
         })
+      } else if (getToken(ACCESS_TOKEN)) {
+        this.getUserDetails(true, false)
+          .then(user => resolve(user))
+          .catch(error => resolve(error));
       } else {
         this.setUser();
-        unsetToken();
         resolve('');
       }
     });
@@ -110,11 +117,45 @@ export class AuthService extends InterfaceService {
             .catch(error => reject(error));
         },
         error: (error) => {
-          unsetToken();
           reject(error.error);
         }
       });
     })
+  }
+
+  sendOtp(payload: { phone?: string; email?: string; }): Promise<any> {
+    return new Promise((resolve, reject) => {
+      this.http.post(
+        this.getApiUrl('/auth/sendotp/'),
+        payload,
+        this.getHttpOptions('json', { auth: false })
+      ).subscribe({
+        next: (response: any) => resolve(response),
+        error: (error) => reject(error.error),
+      });
+    });
+  }
+
+  verifyOtp(payload: { phone?: string; email?: string; otp: string; }): Promise<any> {
+    return new Promise((resolve, reject) => {
+      this.http.post(
+        this.getApiUrl('/auth/otp-verify/'),
+        payload,
+        this.getHttpOptions('json', { auth: false })
+      ).subscribe({
+        next: (response: any) => {
+          setToken(response.access, ACCESS_TOKEN);
+          setToken(response.refresh, REFRESH_TOKEN);
+          this.cartService.syncGuestCartToServer()
+            .then(() => this.getUserDetails())
+            .then(user => resolve(user))
+            .catch(error => reject(error));
+        },
+        error: (error) => {
+          reject(error.error);
+        }
+      });
+    });
   }
 
   changePassword(data: any) {
@@ -157,7 +198,6 @@ export class AuthService extends InterfaceService {
           resolve(user);
         },
         error: (error) => {
-          unsetToken();
           reject(error.error);
         }
       });
@@ -165,11 +205,24 @@ export class AuthService extends InterfaceService {
   }
 
   getUserData(): Observable<any> {
+    const refreshToken = getToken(REFRESH_TOKEN);
+    if (!refreshToken) {
+      return throwError(() => new Error('Refresh token is missing.'));
+    }
+
     return this.http
-      .post(this.getApiUrl('/auth/token/refresh/'), { refresh: getToken(REFRESH_TOKEN) }, this.getHttpOptions('json', { auth: false }))
+      .post(this.getApiUrl('/auth/token/refresh/'), { refresh: refreshToken }, this.getHttpOptions('json', { auth: false }))
       .pipe(
         map(response => response),
-        catchError(this.handleError)
+        catchError((error) => {
+          if (error instanceof HttpErrorResponse && (error.status === 400 || error.status === 401)) {
+            unsetToken();
+            this.stopTimer.next(true);
+            this.setUser();
+          }
+
+          return this.handleError(error);
+        })
       );
   }
 
@@ -199,8 +252,12 @@ export class AuthService extends InterfaceService {
     time.pipe(takeUntil(this.stopTimer)).subscribe(() => {
       this.getUserData().subscribe({
         next: (response: any) => {
-          setToken(response['access'], ACCESS_TOKEN);
-          setToken(response['refresh'], REFRESH_TOKEN);
+          if (response?.access) {
+            setToken(response.access, ACCESS_TOKEN);
+          }
+          if (response?.refresh) {
+            setToken(response.refresh, REFRESH_TOKEN);
+          }
           this.stopTimer.next(false);
           timer(100).pipe(take(1)).subscribe({
             next: () => {
@@ -211,7 +268,7 @@ export class AuthService extends InterfaceService {
           this.getUserDetails(true, false).then(user => user).catch(error => error);
         },
         error: () => {
-          this.router.navigate(['/']).then(res => res);
+          this.stopTimer.next(true);
         }
       });
     });
@@ -219,23 +276,19 @@ export class AuthService extends InterfaceService {
 
 
   logout() {
-    // this.logout$.next('open');
     return this.http
       .post(this.getApiUrl('/auth/logout/'), { 'refresh': getToken(REFRESH_TOKEN) }, this.getHttpOptions('json')).subscribe({
-        next: (res: any) => {
-          // console.log('result', res)
+        next: () => {
           unsetToken();
           void this.cartService.hydrateCart();
           this.router.navigate(['/account/login']).then(res => res).catch(error => {
           });
-          // this.logout$.next('close');
         },
-        error: (err) => {
+        error: () => {
           unsetToken();
           void this.cartService.hydrateCart();
           this.router.navigate(['/account/login']).then(res => res).catch(error => {
           });
-          // this.logout$.next('close');
         }
       })
   }
@@ -247,17 +300,13 @@ export class AuthService extends InterfaceService {
         allowCredentials: true
       })).subscribe({
         next: (response: any) => {
-          // console.log(response.token);
           setToken(response.token, ACCESS_TOKEN);
-          // this.authService.setLogoutActivityToken();
-          // setToken("response.refresh_token", REFRESH_TOKEN);
           this.cartService.syncGuestCartToServer()
             .then(() => this.getUserDetails())
             .then(user => resolve(user))
             .catch(error => reject(error));
         },
         error: (error) => {
-          unsetToken();
           reject(error.error);
         }
       })
@@ -265,8 +314,7 @@ export class AuthService extends InterfaceService {
   }
 
   isLoggedIn() {
-    return (!!getToken(ACCESS_TOKEN) && !isTokenExpired(ACCESS_TOKEN))
-      || (!!getToken(REFRESH_TOKEN) && !isTokenExpired(REFRESH_TOKEN));
+    return !!getToken(ACCESS_TOKEN) || !!getToken(REFRESH_TOKEN);
   }
 
   redirectToLogin() {
@@ -330,19 +378,4 @@ export class AuthService extends InterfaceService {
     );
   }
 
-  getAccessToken(): string | null {
-    return localStorage.getItem('access_token');
-  }
-
-  saveAccessToken(token: string): void {
-    localStorage.setItem('access_token', token);
-  }
-
-  getRefreshToken(): string | null {
-    return localStorage.getItem('refresh_token');
-  }
-
-  saveRefreshToken(token: string): void {
-    localStorage.setItem('refresh_token', token);
-  }
 }

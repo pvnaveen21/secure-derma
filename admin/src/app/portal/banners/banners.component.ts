@@ -4,6 +4,18 @@ import { BannersService } from '@app/services/secura/banners.service';
 import { ThumbnailUploadComponent } from '@app/shared/directives/thumbnail-upload/thumbnail-upload.component';
 import { NzMessageService } from 'ng-zorro-antd/message';
 
+interface BannerItem {
+  key: string;
+  label: string;
+  type: 'single' | 'multiple';
+  uploadLabel: string[];
+}
+
+interface BannerSection {
+  title: string;
+  items: BannerItem[];
+}
+
 @Component({
   selector: 'app-banners',
   imports: [
@@ -14,25 +26,68 @@ import { NzMessageService } from 'ng-zorro-antd/message';
 })
 export class BannersComponent {
 
-  bannerTypes = [
-    { key: "default_banner", label: "Default Banner", type: 'single' },
-    { key: "main_image", label: "Main Image Banner", type: 'single' },
-    { key: "why_secure_derma", label: "Why Secure Derma", type: 'single' },
-    { key: "landing_page", label: "Landing Page Banner", type: 'multiple' },
-
-    { key: "skin_thumbnail", label: "Skin Thumbnail", type: 'single' },
-    { key: "skin-care", label: "Skin Banner", type: 'multiple' },
-
-    { key: "hair_thumbnail", label: "Hair Thumbnail", type: 'single' },
-    { key: "hair-care", label: "Hair Banner", type: 'multiple' },
-
-    { key: "supplement_thumbnail", label: "Supplement Thumbnail", type: 'single' },
-    { key: "supplements", label: "Supplement Banner", type: 'multiple' },
-
-    { key: "pediatric_thumbnail", label: "Pediatric", type: 'single' },
-    { key: "pediatric", label: "Pediatric Banner", type: 'multiple' },
-
-    { key: "all", label: "Shop All", type: 'multiple' }
+  bannerSections: BannerSection[] = [
+    {
+      title: 'Main Image Banner',
+      items: [
+        { key: 'main_image_web', label: 'Web Banner', type: 'single', uploadLabel: ['Upload desktop main banner', 'Suggested: wide landscape image'] },
+        { key: 'main_image_mobile', label: 'Mobile Banner', type: 'single', uploadLabel: ['Upload mobile main banner', 'Suggested: portrait-friendly image'] }
+      ]
+    },
+    {
+      title: 'Default Banner',
+      items: [
+        { key: 'default_banner_web', label: 'Web Banner', type: 'single', uploadLabel: ['Upload desktop default banner', 'Suggested: wide landscape image'] },
+        { key: 'default_banner_mobile', label: 'Mobile Banner', type: 'single', uploadLabel: ['Upload mobile default banner', 'Suggested: portrait-friendly image'] }
+      ]
+    },
+    {
+      title: 'Landing Page Banner',
+      items: [
+        { key: 'landing_page_web', label: 'Web Banner', type: 'multiple', uploadLabel: ['Upload desktop landing banner', 'File Type: PNG, JPEG'] },
+        { key: 'landing_page_mobile', label: 'Mobile Banner', type: 'multiple', uploadLabel: ['Upload mobile landing banner', 'File Type: PNG, JPEG'] }
+      ]
+    },
+    {
+      title: 'General Banners',
+      items: [
+        { key: 'why_secure_derma', label: 'Why Secure Derma', type: 'single', uploadLabel: ['Upload Image Size 1270x240', 'File Type: PNG, JPEG'] },
+      ]
+    },
+    {
+      title: 'Skin',
+      items: [
+        { key: 'skin_thumbnail', label: 'Skin Thumbnail', type: 'single', uploadLabel: ['Upload Image Size 1270x240', 'File Type: PNG, JPEG'] },
+        { key: 'skin-care', label: 'Skin Banner', type: 'multiple', uploadLabel: ['Upload Image Size 1270x240', 'File Type: PNG, JPEG'] }
+      ]
+    },
+    {
+      title: 'Hair',
+      items: [
+        { key: 'hair_thumbnail', label: 'Hair Thumbnail', type: 'single', uploadLabel: ['Upload Image Size 1270x240', 'File Type: PNG, JPEG'] },
+        { key: 'hair-care', label: 'Hair Banner', type: 'multiple', uploadLabel: ['Upload Image Size 1270x240', 'File Type: PNG, JPEG'] }
+      ]
+    },
+    {
+      title: 'Supplements',
+      items: [
+        { key: 'supplement_thumbnail', label: 'Supplement Thumbnail', type: 'single', uploadLabel: ['Upload Image Size 1270x240', 'File Type: PNG, JPEG'] },
+        { key: 'supplements', label: 'Supplement Banner', type: 'multiple', uploadLabel: ['Upload Image Size 1270x240', 'File Type: PNG, JPEG'] }
+      ]
+    },
+    {
+      title: 'Pediatric',
+      items: [
+        { key: 'pediatric_thumbnail', label: 'Pediatric Thumbnail', type: 'single', uploadLabel: ['Upload Image Size 1270x240', 'File Type: PNG, JPEG'] },
+        { key: 'pediatric', label: 'Pediatric Banner', type: 'multiple', uploadLabel: ['Upload Image Size 1270x240', 'File Type: PNG, JPEG'] }
+      ]
+    },
+    {
+      title: 'Shop All',
+      items: [
+        { key: 'all', label: 'Shop All', type: 'multiple', uploadLabel: ['Upload Image Size 1270x240', 'File Type: PNG, JPEG'] }
+      ]
+    }
   ];
 
   groupedBanners: any = {};
@@ -44,6 +99,14 @@ export class BannersComponent {
 
   ngOnInit() {
     this.getAllImages();
+  }
+
+  get bannerTypes(): BannerItem[] {
+    return this.bannerSections.flatMap((section) => section.items);
+  }
+
+  getBannerConfig(type: string): BannerItem | undefined {
+    return this.bannerTypes.find((item) => item.key === type);
   }
 
   /** 🔥 Fetch grouped banners from backend */
@@ -71,17 +134,11 @@ export class BannersComponent {
 
   /** 🔥 When user selects image */
   onThumbnailSelected(file: File | null, index: number, type: string) {
-    console.log(file);
-    
     if (!file) return;
 
     this.bannerService.addNewBanner(file, type).subscribe({
       next: (res: any) => {
-        // console.log(file);
-        // console.log(type);
-        const findindexValue = this.bannerTypes.findIndex((value: any) => {
-          return value.key == type
-        })
+        const bannerConfig = this.getBannerConfig(type);
         this.message.success('File uploaded successfully');
 
         // update UI instantly
@@ -89,7 +146,7 @@ export class BannersComponent {
         this.groupedBanners[type][index].image = URL.createObjectURL(file);
 
         // add new blank placeholder        
-        if (this.bannerTypes[findindexValue].type == 'multiple') {
+        if (bannerConfig?.type == 'multiple') {
           this.addBanner(type);
         }
       }

@@ -1,28 +1,21 @@
 <div class="login-page">
 
-  <!-- Background layers -->
   <div class="bg-image"></div>
   <div class="bg-overlay"></div>
 
-  <!-- Card -->
   <div class="login-card">
-
-    <!-- Brand -->
     <div class="brand">
-      <div class="brand-icon">
-        <span nz-icon nzType="appstore" nzTheme="outline"></span>
+      <img class="brand-logo" src="assets/brand/secure-derma-dark.png" alt="Secure Derma" />
+      <div class="brand-copy">
+        <p class="brand-eyebrow">Secure Derma Admin</p>
+        <p class="brand-description">Operations console for catalog, orders, banners, and storefront content.</p>
       </div>
-      <span class="brand-name">Nexus</span>
     </div>
 
-    <h2 class="card-title">Welcome back</h2>
-    <p class="card-sub">Sign in to your account</p>
+    <h2 class="card-title">Admin sign in</h2>
+    <p class="card-sub">Use your authorized team account to access the Secure Derma control panel.</p>
 
-    <!-- Form -->
     <form nz-form nzLayout="vertical" [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="form" autocomplete="on">
-      <div id="googleBtn"></div>
-
-      <!-- Username -->
       <nz-form-item>
         <nz-form-label nzFor="email">Email</nz-form-label>
         <nz-form-control [nzErrorTip]="emailTpl" nzHasFeedback>
@@ -37,7 +30,6 @@
         </nz-form-control>
       </nz-form-item>
 
-      <!-- Password -->
       <nz-form-item>
         <nz-form-label nzFor="password">Password</nz-form-label>
         <nz-form-control [nzErrorTip]="passwordTpl" nzHasFeedback>
@@ -56,30 +48,15 @@
         </nz-form-control>
       </nz-form-item>
 
-      <!-- Remember me + Forgot -->
-      <!-- <div class="options-row">
-        <label nz-checkbox formControlName="remember">Remember me</label>
-        <a class="forgot-link" href="#">Forgot password?</a>
-      </div> -->
-
-      <!-- Error banner -->
       <div class="error-banner" *ngIf="loginError">
         <span nz-icon nzType="close-circle" nzTheme="outline"></span>
         {{ loginError }}
       </div>
 
-      <!-- Submit -->
       <button nz-button nzType="primary" nzBlock [nzLoading]="isLoading" type="submit" class="mt-5">
         <span nz-icon nzType="login" nzTheme="outline" *ngIf="!isLoading"></span>
         Sign In
       </button>
-
     </form>
-
-    <!-- <p class="register-row">
-      Don't have an account? <a href="#">Register now</a>
-    </p> -->
-
   </div>
-
 </div>

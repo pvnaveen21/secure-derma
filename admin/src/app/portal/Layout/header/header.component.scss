@@ -8,6 +8,32 @@
 
 .header-title {
     line-height: normal;
+
+    h3 {
+        font-size: 1.1rem;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        color: #143f31;
+    }
+
+    .text-muted {
+        color: #587467 !important;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        font-size: 0.7rem;
+        font-weight: 700;
+    }
+}
+
+.header-brand {
+    min-width: 0;
+}
+
+.header-brand__logo {
+    width: 148px;
+    max-width: 38vw;
+    height: auto;
+    display: block;
 }
 
 .header-title-container {
@@ -35,4 +61,16 @@
 ::ng-deep .ant-drawer-body {
     padding: 0px;
     scrollbar-width: thin !important;
+}
+
+@media only screen and (max-width: 640px) {
+    .header-brand__logo {
+        width: 124px;
+    }
+
+    .header-title {
+        .text-muted {
+            font-size: 0.64rem;
+        }
+    }
 }

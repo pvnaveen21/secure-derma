@@ -11,11 +11,11 @@
     </nav>
 
     <div class="pro-detail-view mt-5">
-        <div style="width: 100%;overflow: auto;">
+        <div class="product-img-wrap">
             <div class="product-img-container">
                 <div>
                     <app-horizontal-scroll [data]="sideImages" scrollDirection="vertical">
-                        <div data-scroll-body class="category-container">
+                        <div #thumbnailStrip data-scroll-body class="category-container">
                             <div class="d-flex flex-column">
                                 @for (category of sideImages; track $index; let i = $index) {
                                 <img [src]="category" alt="" class="clickable rounded-lg side-select-img"
@@ -27,10 +27,23 @@
                     </app-horizontal-scroll>
                 </div>
                 <div class="">
-                    <div class="view-img-main border">
+                    <div class="view-img-main border" (touchstart)="onProductImageTouchStart($event)"
+                        (touchend)="onProductImageTouchEnd($event)">
+                        @if(sideImages.length > 1) {
+                        <button type="button" class="secure-btn product-image-nav product-image-nav--prev"
+                            (click)="showPreviousProductImage()" aria-label="Show previous product image">
+                            <lucide-angular [img]="icons.chevron.leftIcon" [size]="20"></lucide-angular>
+                        </button>
+                        }
                         @if(mainViewImage){
                         <img [src]="mainViewImage" [alt]="productData?.product_name || 'Product image'"
                             class="slide-img" [ngClass]="{'slide-animation': isImageChanging}" />
+                        }
+                        @if(sideImages.length > 1) {
+                        <button type="button" class="secure-btn product-image-nav product-image-nav--next"
+                            (click)="showNextProductImage()" aria-label="Show next product image">
+                            <lucide-angular [img]="icons.chevron.rightIcon" [size]="20"></lucide-angular>
+                        </button>
                         }
                     </div>
                 </div>
@@ -43,13 +56,13 @@
                 <p class="company_name mb-2">{{productData?.brand?.brand_name}}</p>
                 <p class="product_name mb-0">{{productData?.product_name}}</p>
             </div>
-            <div class="star-rating-main mb-1">
+            <div class="star-rating-main">
                 @if(productData?.avg_rating){
                 <nz-rate [ngModel]="productData?.avg_rating" nzAllowHalf nzDisabled class="pro-small-rate"></nz-rate>
                 <span class="rating-value">{{productData?.avg_rating}}/<span class="muted-clr">5</span></span>
                 <span class="overall-review">{{productData?.reviews.total_count}} reviews</span>
                 <span class="rating-separator"></span>
-                <button type="button" class="rating-action-btn">
+                <button type="button" class="secure-btn rating-action-btn">
                     <span class="rating-dot"></span>
                     <span class="rating-text">Rate this product</span>
                 </button>
@@ -71,7 +84,7 @@
                             <span class="mrp-label">M.R.P</span>
                         </div>
                         <div class="org-price">
-                            <lucide-angular [img]="icons.product.rupee" class="d-flex og-price-icon"></lucide-angular>
+                            <lucide-angular [img]="icons.product.rupee" class="d-flex og-price-icon" style="width: 1rem;"></lucide-angular>
                             {{currentPriceData.original_price}}
                         </div>
                     </div>
@@ -160,6 +173,22 @@
             }
 
             <div class="purchase-panel mt-5">
+                <div class="quantity-selector quantity-selector--main">
+                    <span class="quantity-selector__label">Quantity</span>
+                    <div class="quantity-selector__controls">
+                        <button type="button" class="secure-btn quantity-selector__button"
+                            [disabled]="selectedQuantity <= minPurchaseQuantity"
+                            (click)="decreaseQuantity()">
+                            -
+                        </button>
+                        <span class="quantity-selector__value">{{ selectedQuantity }}</span>
+                        <button type="button" class="secure-btn quantity-selector__button"
+                            [disabled]="selectedQuantity >= maxPurchaseQuantity"
+                            (click)="increaseQuantity()">
+                            +
+                        </button>
+                    </div>
+                </div>
                 <div class="both-btn-container">
                     <div class="btn-container">
                         <button class=" secure-btn  w-100 add-to-cart-btn "
@@ -179,7 +208,7 @@
                 <div class="product-assurance">
                     <div class="product-assurance-card">
                         <div class="product-assurance-icon">
-                            <lucide-angular [img]="icons.product.badge"></lucide-angular>
+                            <lucide-angular [img]="icons.product.badge" style="width: 1rem;height: auto;" ></lucide-angular>
                         </div>
                         <div class="product-assurance-copy">
                             <h5>Authentic Stock</h5>
@@ -188,7 +217,7 @@
                     </div>
                     <div class="product-assurance-card">
                         <div class="product-assurance-icon">
-                            <lucide-angular [img]="icons.product.rupee"></lucide-angular>
+                            <lucide-angular [img]="icons.product.rupee" style="width: 1rem;height: auto;"></lucide-angular>
                         </div>
                         <div class="product-assurance-copy">
                             <h5>Clear Pricing</h5>
@@ -197,7 +226,7 @@
                     </div>
                     <div class="product-assurance-card">
                         <div class="product-assurance-icon">
-                            <lucide-angular [img]="icons.product.truck"></lucide-angular>
+                            <lucide-angular [img]="icons.product.truck" style="width: 1rem;height: auto;"></lucide-angular>
                         </div>
                         <div class="product-assurance-copy">
                             <h5>Shipping Updates</h5>
@@ -254,7 +283,7 @@
                     <section class="product-info-tab"
                         [ngClass]="{'product-info-tab-active': activeProductInfoKey === section.key}"
                         [attr.id]="'product-info-section-' + section.key">
-                        <button type="button" class="product-info-trigger" (click)="setActiveProductInfo(section.key)"
+                        <button type="button" class="secure-btn product-info-trigger" (click)="setActiveProductInfo(section.key)"
                             [attr.aria-expanded]="activeProductInfoKey === section.key"
                             [attr.aria-controls]="'product-info-panel-' + section.key">
                             <span class="product-info-tab-badge">0{{ i + 1 }}</span>
@@ -395,7 +424,7 @@
             </section>
         </div>
 
-        <div *ngIf="customerReviews.length" class="reviews-section pb-5">
+        <div *ngIf="customerReviews.length" #reviewsSection class="reviews-section pb-5">
             <div class="reviews-section-head">
                 <div>
                     <h4 class="mb-0">Customer reviews</h4>
@@ -403,58 +432,142 @@
                 </div>
             </div>
 
+            <div class="mt-4"
+                style="display:grid;grid-template-columns:repeat(auto-fit,minmax(16rem,1fr));gap:.85rem;padding:.9rem;border-radius:1rem;border:.1rem solid color-mix(in srgb,var(--border-color) 82%,transparent);background:color-mix(in srgb,var(--card-bg) 97%,var(--brand-primary) 3%);">
+                <div style="display:grid;gap:.55rem;">
+                    <p class="mb-0"
+                        style="font-size:.8rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--text-secondary);">
+                        Filter By</p>
+                    <div style="display:flex;flex-wrap:wrap;gap:.55rem;">
+                        @for (rating of reviewRatingOptions; track rating) {
+                        <button type="button" class="secure-btn reviews-filter-chip"
+                            [style.border-color]="selectedReviewRatings.includes(rating) ? 'color-mix(in srgb, var(--brand-primary) 55%, transparent)' : 'color-mix(in srgb, var(--border-color) 80%, transparent)'"
+                            [style.background]="selectedReviewRatings.includes(rating) ? 'color-mix(in srgb, var(--brand-primary) 12%, var(--card-bg))' : 'var(--card-bg)'"
+                            [style.color]="selectedReviewRatings.includes(rating) ? 'var(--brand-primary)' : 'var(--text-primary)'"
+                            style="min-height:2.2rem;padding:.5rem .85rem;border-radius:99.9rem;border:.1rem solid;font-size:.82rem;font-weight:700;"
+                            (click)="toggleReviewRatingFilter(rating)">
+                            {{ rating }} star
+                        </button>
+                        }
+                    </div>
+                </div>
+
+                <div style="display:grid;gap:.55rem;">
+                    <p class="mb-0"
+                        style="font-size:.8rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--text-secondary);">
+                        Sort by reviews type</p>
+                    <div style="display:flex;flex-wrap:wrap;gap:.55rem;">
+                        @for (option of reviewSortOptions; track option.value) {
+                        <button type="button" class="secure-btn reviews-filter-chip"
+                            [style.border-color]="selectedReviewSort === option.value ? 'color-mix(in srgb, var(--brand-primary) 55%, transparent)' : 'color-mix(in srgb, var(--border-color) 80%, transparent)'"
+                            [style.background]="selectedReviewSort === option.value ? 'color-mix(in srgb, var(--brand-primary) 12%, var(--card-bg))' : 'var(--card-bg)'"
+                            [style.color]="selectedReviewSort === option.value ? 'var(--brand-primary)' : 'var(--text-primary)'"
+                            style="min-height:2.2rem;padding:.5rem .85rem;border-radius:99.9rem;border:.1rem solid;font-size:.82rem;font-weight:700;"
+                            (click)="setReviewSort(option.value)">
+                            {{ option.label }}
+                        </button>
+                        }
+                    </div>
+                </div>
+
+                <div style="display:flex;flex-wrap:wrap;gap:.55rem;align-items:flex-start;">
+                    <button type="button" class="secure-btn reviews-filter-chip"
+                        [style.border-color]="reviewsWithImagesOnly ? 'color-mix(in srgb, var(--brand-primary) 55%, transparent)' : 'color-mix(in srgb, var(--border-color) 80%, transparent)'"
+                        [style.background]="reviewsWithImagesOnly ? 'color-mix(in srgb, var(--brand-primary) 12%, var(--card-bg))' : 'var(--card-bg)'"
+                        [style.color]="reviewsWithImagesOnly ? 'var(--brand-primary)' : 'var(--text-primary)'"
+                        style="min-height:2.2rem;padding:.5rem .85rem;border-radius:99.9rem;border:.1rem solid;font-size:.82rem;font-weight:700;"
+                        (click)="toggleReviewImageFilter()">
+                        Reviews with image
+                    </button>
+                    <button *ngIf="hasActiveReviewFilters" type="button"
+                        class="secure-btn"
+                        style="min-height:2.2rem;padding:.5rem .85rem;border-radius:99.9rem;border:.1rem solid color-mix(in srgb,var(--border-color) 80%,transparent);font-size:.82rem;font-weight:700;color:#b42318;"
+                        (click)="resetReviewFilters()">
+                        Reset filters
+                    </button>
+                </div>
+            </div>
+
+            <p *ngIf="!filteredCustomerReviews.length" class="mb-0"
+                style="margin-top:1rem;padding:.9rem 1rem;border-radius:1rem;border:.1rem dashed color-mix(in srgb,var(--border-color) 80%,transparent);color:var(--text-secondary);text-align:center;">
+                No reviews match the selected filters.
+            </p>
+
             <div class="grid-review mt-4">
-                @for (item of customerReviews; track $index) {
+                @for (entry of paginatedCustomerReviews; track entry.index) {
                 <article class="review-card">
                     <div class="review-card-head">
                         <div class="review-card-rating">
-                            <nz-rate [ngModel]="getReviewRating(item)" nzAllowHalf nzDisabled></nz-rate>
-                            <span class="review-card-rating-value">{{ getReviewRating(item) }}/5</span>
+                            <nz-rate [ngModel]="getReviewRating(entry.review)" nzAllowHalf nzDisabled></nz-rate>
+                            <span class="review-card-rating-value">{{ getReviewRating(entry.review) }}/5</span>
                         </div>
                     </div>
 
-                    <p *ngIf="getReviewTitle(item)" class="review-card-title mb-0">{{ getReviewTitle(item) }}</p>
+                    <p *ngIf="getReviewTitle(entry.review)" class="review-card-title mb-0">{{ getReviewTitle(entry.review) }}</p>
 
                     <div class="review-card-copy">
-                        <p class="review-card-body mb-0" [class.review-card-body-expanded]="isReviewExpanded($index)">
-                            {{ getReviewDescription(item) }}
+                        <p class="review-card-body mb-0" [class.review-card-body-expanded]="isReviewExpanded(entry.index)">
+                            {{ getReviewDescription(entry.review) }}
                         </p>
 
-                        <button *ngIf="shouldShowReviewToggle(item)" type="button" class="review-card-toggle"
-                            (click)="toggleReviewExpanded($index)">
-                            {{ isReviewExpanded($index) ? 'Read less' : 'Read more' }}
+                        <button *ngIf="shouldShowReviewToggle(entry.review)" type="button" class="secure-btn review-card-toggle"
+                            (click)="toggleReviewExpanded(entry.index)">
+                            {{ isReviewExpanded(entry.index) ? 'Read less' : 'Read more' }}
                         </button>
                     </div>
 
-                    <div *ngIf="getReviewImages(item).length" class="review-card-images">
-                        @for (image of getReviewImages(item); track image) {
-                        <a class="review-card-image-link" [href]="image" target="_blank" rel="noopener noreferrer">
+                    <div *ngIf="getReviewImages(entry.review).length" class="review-card-images">
+                        @for (image of getReviewImages(entry.review); track image; let imageIndex = $index) {
+                        <button type="button" class="secure-btn review-card-image-link"
+                            (click)="openReviewImagePreview(getReviewImages(entry.review), imageIndex, entry.review)"
+                            [attr.aria-label]="'Open review image ' + (imageIndex + 1)">
                             <img class="review-card-image" [src]="image"
-                                [alt]="getReviewAuthor(item) + ' review image'" />
-                        </a>
+                                [alt]="getReviewAuthor(entry.review) + ' review image'" />
+                        </button>
                         }
                     </div>
 
                     <div class="review-card-footer">
                         <div class="review-card-author-block">
                             <div class="review-card-author-row">
-                                <p class="review-card-author mb-0">{{ getReviewAuthor(item) }}</p>
-                                <span *ngIf="!isVerifiedReview(item)" class="review-card-author-verified">
+                                <p class="review-card-author mb-0">{{ getReviewAuthor(entry.review) }}</p>
+                                <span *ngIf="isVerifiedReview(entry.review)" class="review-card-author-verified">
                                     <lucide-angular [img]="icons.product.badge" class="review-card-author-verified-icon"
                                         [size]="15"></lucide-angular>
                                     Verified buyer
                                 </span>
                             </div>
-                            <p *ngIf="getReviewLocation(item)" class="review-card-location mb-0">From {{
-                                getReviewLocation(item) }}</p>
+                            <p *ngIf="getReviewLocation(entry.review)" class="review-card-location mb-0">From {{
+                                getReviewLocation(entry.review) }}</p>
                         </div>
 
-                        <p *ngIf="getReviewDateLabel(item)" class="review-card-date mb-0">{{ getReviewDateLabel(item) }}
+                        <p *ngIf="getReviewDateLabel(entry.review)" class="review-card-date mb-0">{{ getReviewDateLabel(entry.review) }}
                         </p>
                     </div>
                 </article>
                 }
             </div>
+
+            @if (filteredCustomerReviews.length > reviewsPerPage) {
+            <div class="reviews-pagination">
+                <p class="reviews-pagination__meta mb-0">
+                    Showing {{ reviewRangeStart }}-{{ reviewRangeEnd }} of {{ filteredCustomerReviews.length }} reviews
+                </p>
+                <div class="reviews-pagination__actions">
+                    <button type="button" class="secure-btn reviews-pagination__button"
+                        [disabled]="reviewPage === 1"
+                        (click)="goToPreviousReviewPage()">
+                        Previous page
+                    </button>
+                    <span class="reviews-pagination__status">Page {{ reviewPage }} of {{ totalReviewPages }}</span>
+                    <button type="button" class="secure-btn reviews-pagination__button"
+                        [disabled]="reviewPage === totalReviewPages"
+                        (click)="goToNextReviewPage()">
+                        Next page
+                    </button>
+                </div>
+            </div>
+            }
         </div>
     </section>
 
@@ -472,11 +585,11 @@
                 <h3 class="">{{productData?.product_name}}</h3>
                 <div class=" price-detail">
                     <div class="pro-price text-success">
-                        <lucide-angular [img]="icons.product.rupee" class="d-flex" [size]="18"></lucide-angular>
+                        <lucide-angular [img]="icons.product.rupee" class="d-flex" [size]="18"style="width: 1.4rem;"></lucide-angular>
                         {{currentPriceData.selling_price}}
                     </div>
                     <div class="org-price">
-                        <lucide-angular [img]="icons.product.rupee" class="d-flex" [size]="18"></lucide-angular>
+                        <lucide-angular [img]="icons.product.rupee" class="d-flex" [size]="18" style="width: 1.2rem;"></lucide-angular>
                         {{currentPriceData.original_price}}
                     </div>
                     <div>{{currentPriceData.discount_price}}% off</div>
@@ -484,6 +597,19 @@
             </div>
         </div>
         <div class="bottom-btn-container ">
+            <div class="quantity-selector quantity-selector--compact">
+                <button type="button" class="secure-btn quantity-selector__button"
+                    [disabled]="selectedQuantity <= minPurchaseQuantity"
+                    (click)="decreaseQuantity()">
+                    -
+                </button>
+                <span class="quantity-selector__value">{{ selectedQuantity }}</span>
+                <button type="button" class="secure-btn quantity-selector__button"
+                    [disabled]="selectedQuantity >= maxPurchaseQuantity"
+                    (click)="increaseQuantity()">
+                    +
+                </button>
+            </div>
             <button class="secure-btn  w-100 add-to-cart-btn w-s-nowrap b-btn"
                 [disabled]="addToCartLoading || !currentPriceData"
                 (click)="addSelectedProductToCart()">
@@ -499,9 +625,89 @@
 </div>
 }
 
+@if (reviewImagePreviewOpen) {
+<div class="review-image-preview" (click)="closeReviewImagePreview()">
+    <div class="review-image-preview__dialog" role="dialog" aria-modal="true" aria-label="Review image preview"
+        (click)="$event.stopPropagation()">
+        <div class="review-image-preview__header">
+            <p class="review-image-preview__counter mb-0">{{ reviewPreviewPositionLabel }}</p>
+            <button type="button" class="secure-btn review-image-preview__close" (click)="closeReviewImagePreview()"
+                aria-label="Close review image preview">
+                <lucide-angular [img]="icons.product.close" [size]="20"></lucide-angular>
+            </button>
+        </div>
+
+        <div class="review-image-preview__stage">
+            <div class="review-image-preview__media-shell">
+                @if (reviewPreviewImages.length > 1) {
+                <button type="button" class="secure-btn review-image-preview__nav review-image-preview__nav--prev"
+                    (click)="showPreviousReviewImage()" aria-label="Show previous review image">
+                    <lucide-angular [img]="icons.chevron.leftIcon" [size]="20"></lucide-angular>
+                </button>
+                }
+
+                <div class="review-image-preview__media-wrap">
+                    <img class="review-image-preview__image" [src]="activeReviewPreviewImage" alt="Expanded review image" />
+                </div>
+
+                @if (reviewPreviewImages.length > 1) {
+                <button type="button" class="secure-btn review-image-preview__nav review-image-preview__nav--next"
+                    (click)="showNextReviewImage()" aria-label="Show next review image">
+                    <lucide-angular [img]="icons.chevron.rightIcon" [size]="20"></lucide-angular>
+                </button>
+                }
+            </div>
+
+            <div class="review-image-preview__review">
+                <div class="review-image-preview__review-head">
+                    <div class="review-image-preview__review-rating">
+                        <nz-rate [ngModel]="getReviewRating(reviewPreviewReview)" nzAllowHalf nzDisabled></nz-rate>
+                        <span class="review-image-preview__review-rating-value">{{ getReviewRating(reviewPreviewReview) }}/5</span>
+                    </div>
+                    <p *ngIf="getReviewDateLabel(reviewPreviewReview)" class="review-image-preview__review-date mb-0">
+                        {{ getReviewDateLabel(reviewPreviewReview) }}
+                    </p>
+                </div>
+
+                <div class="review-image-preview__review-author-block">
+                    <div class="review-image-preview__review-author-row">
+                        <p class="review-image-preview__review-author mb-0">{{ getReviewAuthor(reviewPreviewReview) }}</p>
+                        <span *ngIf="isVerifiedReview(reviewPreviewReview)" class="review-image-preview__review-verified">
+                            <lucide-angular [img]="icons.product.badge" class="review-image-preview__review-verified-icon"
+                                [size]="14"></lucide-angular>
+                            Verified buyer
+                        </span>
+                    </div>
+                    <p *ngIf="getReviewLocation(reviewPreviewReview)" class="review-image-preview__review-location mb-0">
+                        From {{ getReviewLocation(reviewPreviewReview) }}
+                    </p>
+                </div>
+
+                <p *ngIf="getReviewTitle(reviewPreviewReview)" class="review-image-preview__review-title mb-0">
+                    {{ getReviewTitle(reviewPreviewReview) }}
+                </p>
+                <p class="review-image-preview__review-copy mb-0">{{ getReviewDescription(reviewPreviewReview) }}</p>
+            </div>
+        </div>
+
+        @if (reviewPreviewImages.length > 1) {
+        <div class="review-image-preview__thumbs">
+            @for (image of reviewPreviewImages; track image; let previewIndex = $index) {
+            <button type="button" class="secure-btn review-image-preview__thumb"
+                [class.review-image-preview__thumb--active]="previewIndex === reviewPreviewIndex"
+                (click)="setReviewPreviewImage(previewIndex)" [attr.aria-label]="'Preview image ' + (previewIndex + 1)">
+                <img [src]="image" alt="Review preview thumbnail" />
+            </button>
+            }
+        </div>
+        }
+    </div>
+</div>
+}
+
 @if(visible){
 <nz-drawer [nzClosable]="false" [nzVisible]="visible" [nzPlacement]="drawerPlacement" (nzOnClose)="close()"
-    [nzWidth]="500" nzWrapClassName="location-drawer-shell">
+    [nzWidth]="500" [nzHeight]="drawerPlacement === 'bottom' ? '100dvh' : undefined" nzWrapClassName="location-drawer-shell">
     <ng-container *nzDrawerContent>
         <div class="location-drawer">
             <div class="location-drawer__header">
@@ -546,7 +752,7 @@
                     </p>
                     <div class="location-drawer__highlights">
                         @for(suggestion of locationSuggestions; track suggestion.pincode){
-                        <button type="button" class="location-drawer__highlight"
+                        <button type="button" class="secure-btn location-drawer__highlight"
                             (click)="applySuggestedPincode(suggestion.pincode)">
                             <span class="location-drawer__highlight-title">{{ suggestion.pincode }}</span>
                             <span class="location-drawer__highlight-copy">{{ suggestion.location_name || suggestion.city || suggestion.state }}</span>
@@ -566,7 +772,7 @@
                     </p>
                 </div>
 
-                <button type="button" class="location-drawer__current-btn"
+                <button type="button" class="secure-btn location-drawer__current-btn"
                     [disabled]="currentLocationLoading || locationCheckLoading" (click)="useCurrentLocation()">
                     <lucide-angular [img]="icons.product.locateFixed" class="d-flex" [size]="18"></lucide-angular>
                     <span>{{ currentLocationLoading ? 'Detecting current location...' : 'Use my current location' }}</span>

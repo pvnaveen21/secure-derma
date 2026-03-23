@@ -17,6 +17,7 @@ import {
   PaymentService
 } from '../services/payment.service';
 import { PincodeService } from '../services/pincode.service';
+import { SeoService } from '../services/seo.service';
 
 @Component({
   selector: 'app-checkout',
@@ -48,11 +49,19 @@ export class CheckoutComponent {
     private pincodeService: PincodeService,
     private router: Router,
     private message: NzMessageService,
+    private seoService: SeoService,
   ) {
     this.checkoutCustomer = this.paymentService.loadCheckoutCustomer();
   }
 
   ngOnInit(): void {
+    this.seoService.updateSeo({
+      title: 'Checkout',
+      description: 'Complete your Secure Derma purchase with secure delivery and payment details.',
+      canonicalPath: '/checkout',
+      robots: 'noindex,nofollow',
+      type: 'website'
+    });
     window.scrollTo({ top: 0, behavior: 'auto' });
 
     if (!this.authService.isLoggedIn()) {
@@ -113,6 +122,24 @@ export class CheckoutComponent {
 
   get isCartCheckout(): boolean {
     return this.checkoutSession?.source === 'cart';
+  }
+
+
+  openProduct(item: CheckoutSessionItem): void {
+    const productSlug = this.slugify(item.productName || '');
+    if (!productSlug) {
+      return;
+    }
+
+    void this.router.navigate(['/products', productSlug]);
+  }
+
+  private slugify(value: string): string {
+    return String(value || '')
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
   }
 
   onCheckoutFieldChange(field: keyof PaymentCustomerPayload, value: string): void {

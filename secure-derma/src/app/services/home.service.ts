@@ -87,4 +87,15 @@ export class HomeService extends InterfaceService {
       catchError(this.handleError)
     );
   }
+
+  subscribeToNewsletter(payload: { email: string }) {
+    return this.http.post(
+      this.getApiUrl(`/newsletter-subscriptions/`),
+      payload,
+      this.getHttpOptions('json', { auth: false })
+    ).pipe(
+      map(res => res),
+      catchError(this.handleError)
+    );
+  }
 }

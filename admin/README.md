@@ -2,6 +2,20 @@
 
 This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 19.2.20.
 
+## Runtime configuration
+
+Frontend deployment settings now load from `public/env.js` at runtime instead of being hardcoded in TypeScript files.
+
+Set these values in `env.js` for each hosted environment:
+
+```js
+window.__SECURE_DERMA_ENV__ = {
+  BASEURL_API: 'https://your-backend.example.com/api/admin'
+};
+```
+
+The committed `public/env.js` is only a local default. Replace it during deployment with environment-specific values and do not put secrets in the Angular source files.
+
 ## Development server
 
 To start a local development server, run:

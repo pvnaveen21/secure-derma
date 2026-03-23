@@ -1,0 +1,40 @@
+<div class="collections-landing">
+    <section class="collections-landing__hero">
+        <p class="collections-landing__kicker m-0">Collections</p>
+        <h1 class="collections-landing__title m-0">Explore All Brands</h1>
+        <p class="collections-landing__copy m-0">Browse every brand available on Secure Derma. Tap any brand to open its collection page.</p>
+    </section>
+
+    @if (brands.length > 0) {
+    <section class="collections-brands-section">
+        <div class="collections-brands-header">
+            <div>
+                <p class="collections-brands-kicker m-0">Brands</p>
+                <h2 class="collections-brands-title m-0">All Available Brands</h2>
+            </div>
+            <span class="collections-brands-count">{{ brands.length }} brands</span>
+        </div>
+
+        <div class="collections-brands-grid">
+            @for (brand of visibleBrands; track brand.id ?? brand.brand_name; let i = $index) {
+            <article class="collections-brand-card" [style.--brand-delay]="(i * 45) + 'ms'"
+                (click)="openBrandCollection(brand.brand_name)">
+                <div class="collections-brand-card__frame">
+                    <img [src]="brand.brand_image || '/assets/Collection/no_products_found.svg'"
+                        [alt]="brand.brand_name" class="collections-brand-card__image" loading="lazy" />
+                </div>
+                <h3 class="collections-brand-card__name m-0">{{ brand.brand_name }}</h3>
+            </article>
+            }
+        </div>
+
+        @if (hasMoreBrands) {
+        <div class="collections-brands-actions">
+            <button type="button" class="secure-btn collections-brands-load-more" (click)="loadMoreBrands()">
+                Load More
+            </button>
+        </div>
+        }
+    </section>
+    }
+</div>

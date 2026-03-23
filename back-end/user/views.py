@@ -220,7 +220,8 @@ def google_login(request):
         idinfo = id_token.verify_oauth2_token(
             token,
             requests.Request(),
-            GOOGLE_CLIENT_ID
+            GOOGLE_CLIENT_ID,
+            clock_skew_in_seconds=300,  # tolerate up to 5 min clock drift
         )
 
         email = idinfo['email']
@@ -260,8 +261,14 @@ def google_login(request):
         }, status=status.HTTP_200_OK)
 
     except ValueError as e:
+        error_msg = str(e)
+        if 'Token expired' in error_msg:
+            return Response(
+                {"error": "Token expired", "detail": "Your Google session has expired. Please try signing in again."},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
         return Response(
-            {"error": "Invalid token", "detail": str(e)},
+            {"error": "Invalid token", "detail": error_msg},
             status=status.HTTP_400_BAD_REQUEST
         )
     except Exception as e:

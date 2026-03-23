@@ -23,6 +23,7 @@ import { NzMessageService } from 'ng-zorro-antd/message';
 import { SettingsService } from '../services/settings/settings.service';
 import { PaymentService } from '../services/payment.service';
 import { AuthService } from '../services/auth/auth.service';
+import { ThemeType } from '../interfaces/theme';
 interface MobilePanelItem {
   label: string;
   value: string;
@@ -59,6 +60,12 @@ interface SearchSuggestionGroup {
   type: SearchSuggestionItem['type'];
   items: SearchSuggestionItem[];
 }
+
+interface MobileBottomNavItem {
+  key: 'home' | 'categories' | 'shop' | 'cart' | 'account';
+  label: string;
+  icon: keyof typeof Icons.header;
+}
 @Component({
   selector: 'app-header',
   imports: [
@@ -82,12 +89,14 @@ interface SearchSuggestionGroup {
   styleUrl: './header.component.scss'
 })
 export class HeaderComponent {
-  private readonly mobileBreakpoint = 768;
+  private readonly mobileBreakpoint = 959;
   private readonly resumeCheckoutStorageKey = 'secure_derma_resume_checkout';
   @ViewChild('brandListContainer') brandListContainer!: ElementRef;
   @ViewChild('mobileBrandListContainer') mobileBrandListContainer?: ElementRef;
   @ViewChild('desktopSearchShell') desktopSearchShell?: ElementRef;
   @ViewChild('mobileSearchShell') mobileSearchShell?: ElementRef;
+  @ViewChild('desktopSearchInput') desktopSearchInput?: ElementRef<HTMLInputElement>;
+  @ViewChild('mobileSearchInput') mobileSearchInput?: ElementRef<HTMLInputElement>;
   @ViewChild(NzDropDownDirective) dropdown!: NzDropDownDirective;
   // Add a search property for two-way binding
   searchTerm: string = '';
@@ -110,11 +119,20 @@ export class HeaderComponent {
     { name: 'Shop All', value: 'all' }
   ];
 
+  mobileBottomNavItems: MobileBottomNavItem[] = [
+    { key: 'home', label: 'Home', icon: 'home' },
+    { key: 'categories', label: 'Categories', icon: 'categories' },
+    { key: 'shop', label: 'Shop', icon: 'shop' },
+    { key: 'cart', label: 'Cart', icon: 'handbag' },
+    { key: 'account', label: 'Account', icon: 'user' },
+  ];
+
   // Add these properties
   isSkinDropdownVisible = false;
   isHairDropdownVisible = false;
   isSupplementDropdownVisible = false;
   isBrandDropdownVisible: any = false
+  isMobileSideIntroVisible = false;
 
   // Search-related properties
   private searchSubject = new Subject<string>();
@@ -188,8 +206,13 @@ export class HeaderComponent {
     });
 
     this.routerEventsSubscription = this.router.events.subscribe((event) => {
-      if (event instanceof NavigationStart && event.url.includes('/collections/')) {
-        this.showSelectionLoader();
+      if (event instanceof NavigationStart) {
+        if (event.url.includes('/collections/')) {
+          this.showSelectionLoader();
+        }
+
+        this.closeSideMenu();
+        this.closeCartDrawer();
       }
 
       if (
@@ -257,11 +280,17 @@ export class HeaderComponent {
     return !!this.authService.isLoggedIn();
   }
 
+  get hasBrandResults(): boolean {
+    return Object.keys(this.allBrands || {}).length > 0;
+  }
+
   logout(): void {
     this.authService.logout();
   }
 
   openMyAccount(): void {
+    this.closeSideMenu();
+    this.closeCartDrawer();
     void this.router.navigate(['/account']);
   }
 
@@ -298,11 +327,13 @@ export class HeaderComponent {
       this.authService.redirectUrl = '/checkout';
       this.closeCartDrawer();
       this.router.navigate(['/account/login']);
+      this.scrollViewportToTop();
       return;
     }
 
     this.closeCartDrawer();
     this.router.navigate(['/checkout']);
+    this.scrollViewportToTop();
   }
 
 
@@ -355,11 +386,23 @@ export class HeaderComponent {
     }
   }
 
-  clearGlobalSearch() {
+  clearGlobalSearch(event?: Event) {
+    event?.preventDefault();
+    event?.stopPropagation();
+
     this.globalSearchTerm = '';
+    this.globalSearchSubject.next('');
     this.showSearchSuggestions = false;
     this.suggestionLoading = false;
     this.searchSuggestionGroups = [];
+    this.desktopSearchInput?.nativeElement?.blur();
+    this.mobileSearchInput?.nativeElement?.blur();
+    if (this.desktopSearchInput?.nativeElement) {
+      this.desktopSearchInput.nativeElement.value = '';
+    }
+    if (this.mobileSearchInput?.nativeElement) {
+      this.mobileSearchInput.nativeElement.value = '';
+    }
     this.isHeaderSearchFocused = false;
   }
 
@@ -657,7 +700,15 @@ export class HeaderComponent {
   }
 
   sideMenuView(type: any) {
+    if (this.selectedSideType === 1 && type !== 1) {
+      this.resetBrandSearch();
+    }
     this.selectedSideType = type;
+    if (type === 1 && this.visible) {
+      this.replayMobileSideIntro();
+    } else {
+      this.isMobileSideIntroVisible = false;
+    }
   }
 
   // Dropdown methods
@@ -687,8 +738,7 @@ export class HeaderComponent {
   closeBrandDropdown() {
     if (this.searchTerm.length != 0) {
       setTimeout(() => {
-        this.searchTerm = ''
-        this.getBrandsList();
+        this.resetBrandSearch();
       }, 1800)
     }
     this.isBrandDropdownVisible = false;
@@ -714,11 +764,16 @@ export class HeaderComponent {
       this.visible = false;
       return;
     }
+    this.resetBrandSearch();
+    this.isMobileSideIntroVisible = false;
     this.visible = true;
     this.selectedSideType = 1;
+    this.replayMobileSideIntro();
   }
 
   closeSideMenu() {
+    this.resetBrandSearch();
+    this.isMobileSideIntroVisible = false;
     this.visible = false;
   }
 
@@ -730,7 +785,11 @@ export class HeaderComponent {
   }
 
   homeLocation() {
-    this.router.navigate(['./'])
+    void this.router.navigate(['./'], {
+      state: { scrollToTop: true }
+    }).then(() => {
+      this.scrollViewportToTop();
+    });
   }
 
   slugify(value: string): string {
@@ -755,7 +814,62 @@ export class HeaderComponent {
     else if (type == 'supplements') {
       this.closeSupplementDropdown()
     }
-    this.router.navigate([`./collections/${this.slugify(value)}`])
+
+    const navigateToCollection = () => {
+      void this.router.navigate([`./collections/${this.slugify(value)}`], {
+        state: {
+          scrollToTop: true
+        }
+      }).then(() => {
+        this.scrollViewportToTop();
+      });
+    };
+
+    if (this.visible && !this.isDesktopView()) {
+      this.closeSideMenu();
+      setTimeout(() => {
+        navigateToCollection();
+      }, 260);
+      return;
+    }
+
+    navigateToCollection();
+  }
+
+  private scrollViewportToTop(): void {
+    const forceScroll = () => {
+      const html = document.documentElement;
+
+      // Force-remove CDK scroll block (NZ Drawer sets this)
+      if (html.classList.contains('cdk-global-scrollblock')) {
+        html.classList.remove('cdk-global-scrollblock');
+      }
+      // Clear any CDK inline styles that lock scroll position
+      html.style.position = '';
+      html.style.top = '';
+      html.style.width = '';
+      html.style.overflow = '';
+      html.style.scrollBehavior = 'auto';
+
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.overflow = '';
+
+      window.scrollTo(0, 0);
+      html.scrollTop = 0;
+      document.body.scrollTop = 0;
+    };
+
+    // Execute immediately
+    forceScroll();
+
+    // Retry at multiple intervals to handle mobile browser timing differences
+    // CDK drawer close animation can take 300ms+ on mobile
+    [100, 300, 600].forEach((delay) => {
+      setTimeout(() => {
+        forceScroll();
+      }, delay);
+    });
   }
   openCartDrawer() {
     this.cartDrawerPlacement = 'right';
@@ -777,6 +891,80 @@ export class HeaderComponent {
 
   signIn() {
     this.router.navigate(['account/login'])
+  }
+
+  handleMobileBottomNavAction(item: MobileBottomNavItem): void {
+    if (item.key === 'home') {
+      this.closeCartDrawer();
+      this.closeSideMenu();
+      this.homeLocation();
+      return;
+    }
+
+    if (item.key === 'categories') {
+      this.closeCartDrawer();
+      this.openSideMenu();
+      return;
+    }
+
+    if (item.key === 'shop') {
+      this.closeCartDrawer();
+      this.closeSideMenu();
+      this.startShop();
+      return;
+    }
+
+    if (item.key === 'cart') {
+      this.closeSideMenu();
+      this.openCartDrawer();
+      return;
+    }
+
+    this.handleHeaderAccountAction();
+  }
+
+  isMobileBottomNavActive(item: MobileBottomNavItem): boolean {
+    const currentPath = this.getCurrentPath();
+
+    if (item.key === 'home') {
+      return currentPath === '/';
+    }
+
+    if (item.key === 'categories') {
+      return this.visible && this.selectedSideType === 1;
+    }
+
+    if (item.key === 'shop') {
+      return currentPath.startsWith('/collections');
+    }
+
+    if (item.key === 'cart') {
+      return this.cartDrawerVisible;
+    }
+
+    return currentPath.startsWith('/account');
+  }
+
+  getMobileBottomNavLabel(item: MobileBottomNavItem): string {
+    if (item.key === 'account') {
+      return this.isLoggedIn ? 'Account' : 'Sign in';
+    }
+
+    return item.label;
+  }
+
+  get shouldShowMobileBottomNav(): boolean {
+    const currentPath = this.getCurrentPath();
+    return currentPath === '/' || currentPath.startsWith('/account');
+  }
+
+  handleHeaderAccountAction(): void {
+    if (this.isLoggedIn) {
+      this.openMyAccount();
+      return;
+    }
+
+    this.signIn();
   }
 
   onImageError(event: Event): void {
@@ -812,19 +1000,57 @@ export class HeaderComponent {
 
   startShop() {
     this.closeCartDrawer();
-    this.router.navigate(['collections/all'])
+    void this.router.navigate(['collections/all'], {
+      state: { scrollToTop: true }
+    }).then(() => {
+      this.scrollViewportToTop();
+    });
   }
 
   get isDark(): boolean {
     return this.settingsService.isDarkTheme();
   }
 
+  get headerLogoSrc(): string {
+    const theme = this.settingsService.currentTheme;
+    const isDarkVariant = theme === ThemeType.dark || theme === ThemeType.coloured;
+    return isDarkVariant
+      ? 'assets/secure-derma/SecureDerma_DarkMode.png'
+      : 'assets/secure-derma/SecureDerma_LightMode.png';
+  }
+
+  get mobileLogoSrc(): string {
+    return this.headerLogoSrc;
+  }
+
   toggleTheme(): void {
     this.settingsService.toggleLightDark();
   }
 
+  private getCurrentPath(): string {
+    return this.router.url.split('?')[0] || '/';
+  }
+
   private isDesktopView(): boolean {
     return typeof window !== 'undefined' && window.innerWidth > this.mobileBreakpoint;
+  }
+
+  private resetBrandSearch(): void {
+    if (!this.searchTerm.length && this.hasBrandResults) {
+      return;
+    }
+
+    this.searchTerm = '';
+    this.getBrandsList();
+  }
+
+  private replayMobileSideIntro(): void {
+    this.isMobileSideIntroVisible = false;
+    setTimeout(() => {
+      if (this.visible && this.selectedSideType === 1) {
+        this.isMobileSideIntroVisible = true;
+      }
+    }, 30);
   }
 
   get cartDrawerWidth(): string | number | undefined {

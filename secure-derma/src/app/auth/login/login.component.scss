@@ -595,6 +595,46 @@
     padding: 0.95rem 0 !important;
 }
 
+::ng-deep .login-input,
+::ng-deep .login-input::placeholder {
+    color: #0f172a !important;
+    font-size: 1rem !important;
+}
+
+::ng-deep .login-input::placeholder {
+    color: #94a3b8 !important;
+    opacity: 1;
+}
+
+::ng-deep .checkbox .ant-checkbox-wrapper {
+    color: #475569;
+    font-size: 0.88rem;
+    line-height: 1.5;
+}
+
+::ng-deep .checkbox .ant-checkbox {
+    top: 0;
+}
+
+::ng-deep .checkbox .ant-checkbox-inner {
+    width: 1rem;
+    height: 1rem;
+    border-radius: 0.25rem;
+    border-color: rgba(148, 163, 184, 0.42);
+}
+
+::ng-deep .checkbox .ant-checkbox-checked .ant-checkbox-inner,
+::ng-deep .checkbox .ant-checkbox-indeterminate .ant-checkbox-inner {
+    background: #059669;
+    border-color: #059669;
+}
+
+::ng-deep .checkbox .ant-checkbox + span,
+::ng-deep .checkbox .ant-checkbox-wrapper span:last-child {
+    color: #475569;
+    padding-inline-start: 0.55rem;
+}
+
 .field-error {
     margin-top: 0.45rem !important;
     color: #dc2626;
@@ -816,30 +856,32 @@
     }
 }
 
-@media (max-width: 1024px) {
+@media (max-width: 64rem) {
     .login-layout {
-        grid-template-columns: 1fr;
-        max-width: 46rem;
+        grid-template-columns: minmax(0, 1fr);
+        max-width: 30rem;
+        justify-content: center;
     }
 
     .login-showcase {
+        display: none;
+    }
+
+    .login-panel {
+        width: 100%;
+    }
+
+    .login-card {
         min-height: auto;
     }
 
-    .login-showcase__title {
-        max-width: none;
-    }
-
-    .login-showcase__panel {
-        grid-template-columns: 1fr;
-    }
-
-    .login-showcase__media {
-        min-height: 18rem;
+    ::ng-deep .login-shell .slick-dots,
+    ::ng-deep .login-shell .slick-dots-bottom {
+        display: none !important;
     }
 }
 
-@media (max-width: 767px) {
+@media (max-width: 47.9375rem) {
     .login-shell {
         padding: 1rem 0.75rem 1.5rem;
     }

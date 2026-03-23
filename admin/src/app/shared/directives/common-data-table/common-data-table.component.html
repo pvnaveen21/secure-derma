@@ -56,7 +56,7 @@
             }
             @if(tableConfig.addOnBtnText){
             <div class="sort-section">
-                <button class="tej-btn border-0 rounded-lg btn-primary b2 fw-semibold " (click)="showAddonBtnModal()">
+                <button class="secure-derma-btn border-0 rounded-lg btn-primary b2 fw-semibold " (click)="showAddonBtnModal()">
                     <lucide-angular [img]="tableConfig.addOnIcon" class="d-flex me-1" [size]="20"></lucide-angular>
                     {{tableConfig.addOnBtnText}}
                     @if(exportBtnLoader){
@@ -67,7 +67,7 @@
             }
             @if(tableConfig.btnText){
             <div class="sort-section">
-                <button class="tej-btn border-0 rounded-lg btn-primary b2 fw-semibold " (click)="showModal()"
+                <button class="secure-derma-btn border-0 rounded-lg btn-primary b2 fw-semibold " (click)="showModal()"
                     [disabled]="listOfData?.length ==0 &&tableConfig.btnText =='Export' || exportBtnLoader">
                     <lucide-angular [img]="tableConfig.btnIcon" class="d-flex me-1" [size]="20"></lucide-angular>
                     {{tableConfig.btnText}}

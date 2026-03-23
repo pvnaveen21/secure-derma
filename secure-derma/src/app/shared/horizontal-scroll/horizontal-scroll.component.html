@@ -1,7 +1,7 @@
 <div class="position-relative tej-hr-scroll" [class.vertical]="scrollDirection === 'vertical'" #scrollPageContainer>
     @if (showScrollBtns) {
     <div class="scroll-icon prev-icon" (click)="canScrollPrev && scrollPrev()" [class.disabled]="!canScrollPrev">
-        <lucide-angular class="text-primary d-flex" [size]="18"
+        <lucide-angular class="text-primary d-flex" [size]="18"style="width: 1.2rem;"
             [img]="scrollDirection === 'horizontal' ? icons.chevron.leftIcon : icons.chevron.upIcon"></lucide-angular>
     </div>
     }
@@ -12,7 +12,7 @@
 
     @if (showScrollBtns) {
     <div class="scroll-icon next-icon" (click)="canScrollNext && scrollNext()" [class.disabled]="!canScrollNext">
-        <lucide-angular class="text-primary d-flex" [size]="18"
+        <lucide-angular class="text-primary d-flex" style="width: 1.2rem;"
             [img]="scrollDirection === 'horizontal' ? icons.chevron.rightIcon : icons.chevron.downIcon"></lucide-angular>
     </div>
     }

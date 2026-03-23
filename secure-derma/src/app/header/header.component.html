@@ -8,8 +8,16 @@
 
                 <div class="logo-container">
                     <div class="app-logo" (click)="homeLocation()">
-                        <h2 class="logo-title">Secure</h2>
-                        <p class="logo-subtitle m-0">Derma</p>
+                        <img
+                            class="logo-image logo-image--desktop"
+                            [src]="headerLogoSrc"
+                            alt="Secure Derma"
+                        />
+                        <img
+                            class="logo-image logo-image--mobile"
+                            [src]="mobileLogoSrc"
+                            alt="Secure Derma"
+                        />
                     </div>
                 </div>
             </div>
@@ -46,6 +54,7 @@
                             <div class="brand-list-wrapper">
                                 <div class="brand-list-wrapper">
                                     @if(allBrands){
+                                    @if(hasBrandResults){
                                     <div class="brand-list-container" #brandListContainer>
                                         @for(menu of getBrandKeys(allBrands); track menu) {
                                         <div [attr.data-letter]="menu" class="brand-section">
@@ -68,6 +77,19 @@
                                         </div>
                                         }
                                     </div>
+                                    }
+                                    @else {
+                                    <div class="brand-empty-state">
+                                        <div class="brand-empty-state__visual" aria-hidden="true">
+                                            <img
+                                                class="brand-empty-state__image"
+                                                src="/assets/Home/brand_no_search_found.png"
+                                                alt=""
+                                            />
+                                        </div>
+                                        Oops! We couldn't find any matching brands. Try a different search.
+                                    </div>
+                                    }
                                     }
                                 </div>
                             </div>
@@ -94,7 +116,7 @@
                                 <p class="skin-v2-subtitle m-0">Build by routine step</p>
                                 <div class="skin-v2-list">
                                     @for(data of skinBannerData?.skin_category?.data;track data ;let i = $index){
-                                    <button class="skin-v2-item" (click)="producetNavigation(data.product_type ,'skin')">
+                                    <button class="secure-btn skin-v2-item" (click)="producetNavigation(data.product_type ,'skin')">
                                         {{data?.product_type}}
                                     </button>
                                     }
@@ -106,7 +128,7 @@
                                 <p class="skin-v2-subtitle m-0">Targeted treatment goals</p>
                                 <div class="skin-v2-list">
                                     @for(data of skinBannerData?.skin_concerns?.data;track data ;let i = $index){
-                                    <button class="skin-v2-item" (click)="producetNavigation(data.skin_concern ,'skin')">
+                                    <button class="secure-btn skin-v2-item" (click)="producetNavigation(data.skin_concern ,'skin')">
                                         {{data?.skin_concern}}
                                     </button>
                                     }
@@ -146,7 +168,7 @@
                                 <p class="hair-v2-subtitle m-0">Core haircare steps</p>
                                 <div class="hair-v2-list">
                                     @for(data of hairBannerData?.hair_category?.data;track data ;let i = $index){
-                                    <button class="hair-v2-item" (click)="producetNavigation(data.product_type ,'hair')">
+                                    <button class="secure-btn hair-v2-item" (click)="producetNavigation(data.product_type ,'hair')">
                                         {{data?.product_type}}
                                     </button>
                                     }
@@ -158,7 +180,7 @@
                                 <p class="hair-v2-subtitle m-0">Scalp and strand goals</p>
                                 <div class="hair-v2-list">
                                     @for(data of hairBannerData?.hair_concerns?.data;track data ;let i = $index){
-                                    <button class="hair-v2-item" (click)="producetNavigation(data.hair_concern ,'hair')">
+                                    <button class="secure-btn hair-v2-item" (click)="producetNavigation(data.hair_concern ,'hair')">
                                         {{data?.hair_concern}}
                                     </button>
                                     }
@@ -198,7 +220,7 @@
                                 <p class="supplement-v2-subtitle m-0">Wellness and nutrition support</p>
                                 <div class="supplement-v2-list">
                                     @for(data of supplementBannerData?.supplements?.data;track data ;let i = $index){
-                                    <button class="supplement-v2-item" (click)="producetNavigation(data.product_type ,'supplements')">
+                                    <button class="secure-btn supplement-v2-item" (click)="producetNavigation(data.product_type ,'supplements')">
                                         {{data?.product_type}}
                                     </button>
                                     }
@@ -244,6 +266,7 @@
                         <input type="text" nz-input placeholder="Search products, brands, concerns..." class="home-search"
                             [(ngModel)]="globalSearchTerm"
                             (ngModelChange)="onGlobalSearchChange($event)"
+                            #desktopSearchInput
                             (focus)="onGlobalSearchFocus()"
                             (keydown.enter)="submitGlobalSearch()" />
                     </nz-input-group>
@@ -253,7 +276,7 @@
                     </ng-template>
 
                     <ng-template #desktopSearchClear>
-                        <button *ngIf="globalSearchTerm" type="button" class="search-clear-btn" (click)="clearGlobalSearch()" aria-label="Clear search">
+                        <button *ngIf="globalSearchTerm" type="button" class="secure-btn search-clear-btn" (mousedown)="$event.preventDefault()" (click)="clearGlobalSearch($event)" aria-label="Clear search">
                             <lucide-angular class="d-flex" [img]="icons.header.close" [size]="16"></lucide-angular>
                         </button>
                     </ng-template>
@@ -271,7 +294,7 @@
                                         <span>{{ group.title }}</span>
                                     </div>
                                     <button type="button"
-                                        class="header-search-item"
+                                        class="secure-btn header-search-item"
                                         [class.header-search-item--product]="group.type === 'product'"
                                         *ngFor="let item of group.items"
                                         (click)="navigateToSuggestion(item)">
@@ -307,7 +330,7 @@
 
 
             <div class="user-bag">
-                <button class="theme-toggle-btn" (click)="toggleTheme()" [title]="isDark ? 'Switch to Light mode' : 'Switch to Dark mode'" aria-label="Toggle theme">
+                <button class="secure-btn theme-toggle-btn" (click)="toggleTheme()" [title]="isDark ? 'Switch to Light mode' : 'Switch to Dark mode'" aria-label="Toggle theme">
                     <lucide-angular class="icon-display theme-icon" [img]="isDark ? icons.theme.light : icons.theme.dark" [size]="22"></lucide-angular>
                 </button>
                 <div class="cart-icon" (click)="openCartDrawer()">
@@ -319,17 +342,13 @@
                         </div>
                     </nz-badge>
                 </div>
-                <div *ngIf="isLoggedIn" nz-dropdown [nzDropdownMenu]="profileMenu" nzTrigger="click"
-                    class="user-icon user-icon--menu">
+                <button type="button" class="secure-btn user-icon user-icon--menu"
+                    [class.user-icon--mobile-auth]="!isLoggedIn"
+                    [attr.aria-label]="isLoggedIn ? 'Open my account' : 'Sign in'"
+                    (click)="handleHeaderAccountAction()">
                     <lucide-angular class="icon-display" [img]="icons.header.user" [size]="25"></lucide-angular>
-                </div>
+                </button>
             </div>
-            <nz-dropdown-menu #profileMenu="nzDropdownMenu">
-                <ul nz-menu>
-                    <li nz-menu-item (click)="openMyAccount()">My Account</li>
-                    <li nz-menu-item (click)="logout()">Logout</li>
-                </ul>
-            </nz-dropdown-menu>
         </div>
         @if (isSelectionLoading) {
         <div class="header-selection-loader" aria-live="polite">
@@ -346,12 +365,13 @@
             <input type="text" nz-input placeholder="Search products, brands, concerns..." nzSize="large"
                 [(ngModel)]="globalSearchTerm"
                 (ngModelChange)="onGlobalSearchChange($event)"
+                #mobileSearchInput
                 (focus)="onGlobalSearchFocus()"
                 (keydown.enter)="submitGlobalSearch()" />
         </nz-input-group>
 
         <ng-template #mobileSearchClear>
-            <button *ngIf="globalSearchTerm" type="button" class="search-clear-btn" (click)="clearGlobalSearch()" aria-label="Clear search">
+            <button *ngIf="globalSearchTerm" type="button" class="secure-btn search-clear-btn" (mousedown)="$event.preventDefault()" (click)="clearGlobalSearch($event)" aria-label="Clear search">
                 <lucide-angular class="d-flex" [img]="icons.header.close" [size]="16"></lucide-angular>
             </button>
         </ng-template>
@@ -369,7 +389,7 @@
                             <span>{{ group.title }}</span>
                         </div>
                         <button type="button"
-                            class="header-search-item"
+                            class="secure-btn header-search-item"
                             [class.header-search-item--product]="group.type === 'product'"
                             *ngFor="let item of group.items"
                             (click)="navigateToSuggestion(item)">
@@ -403,6 +423,20 @@
     </ng-template>
     <nz-divider class="m-0"></nz-divider>
 
+    <nav *ngIf="shouldShowMobileBottomNav" class="mobile-bottom-nav" aria-label="Primary navigation">
+        <button
+            *ngFor="let item of mobileBottomNavItems"
+            type="button"
+            class="secure-btn mobile-bottom-nav__item"
+            [class.mobile-bottom-nav__item--active]="isMobileBottomNavActive(item)"
+            [attr.aria-current]="isMobileBottomNavActive(item) ? 'page' : null"
+            [attr.aria-label]="getMobileBottomNavLabel(item)"
+            (click)="handleMobileBottomNavAction(item)">
+            <lucide-angular class="mobile-bottom-nav__icon" [img]="icons.header[item.icon]" [size]="20"></lucide-angular>
+            <span class="mobile-bottom-nav__label">{{ getMobileBottomNavLabel(item) }}</span>
+        </button>
+    </nav>
+
 </div>
 
 <!-- sider -->
@@ -425,6 +459,18 @@
     <ng-container *nzDrawerContent>
         <div class="pb-2 mobile-side-menu-conatiner">
             <div>
+                <div class="mobile-side-menu-topbar">
+                    <div class="mobile-side-menu-brand" (click)="homeLocation(); closeSideMenu()">
+                        <img
+                            class="mobile-side-menu-brand__logo"
+                            [src]="mobileLogoSrc"
+                            alt="Secure Derma"
+                        />
+                    </div>
+                    <button class="secure-btn mobile-side-menu-close" type="button" (click)="closeSideMenu()" aria-label="Close menu">
+                        <lucide-angular class="d-flex" [img]="icons.header.close" [size]="20"></lucide-angular>
+                    </button>
+                </div>
                 <div class="side-menu-title-header pt-1">
                     <p class="side-menu-title pb-1 m-0" [ngClass]="{'selectedSideMenu':selectedSideType == 1}"
                         (click)="sideMenuView(1)">Shop By</p>
@@ -452,6 +498,7 @@
                             [img]="icons.header.search"></lucide-angular>
                     </ng-template>
                     @if(allBrands){
+                    @if(hasBrandResults){
                     <div class="side-menu-brand-list-wrapper pb-1">
                         <div class="brand-list-container px-1" #mobileBrandListContainer>
                             @for(menu of getBrandKeys(allBrands); track menu) {
@@ -476,9 +523,28 @@
                         </div>
                     </div>
                     }
+                    @else {
+                    <div class="brand-empty-state brand-empty-state--mobile px-2">
+                        <div class="brand-empty-state__visual" aria-hidden="true">
+                            <img
+                                class="brand-empty-state__image"
+                                src="/assets/Home/brand_no_search_found.png"
+                                alt=""
+                            />
+                        </div>
+                        Oops! We couldn't find any matching brands. Try a different search.
+                    </div>
+                    }
+                    }
                 </div>
                 }
                 @else{
+                <div class="mobile-side-intro" *ngIf="selectedSideType == 1" [class.mobile-side-intro--visible]="isMobileSideIntroVisible">
+                    <p class="mobile-side-intro__eyebrow m-0">Secure Derma</p>
+                    <h3 class="mobile-side-intro__title m-0">Find your next routine by category, concern, or daily need.</h3>
+                    <p class="mobile-side-intro__text m-0">Explore skin, hair, supplements, and quick links built for faster shopping.</p>
+                </div>
+
                 <div class="collapse-container">
                     @for (panel of panels; track panel.key) {
                     <div class="collapse-panel">
@@ -496,7 +562,7 @@
                                     <div class="mobile-panel-overlay">
                                         <p class="mobile-panel-overlay__kicker m-0">{{ panel.name }} Care Guide</p>
                                         <h4 class="mobile-panel-overlay__title m-0">{{ getMobilePanelTitle(panel.key) }}</h4>
-                                        <button class="mobile-section-cta mobile-section-cta--overlay"
+                                        <button class="secure-btn mobile-section-cta mobile-section-cta--overlay"
                                             (click)="producetNavigation(panel.routeValue, panel.routeType); closeSideMenu()">
                                             Explore {{ panel.name }}
                                         </button>
@@ -507,7 +573,7 @@
                                     <nz-divider class="mt-1 mb-1"></nz-divider>
                                     <div class="skin-section mobile-link-list">
                                         @for(item of panel.categoryItems; track item.value) {
-                                        <button class="mobile-link-item"
+                                        <button class="secure-btn mobile-link-item"
                                             (click)="producetNavigation(item.value, panel.routeType); closeSideMenu()">
                                             {{ item.label }}
                                         </button>
@@ -523,7 +589,7 @@
                                     <nz-divider class="mt-1 mb-1"></nz-divider>
                                     <div class="skin-section mobile-link-list">
                                         @for(item of panel.concernItems; track item.value) {
-                                        <button class="mobile-link-item"
+                                        <button class="secure-btn mobile-link-item"
                                             (click)="producetNavigation(item.value, panel.routeType); closeSideMenu()">
                                             {{ item.label }}
                                         </button>
@@ -575,7 +641,10 @@
     <!-- Cart Items List Content -->
     <ng-container *nzDrawerContent>
         <div class="cart-items-container" [class.cart-open]="cartDrawerVisible">
-            <nz-empty *ngIf="cartItems.length === 0" nzNotFoundImage="simple" [nzNotFoundContent]="emptyContent">
+            <nz-empty *ngIf="cartItems.length === 0" [nzNotFoundImage]="emptyBagImage" [nzNotFoundContent]="emptyContent">
+                <ng-template #emptyBagImage>
+                    <img class="empty-bag__image" src="/assets/Home/empty_bag.svg" alt="" />
+                </ng-template>
                 <ng-template #emptyContent>
                     <div class="empty-bag">
                         <h2 class="your_bag_text">Your Shopping Bag is Empty</h2>
@@ -619,7 +688,7 @@
                             </div>
 
                             <button nz-button nzType="text" nzDanger nzSize="small" (click)="removeItem(item.detailId ?? item.productId)"
-                                class="remove-btn">
+                                class="secure-btn remove-btn">
                                 <span nz-icon nzType="delete" nzTheme="outline"></span>
                             </button>
                         </div>
@@ -667,7 +736,7 @@
 
             <button nz-button nzType="primary" nzSize="large" nzBlock (click)="proceedToCheckout()"
                 [disabled]="checkoutLoading"
-                class="checkout-btn">
+                class="secure-btn checkout-btn">
                 {{ checkoutLoading ? 'Opening Checkout...' : 'Proceed to Checkout' }}
             </button>
 
