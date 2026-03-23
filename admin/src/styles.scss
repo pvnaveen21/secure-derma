@@ -1,5 +1,5 @@
 /* You can add global styles to this file, and also import other style files */
-@use "styles/tej/main" as *;
+@use "styles/secure-derma/main" as *;
 
 @use "styles/developers" as *;
 
@@ -17,7 +17,7 @@ body {
     font-weight: 400;
     font-style: normal;
     font-variation-settings: "wdth" 100;
-    background-color: var(--tej-bg-primary) !important;
+    background-color: var(--secure-derma-bg-primary) !important;
 }
 
 .ff-dm-serif-text,
@@ -54,6 +54,6 @@ h4,
 
 .home-menu-drawer {
     .ant-drawer-content {
-        background-color: var(--tej-bg-secondary) !important;
+        background-color: var(--secure-derma-bg-secondary) !important;
     }
 }
