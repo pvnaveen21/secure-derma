@@ -85,8 +85,7 @@
 }
 
 
-.mobile-bottom-nav,
-.mobile-bottom-nav-spacer {
+.mobile-bottom-nav {
     display: none;
 }
 
@@ -140,18 +139,12 @@
     letter-spacing: 0.01em;
 }
 
-.mobile-bottom-nav-spacer {
-    height: calc(4.85rem + env(safe-area-inset-bottom));
-}
 
 @media only screen and (max-width:59.9375rem) {
     .mobile-bottom-nav {
         display: grid;
     }
 
-    .mobile-bottom-nav-spacer {
-        display: block;
-    }
 }
 
 // Logo

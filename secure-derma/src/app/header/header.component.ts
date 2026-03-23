@@ -95,6 +95,8 @@ export class HeaderComponent {
   @ViewChild('mobileBrandListContainer') mobileBrandListContainer?: ElementRef;
   @ViewChild('desktopSearchShell') desktopSearchShell?: ElementRef;
   @ViewChild('mobileSearchShell') mobileSearchShell?: ElementRef;
+  @ViewChild('desktopSearchInput') desktopSearchInput?: ElementRef<HTMLInputElement>;
+  @ViewChild('mobileSearchInput') mobileSearchInput?: ElementRef<HTMLInputElement>;
   @ViewChild(NzDropDownDirective) dropdown!: NzDropDownDirective;
   // Add a search property for two-way binding
   searchTerm: string = '';
@@ -325,11 +327,13 @@ export class HeaderComponent {
       this.authService.redirectUrl = '/checkout';
       this.closeCartDrawer();
       this.router.navigate(['/account/login']);
+      this.scrollViewportToTop();
       return;
     }
 
     this.closeCartDrawer();
     this.router.navigate(['/checkout']);
+    this.scrollViewportToTop();
   }
 
 
@@ -382,11 +386,23 @@ export class HeaderComponent {
     }
   }
 
-  clearGlobalSearch() {
+  clearGlobalSearch(event?: Event) {
+    event?.preventDefault();
+    event?.stopPropagation();
+
     this.globalSearchTerm = '';
+    this.globalSearchSubject.next('');
     this.showSearchSuggestions = false;
     this.suggestionLoading = false;
     this.searchSuggestionGroups = [];
+    this.desktopSearchInput?.nativeElement?.blur();
+    this.mobileSearchInput?.nativeElement?.blur();
+    if (this.desktopSearchInput?.nativeElement) {
+      this.desktopSearchInput.nativeElement.value = '';
+    }
+    if (this.mobileSearchInput?.nativeElement) {
+      this.mobileSearchInput.nativeElement.value = '';
+    }
     this.isHeaderSearchFocused = false;
   }
 
@@ -769,7 +785,11 @@ export class HeaderComponent {
   }
 
   homeLocation() {
-    this.router.navigate(['./'])
+    void this.router.navigate(['./'], {
+      state: { scrollToTop: true }
+    }).then(() => {
+      this.scrollViewportToTop();
+    });
   }
 
   slugify(value: string): string {
@@ -794,7 +814,62 @@ export class HeaderComponent {
     else if (type == 'supplements') {
       this.closeSupplementDropdown()
     }
-    this.router.navigate([`./collections/${this.slugify(value)}`])
+
+    const navigateToCollection = () => {
+      void this.router.navigate([`./collections/${this.slugify(value)}`], {
+        state: {
+          scrollToTop: true
+        }
+      }).then(() => {
+        this.scrollViewportToTop();
+      });
+    };
+
+    if (this.visible && !this.isDesktopView()) {
+      this.closeSideMenu();
+      setTimeout(() => {
+        navigateToCollection();
+      }, 260);
+      return;
+    }
+
+    navigateToCollection();
+  }
+
+  private scrollViewportToTop(): void {
+    const forceScroll = () => {
+      const html = document.documentElement;
+
+      // Force-remove CDK scroll block (NZ Drawer sets this)
+      if (html.classList.contains('cdk-global-scrollblock')) {
+        html.classList.remove('cdk-global-scrollblock');
+      }
+      // Clear any CDK inline styles that lock scroll position
+      html.style.position = '';
+      html.style.top = '';
+      html.style.width = '';
+      html.style.overflow = '';
+      html.style.scrollBehavior = 'auto';
+
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.overflow = '';
+
+      window.scrollTo(0, 0);
+      html.scrollTop = 0;
+      document.body.scrollTop = 0;
+    };
+
+    // Execute immediately
+    forceScroll();
+
+    // Retry at multiple intervals to handle mobile browser timing differences
+    // CDK drawer close animation can take 300ms+ on mobile
+    [100, 300, 600].forEach((delay) => {
+      setTimeout(() => {
+        forceScroll();
+      }, delay);
+    });
   }
   openCartDrawer() {
     this.cartDrawerPlacement = 'right';
@@ -925,7 +1000,11 @@ export class HeaderComponent {
 
   startShop() {
     this.closeCartDrawer();
-    this.router.navigate(['collections/all'])
+    void this.router.navigate(['collections/all'], {
+      state: { scrollToTop: true }
+    }).then(() => {
+      this.scrollViewportToTop();
+    });
   }
 
   get isDark(): boolean {

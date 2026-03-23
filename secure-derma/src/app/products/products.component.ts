@@ -1,4 +1,4 @@
-import { isPlatformBrowser, NgClass, NgIf } from '@angular/common';
+import { isPlatformBrowser, Location, NgClass, NgIf } from '@angular/common';
 import { Component, ElementRef, HostListener, Inject, PLATFORM_ID, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
@@ -171,6 +171,7 @@ export class ProductsComponent {
   ]
   constructor(
     private productService: ProductService,
+    private location: Location,
     private route: ActivatedRoute,
     private router: Router,
     private cartService: CartService,
@@ -630,12 +631,13 @@ export class ProductsComponent {
   }
 
   updateUrlWithVariant(variantId: any) {
-    this.router.navigate([], {
+    const urlTree = this.router.createUrlTree([], {
       relativeTo: this.route,
       queryParams: { variant: variantId },
-      queryParamsHandling: 'merge', // Keep other query params if any
-      replaceUrl: true // Set to true if you don't want to add to history
+      queryParamsHandling: 'merge'
     });
+
+    this.location.replaceState(this.router.serializeUrl(urlTree));
   }
   timeoutRef: any; // Store timeout reference
   isImageChanging = false;  // Flag to trigger the animation

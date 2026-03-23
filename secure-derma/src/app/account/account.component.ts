@@ -10,7 +10,6 @@ import { AuthService } from '../services/auth/auth.service';
 import { Icons } from '../shared/icons';
 import { User } from '../models/users';
 import { AccountOrder, OrdersService } from '../services/orders.service';
-import { CartService } from '../services/cart.service';
 import { SeoService } from '../services/seo.service';
 import { PincodeService } from '../services/pincode.service';
 
@@ -122,7 +121,6 @@ export class AccountComponent implements OnInit, OnDestroy {
     private readonly authService: AuthService,
     private readonly paymentService: PaymentService,
     private readonly ordersService: OrdersService,
-    private readonly cartService: CartService,
     private readonly route: ActivatedRoute,
     private readonly router: Router,
     private readonly message: NzMessageService,
@@ -760,59 +758,36 @@ export class AccountComponent implements OnInit, OnDestroy {
     });
   }
 
-  async startShopping(): Promise<void> {
-    if (!this.selectedOrder?.items?.length || this.isReordering) {
+  async startShopping(order: AccountOrder | null = this.selectedOrder): Promise<void> {
+    const orderItems = (order?.items || []).filter((item) => item.product_id && item.product_detail_id);
+    if (!orderItems.length || this.isReordering) {
+      this.message.error('Unable to open Buy Now for this order right now.');
       return;
     }
 
     this.isReordering = true;
 
-    let addedCount = 0;
-    let updatedCount = 0;
-    let limitedCount = 0;
-
     try {
-      for (const item of this.selectedOrder.items) {
-        const result = await this.cartService.addItemByDetail(item.product_detail_id, item.quantity);
+      this.paymentService.saveCheckoutSession({
+        source: 'buy_now',
+        items: orderItems.map((item) => ({
+          productId: item.product_id,
+          detailId: item.product_detail_id,
+          quantity: item.quantity,
+          productName: item.product_name || 'Product',
+          thumbnail: item.thumbnail || '',
+          productWeight: item.product_weight,
+          weightType: item.weight_type,
+          qualityLabel: item.quality_label,
+          unitPrice: item.unit_price,
+          originalPrice: item.original_price,
+          lineTotal: item.line_total,
+        }))
+      });
 
-        switch (result.status) {
-          case 'added':
-            addedCount += 1;
-            break;
-          case 'updated':
-            updatedCount += 1;
-            break;
-          case 'limit_reached':
-            limitedCount += 1;
-            break;
-          default:
-            break;
-        }
-      }
-
-      if (addedCount || updatedCount) {
-        const parts: string[] = [];
-        if (addedCount) {
-          parts.push(`${addedCount} item${addedCount > 1 ? 's' : ''} added`);
-        }
-        if (updatedCount) {
-          parts.push(`${updatedCount} item${updatedCount > 1 ? 's were' : ' was'} already in your cart`);
-        }
-        if (limitedCount) {
-          parts.push(`${limitedCount} item${limitedCount > 1 ? 's' : ''} hit the quantity limit`);
-        }
-        this.message.success(parts.join('. ') + '.');
-        return;
-      }
-
-      if (limitedCount) {
-        this.message.info('These items are already at the maximum quantity in your cart.');
-        return;
-      }
-
-      this.message.error('Unable to add this order to your cart right now.');
+      await this.router.navigate(['/checkout']);
     } catch {
-      this.message.error('Unable to add this order to your cart right now.');
+      this.message.error('Unable to open Buy Now for this order right now.');
     } finally {
       this.isReordering = false;
     }

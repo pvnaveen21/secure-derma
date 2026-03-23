@@ -566,6 +566,12 @@ export class CollectionsComponent implements OnInit {
     this.applySorting();
   }
 
+  get mobileFilterFooterLabel(): string {
+    return this.selectedFilterCount > 0
+      ? `${this.selectedFilterCount} Filter${this.selectedFilterCount === 1 ? '' : 's'} Applied`
+      : 'No Filter Applied';
+  }
+
   get sortByLabel(): string {
     switch (this.sortBy) {
       case 'za':

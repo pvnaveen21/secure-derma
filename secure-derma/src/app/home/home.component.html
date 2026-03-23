@@ -2,7 +2,9 @@
     @if(isBrowser){
 
     <div class="main-image-container">
-        <img [src]="main_image_url" alt="banner" loading="lazy" class="main-image" />
+        @if(main_image_url) {
+        <img [src]="main_image_url" alt="" loading="eager" class="main-image" />
+        }
     </div>
 
     <!-- cate -->
@@ -102,7 +104,7 @@
             <nz-carousel [nzAutoPlay]="isBrowser" class="banner-carousel">
                 @for (data of bannerImages; track data) {
                 <div nz-carousel-content class="banner-slide">
-                    <img [src]="data.image" alt="banner" loading="lazy" class="banner-image" />
+                    <img [src]="data.image" alt="" loading="lazy" class="banner-image" />
                 </div>
                 }
             </nz-carousel>
@@ -393,19 +395,23 @@
             <ul class="brand-spotlight__features">
                 <li class="brand-spotlight__feature">
                     <span class="brand-spotlight__icon" aria-hidden="true">✓</span>
-                    <span class="brand-spotlight__feature-text">Clear ingredient rationale, not vague marketing language</span>
+                    <span class="brand-spotlight__feature-text">Clear ingredient rationale, not vague marketing
+                        language</span>
                 </li>
                 <li class="brand-spotlight__feature">
                     <span class="brand-spotlight__icon" aria-hidden="true">✓</span>
-                    <span class="brand-spotlight__feature-text">Routine-first discovery built around concern, category, and skin tolerance</span>
+                    <span class="brand-spotlight__feature-text">Routine-first discovery built around concern, category,
+                        and skin tolerance</span>
                 </li>
                 <li class="brand-spotlight__feature">
                     <span class="brand-spotlight__icon" aria-hidden="true">✓</span>
-                    <span class="brand-spotlight__feature-text">Consistent safety and storage standards across listed brands</span>
+                    <span class="brand-spotlight__feature-text">Consistent safety and storage standards across listed
+                        brands</span>
                 </li>
                 <li class="brand-spotlight__feature">
                     <span class="brand-spotlight__icon" aria-hidden="true">✓</span>
-                    <span class="brand-spotlight__feature-text">Focused guidance for Indian skin concerns and climate context</span>
+                    <span class="brand-spotlight__feature-text">Focused guidance for Indian skin concerns and climate
+                        context</span>
                 </li>
             </ul>
         </article>

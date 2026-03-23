@@ -694,6 +694,18 @@
     border: 0.06rem solid color-mix(in srgb, var(--border-color) 70%, transparent);
 }
 
+.order-card__footer-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.8rem;
+    width: 100%;
+}
+
+.order-card__buy-again {
+    display: none;
+}
+
 .order-card__number {
     font-size: 0.98rem;
     font-weight: 700;
@@ -1557,6 +1569,35 @@
         padding: 0;
     }
 
+
+    .account-shell--detail {
+        min-height: 100dvh;
+        height: 100dvh;
+        overflow-y: auto;
+        overflow-x: hidden;
+        overscroll-behavior-y: auto;
+        -webkit-overflow-scrolling: touch;
+        touch-action: pan-y;
+    }
+
+    .account-layout--detail,
+    .account-content--detail,
+    .account-card--detail,
+    .order-detail-page,
+    .order-detail-page__layout,
+    .order-detail,
+    .order-sidebar {
+        min-height: 0;
+        height: auto;
+        overflow: visible;
+    }
+
+    .order-detail-page {
+        overscroll-behavior-y: auto;
+        -webkit-overflow-scrolling: touch;
+        touch-action: pan-y;
+    }
+
     .account-card__head {
         flex-direction: column;
         align-items: flex-start;
@@ -1601,10 +1642,17 @@
     }
 
     .order-card__amount {
-        width: 100%;
+        width: fit-content;
+        max-width: 100%;
         justify-content: flex-start;
-        font-size: 0.96rem;
-        padding: 0.42rem 0.7rem;
+        font-size: 1rem;
+        font-weight: 700;
+        line-height: 1;
+        padding: 0;
+        border: 0;
+        border-radius: 0;
+        background: transparent;
+        color: color-mix(in srgb, var(--brand-primary) 74%, var(--text-primary) 26%);
     }
 
     .order-card__body {
@@ -1644,6 +1692,12 @@
         padding-top: 0.8rem;
     }
 
+    .order-card__status,
+    .order-card__amount {
+        width: fit-content;
+        max-width: 100%;
+    }
+
     .order-card__footer-meta {
         display: grid;
         grid-template-columns: 1fr;
@@ -1660,6 +1714,13 @@
         text-align: center;
     }
 
+    .order-card__footer-actions {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 0.6rem;
+        width: 100%;
+    }
+
     .order-link-btn {
         display: inline-flex;
         align-items: center;
@@ -1671,6 +1732,26 @@
         background: color-mix(in srgb, var(--brand-primary) 10%, var(--card-bg));
         border: 0.06rem solid color-mix(in srgb, var(--brand-primary) 18%, transparent);
         text-align: center;
+    }
+
+    .order-card__buy-again {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        min-height: 2.65rem;
+        padding: 0.65rem 0.9rem;
+        border-radius: 0.9rem;
+        border: 0;
+        background: var(--brand-primary);
+        color: #fff;
+        font-weight: 700;
+        text-align: center;
+        box-shadow: 0 0.7rem 1.4rem color-mix(in srgb, var(--brand-primary) 18%, transparent);
+    }
+
+    .order-card__buy-again:disabled {
+        opacity: 0.72;
     }
 
     .orders-pagination {
@@ -1699,15 +1780,29 @@
 
     .orders-marketplace-header,
     .order-detail-page__header-row,
-    .order-card__top,
     .order-detail__head,
     .order-detail__meta {
         flex-direction: column;
         align-items: flex-start;
     }
 
-    .order-card__body,
-    .order-card__content,
+    .order-card__top {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        align-items: start;
+        gap: 0.55rem;
+    }
+
+    .order-card__body {
+        grid-template-columns: 4.4rem minmax(0, 1fr);
+        align-items: start;
+    }
+
+    .order-card__content {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 0.6rem;
+    }
+
     .order-detail__hero-card,
     .order-detail-state__panel {
         grid-template-columns: minmax(0, 1fr);
@@ -1721,7 +1816,9 @@
     }
 
     .order-card__delivery {
+        padding-top: 0.55rem;
         padding-left: 0;
+        border-top: 0.06rem solid color-mix(in srgb, var(--border-color) 72%, transparent);
         border-left: 0;
     }
 
@@ -1735,6 +1832,10 @@
     .order-detail-page__header {
         padding: 0.95rem;
         border-radius: 1rem;
+    }
+
+    .order-switcher {
+        display: none;
     }
 
     .order-item {

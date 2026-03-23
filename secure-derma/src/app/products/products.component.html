@@ -707,7 +707,7 @@
 
 @if(visible){
 <nz-drawer [nzClosable]="false" [nzVisible]="visible" [nzPlacement]="drawerPlacement" (nzOnClose)="close()"
-    [nzWidth]="500" nzWrapClassName="location-drawer-shell">
+    [nzWidth]="500" [nzHeight]="drawerPlacement === 'bottom' ? '100dvh' : undefined" nzWrapClassName="location-drawer-shell">
     <ng-container *nzDrawerContent>
         <div class="location-drawer">
             <div class="location-drawer__header">

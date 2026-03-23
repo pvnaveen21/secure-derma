@@ -266,6 +266,7 @@
                         <input type="text" nz-input placeholder="Search products, brands, concerns..." class="home-search"
                             [(ngModel)]="globalSearchTerm"
                             (ngModelChange)="onGlobalSearchChange($event)"
+                            #desktopSearchInput
                             (focus)="onGlobalSearchFocus()"
                             (keydown.enter)="submitGlobalSearch()" />
                     </nz-input-group>
@@ -275,7 +276,7 @@
                     </ng-template>
 
                     <ng-template #desktopSearchClear>
-                        <button *ngIf="globalSearchTerm" type="button" class="secure-btn search-clear-btn" (click)="clearGlobalSearch()" aria-label="Clear search">
+                        <button *ngIf="globalSearchTerm" type="button" class="secure-btn search-clear-btn" (mousedown)="$event.preventDefault()" (click)="clearGlobalSearch($event)" aria-label="Clear search">
                             <lucide-angular class="d-flex" [img]="icons.header.close" [size]="16"></lucide-angular>
                         </button>
                     </ng-template>
@@ -364,12 +365,13 @@
             <input type="text" nz-input placeholder="Search products, brands, concerns..." nzSize="large"
                 [(ngModel)]="globalSearchTerm"
                 (ngModelChange)="onGlobalSearchChange($event)"
+                #mobileSearchInput
                 (focus)="onGlobalSearchFocus()"
                 (keydown.enter)="submitGlobalSearch()" />
         </nz-input-group>
 
         <ng-template #mobileSearchClear>
-            <button *ngIf="globalSearchTerm" type="button" class="secure-btn search-clear-btn" (click)="clearGlobalSearch()" aria-label="Clear search">
+            <button *ngIf="globalSearchTerm" type="button" class="secure-btn search-clear-btn" (mousedown)="$event.preventDefault()" (click)="clearGlobalSearch($event)" aria-label="Clear search">
                 <lucide-angular class="d-flex" [img]="icons.header.close" [size]="16"></lucide-angular>
             </button>
         </ng-template>
@@ -434,7 +436,6 @@
             <span class="mobile-bottom-nav__label">{{ getMobileBottomNavLabel(item) }}</span>
         </button>
     </nav>
-    <div *ngIf="shouldShowMobileBottomNav" class="mobile-bottom-nav-spacer" aria-hidden="true"></div>
 
 </div>
 
