@@ -444,13 +444,6 @@ export class CollectionsComponent implements OnInit {
     return total;
   }
 
-  // Apply filters to products
-  applyFilters() {
-    // This method is now deprecated since we're fetching from API
-    // Kept for backwards compatibility if needed
-    this.applySorting();
-  }
-
   // Get product values for a specific filter category
   private getProductFilterValues(product: any, panelKey: string): string[] {
     const values: string[] = [];

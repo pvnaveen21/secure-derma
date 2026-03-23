@@ -94,6 +94,7 @@
 
                 <div class="form-container">
                     <div class="google-login-block">
+                        @if(isGoogleLoginEnabled){
                         <button type="button" class="secure-btn google-custom-btn" (click)="continueWithGoogle()" [disabled]="googleLoading">
                             <span class="google-custom-btn__mark" aria-hidden="true">
                                 <svg viewBox="0 0 48 48" class="google-custom-btn__logo">
@@ -110,6 +111,7 @@
                         <div id="googleBtn" class="google-login-button" aria-hidden="true"></div>
                         @if(googleLoading){
                         <p class="google-login-status m-0">Signing you in with Google...</p>
+                        }
                         }
                         <div class="google-divider">
                             <span>or continue with {{ authMode === 'email' ? 'email OTP' : 'mobile OTP' }}</span>
