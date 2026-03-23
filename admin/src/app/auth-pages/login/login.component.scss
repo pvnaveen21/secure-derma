@@ -2,23 +2,23 @@
    LoginComponent — login.component.scss
    ───────────────────────────────────── */
 
-// ── Page shell ──────────────────────────────
 .login-page {
   position: relative;
   min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: 'Sora', 'Segoe UI', sans-serif;
+  font-family: 'IBM Plex Sans', 'Segoe UI', sans-serif;
   overflow: hidden;
 }
 
-// ── Background ──────────────────────────────
 .bg-image {
   position: absolute;
   inset: 0;
   background:
-    url('https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&w=1920&q=80') center / cover no-repeat;
+    radial-gradient(circle at top left, rgba(63, 122, 96, 0.24), transparent 34%),
+    radial-gradient(circle at bottom right, rgba(24, 57, 46, 0.38), transparent 35%),
+    linear-gradient(135deg, #f4fbf7 0%, #d9ebdf 48%, #b7d3c2 100%);
   z-index: 0;
 }
 
@@ -26,28 +26,27 @@
   position: absolute;
   inset: 0;
   background: linear-gradient(135deg,
-      rgba(2, 8, 30, 0.88) 0%,
-      rgba(5, 18, 55, 0.72) 60%,
-      rgba(0, 0, 0, 0.60) 100%);
+      rgba(8, 29, 22, 0.82) 0%,
+      rgba(12, 49, 37, 0.76) 58%,
+      rgba(20, 33, 28, 0.64) 100%);
   z-index: 1;
 }
 
-// ── Card ────────────────────────────────────
 .login-card {
   position: relative;
   z-index: 2;
   width: 100%;
-  max-width: 420px;
+  max-width: 460px;
   margin: 1.5rem;
   padding: 2.75rem 2.5rem;
-  background: rgba(10, 14, 38, 0.78);
-  backdrop-filter: blur(28px) saturate(1.6);
-  -webkit-backdrop-filter: blur(28px) saturate(1.6);
-  border: 1px solid rgba(255, 255, 255, 0.11);
-  border-radius: 20px;
+  background: rgba(11, 28, 21, 0.78);
+  backdrop-filter: blur(28px) saturate(1.4);
+  -webkit-backdrop-filter: blur(28px) saturate(1.4);
+  border: 1px solid rgba(196, 225, 211, 0.2);
+  border-radius: 24px;
   box-shadow:
-    0 32px 80px rgba(0, 0, 0, 0.55),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+    0 32px 80px rgba(0, 0, 0, 0.42),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.04);
   animation: slideUp 0.5s cubic-bezier(0.22, 0.97, 0.52, 1) both;
 }
 
@@ -63,146 +62,141 @@
   }
 }
 
-// ── Brand ────────────────────────────────────
 .brand {
   display: flex;
-  align-items: center;
-  gap: 0.7rem;
+  flex-direction: column;
+  gap: 1rem;
   margin-bottom: 2rem;
-
-  &-icon {
-    width: 44px;
-    height: 44px;
-    border-radius: 10px;
-    background: linear-gradient(135deg, #1677ff, #00b0ff);
-    display: grid;
-    place-items: center;
-    color: #fff;
-    font-size: 20px;
-    box-shadow: 0 4px 18px rgba(22, 119, 255, 0.45);
-  }
-
-  &-name {
-    font-size: 1.45rem;
-    font-weight: 700;
-    color: #eef2ff;
-    letter-spacing: -0.01em;
-  }
 }
 
-// ── Headings ─────────────────────────────────
-.card-title {
-  font-size: 1.6rem;
+.brand-logo {
+  width: min(100%, 220px);
+  height: auto;
+  display: block;
+  margin: auto;
+}
+
+.brand-copy {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.brand-eyebrow {
+  margin: 0;
+  font-size: 0.78rem;
   font-weight: 700;
-  color: #eef2ff;
-  line-height: 1.15;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(198, 229, 214, 0.78);
+}
+
+.brand-description {
+  margin: 0;
+  max-width: 27rem;
+  color: rgba(221, 237, 228, 0.72);
+  font-size: 0.95rem;
+  line-height: 1.55;
+}
+
+.card-title {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #eef7f1;
+  line-height: 1.12;
 }
 
 .card-sub {
-  font-size: 0.875rem;
-  color: rgba(185, 205, 255, 0.55);
-  margin-top: 0.35rem;
+  font-size: 0.92rem;
+  color: rgba(198, 229, 214, 0.68);
+  margin-top: 0.45rem;
+  line-height: 1.55;
 }
 
-// ── Form ─────────────────────────────────────
 .form {
   margin-top: 1.75rem;
 
-  // NG-ZORRO label overrides (scoped)
   ::ng-deep .ant-form-item-label>label {
     font-size: 0.72rem !important;
     font-weight: 600 !important;
     letter-spacing: 0.09em !important;
     text-transform: uppercase !important;
-    color: rgba(185, 205, 255, 0.55) !important;
+    color: rgba(198, 229, 214, 0.62) !important;
   }
 
-  // Input wrapper
   ::ng-deep .ant-input-affix-wrapper {
     background: rgba(255, 255, 255, 0.06) !important;
-    border: 1px solid rgba(255, 255, 255, 0.13) !important;
-    border-radius: 10px !important;
+    border: 1px solid rgba(202, 230, 216, 0.16) !important;
+    border-radius: 12px !important;
     height: 48px !important;
     transition: border-color 0.2s, box-shadow 0.2s !important;
   }
 
   ::ng-deep .ant-input-affix-wrapper:hover {
-    border-color: rgba(255, 255, 255, 0.28) !important;
+    border-color: rgba(202, 230, 216, 0.28) !important;
   }
 
   ::ng-deep .ant-input-affix-wrapper-focused {
-    border-color: rgba(22, 119, 255, 0.75) !important;
-    box-shadow: 0 0 0 3px rgba(22, 119, 255, 0.22) !important;
+    border-color: rgba(96, 181, 140, 0.88) !important;
+    box-shadow: 0 0 0 3px rgba(74, 148, 116, 0.22) !important;
     background: rgba(255, 255, 255, 0.09) !important;
   }
 
   ::ng-deep .ant-input-affix-wrapper-status-error {
-    border-color: #ff4d4f !important;
-    box-shadow: 0 0 0 3px rgba(255, 77, 79, 0.18) !important;
+    border-color: #ff7875 !important;
+    box-shadow: 0 0 0 3px rgba(255, 120, 117, 0.18) !important;
   }
 
-  // Inner input
   ::ng-deep .ant-input {
     background: transparent !important;
-    color: #eef2ff !important;
+    color: #eef7f1 !important;
     font-family: inherit !important;
     font-size: 0.94rem !important;
   }
 
   ::ng-deep .ant-input::placeholder {
-    color: rgba(140, 165, 230, 0.35) !important;
+    color: rgba(184, 209, 197, 0.4) !important;
   }
 
-  // Prefix / suffix icons
-  ::ng-deep .ant-input-prefix {
-    color: rgba(185, 205, 255, 0.45) !important;
-    margin-right: 8px !important;
-  }
-
+  ::ng-deep .ant-input-prefix,
   ::ng-deep .ant-input-suffix {
-    color: rgba(185, 205, 255, 0.45) !important;
+    color: rgba(198, 229, 214, 0.45) !important;
   }
 
-  // Feedback icons
   ::ng-deep .ant-form-item-feedback-icon-error {
-    color: #ff4d4f !important;
-  }
-
-  ::ng-deep .ant-form-item-feedback-icon-success {
-    color: #52c41a !important;
-  }
-
-  // Error text
-  ::ng-deep .ant-form-item-explain-error {
-    font-size: 0.78rem !important;
     color: #ff7875 !important;
   }
 
-  // Space between items
+  ::ng-deep .ant-form-item-feedback-icon-success {
+    color: #73d13d !important;
+  }
+
+  ::ng-deep .ant-form-item-explain-error {
+    font-size: 0.78rem !important;
+    color: #ffb3ae !important;
+  }
+
   ::ng-deep .ant-form-item {
     margin-bottom: 1rem !important;
   }
 
-  // Eye icon
   .eye-icon {
     cursor: pointer;
     transition: color 0.18s;
 
     &:hover {
-      color: #eef2ff !important;
+      color: #eef7f1 !important;
     }
   }
 
-  // Primary button
   ::ng-deep .ant-btn-primary {
-    background: linear-gradient(90deg, #1677ff, #0052d4) !important;
+    background: linear-gradient(90deg, #1a5944, #26735a) !important;
     border: none !important;
-    border-radius: 10px !important;
+    border-radius: 12px !important;
     height: 48px !important;
     font-size: 0.97rem !important;
     font-weight: 600 !important;
     letter-spacing: 0.02em !important;
-    box-shadow: 0 6px 22px rgba(22, 119, 255, 0.40) !important;
+    box-shadow: 0 8px 24px rgba(16, 74, 56, 0.38) !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
@@ -212,86 +206,41 @@
 
     &:hover {
       transform: translateY(-1px) !important;
-      box-shadow: 0 10px 30px rgba(22, 119, 255, 0.55) !important;
+      box-shadow: 0 12px 30px rgba(16, 74, 56, 0.5) !important;
     }
 
     &:active {
       transform: translateY(0) !important;
     }
   }
-
-  // Checkbox
-  ::ng-deep .ant-checkbox-wrapper {
-    color: rgba(185, 205, 255, 0.55) !important;
-    font-size: 0.85rem !important;
-  }
-
-  ::ng-deep .ant-checkbox-inner {
-    background: transparent !important;
-    border-color: rgba(255, 255, 255, 0.22) !important;
-    border-radius: 5px !important;
-  }
-
-  ::ng-deep .ant-checkbox-checked .ant-checkbox-inner {
-    background: #1677ff !important;
-    border-color: #1677ff !important;
-  }
 }
 
-// ── Options row ──────────────────────────────
-.options-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin: 0.1rem 0 0.85rem;
-}
-
-.forgot-link {
-  font-size: 0.85rem;
-  color: #1677ff;
-  text-decoration: none;
-  transition: color 0.18s;
-
-  &:hover {
-    color: #5aabff;
-  }
-}
-
-// ── Error banner ─────────────────────────────
 .error-banner {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  background: rgba(255, 77, 79, 0.11);
-  border: 1px solid rgba(255, 77, 79, 0.28);
-  border-radius: 8px;
-  padding: 0.6rem 0.9rem;
-  margin-bottom: 0.75rem;
-  font-size: 0.82rem;
-  color: #ff7875;
+  margin-top: 0.5rem;
+  padding: 0.8rem 0.95rem;
+  border-radius: 12px;
+  background: rgba(112, 18, 26, 0.38);
+  border: 1px solid rgba(255, 120, 117, 0.22);
+  color: #ffd2cf;
+  font-size: 0.88rem;
 }
 
-// ── Register row ─────────────────────────────
-.register-row {
-  text-align: center;
-  margin-top: 1.6rem;
-  font-size: 0.85rem;
-  color: rgba(185, 205, 255, 0.45);
-
-  a {
-    color: #1677ff;
-    text-decoration: none;
-    font-weight: 500;
-
-    &:hover {
-      color: #5aabff;
-    }
-  }
-}
-
-// ── Responsive ───────────────────────────────
-@media (max-width: 480px) {
+@media only screen and (max-width: 575px) {
   .login-card {
-    padding: 2rem 1.5rem;
+    margin: 1rem;
+    padding: 2rem 1.25rem;
+    border-radius: 20px;
+  }
+
+  .brand-logo {
+    width: min(100%, 190px);
+    margin: auto;
+  }
+
+  .card-title {
+    font-size: 1.55rem;
   }
 }

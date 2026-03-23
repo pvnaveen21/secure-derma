@@ -3,12 +3,53 @@
     padding: 0rem;
 }
 
+.side-brand-card {
+    display: grid;
+    gap: 0.7rem;
+    margin: 1rem 1rem 0.25rem;
+    padding: 1rem;
+    border-radius: 18px;
+    background: linear-gradient(180deg, #f5fbf7 0%, #edf6f1 100%);
+    border: 1px solid rgba(26, 89, 68, 0.12);
+    box-shadow: 0 12px 32px rgba(26, 89, 68, 0.08);
+}
+
+.side-brand-card__logo {
+    width: 138px;
+    height: auto;
+}
+
+.side-brand-card__copy {
+    display: grid;
+    gap: 0.2rem;
+}
+
+.side-brand-card__title,
+.side-brand-card__subtitle {
+    margin: 0;
+}
+
+.side-brand-card__title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #143f31;
+}
+
+.side-brand-card__subtitle {
+    font-size: 0.75rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #678577;
+}
+
 .side-menu-icon-clr {
     color: var(--icon-bg-color);
 }
 
 .side-menu-titles {
     padding-block: 12px;
+    border-radius: 12px;
+    margin-inline: 0.5rem;
 
     &:hover {
         background-color: var(--ant-primary-1);
@@ -30,7 +71,11 @@
 }
 
 .menu-name {
-    font-weight: 600 !important;
+    font-weight: 700 !important;
+    font-size: 0.75rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #678577;
 }
 
 .selectedSubMenu {
