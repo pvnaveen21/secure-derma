@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   FormBuilder,
@@ -14,8 +14,6 @@ import { NzIconModule } from 'ng-zorro-antd/icon';
 import { NzCheckboxModule } from 'ng-zorro-antd/checkbox';
 import { AuthService } from '@app/services/auth/auth.service';
 import { NzMessageService } from 'ng-zorro-antd/message';
-import { environment } from '../../../environments/environment';
-declare var google: any;
 
 @Component({
   selector: 'app-login',
@@ -32,8 +30,7 @@ declare var google: any;
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.scss'],
 })
-export class LoginComponent implements OnInit {
-  private readonly googleClientId = environment.GOOGLE_CLIENT_ID;
+export class LoginComponent {
   loginForm!: FormGroup;
   passwordVisible = false;
   isLoading = false;
@@ -44,35 +41,14 @@ export class LoginComponent implements OnInit {
     private authService: AuthService,
     private message: NzMessageService,
 
-  ) { }
-
-  ngOnInit(): void {
-    google.accounts.id.initialize({
-      client_id: this.googleClientId,
-      callback: this.handleCredentialResponse.bind(this)
-    });
-
-    google.accounts.id.renderButton(
-      document.getElementById("googleBtn"),
-      { theme: "outline", size: "large" }
-    );
+  ) {
     this.loginForm = this.fb.group({
       email: ['', [Validators.required, Validators.minLength(3)]],
       password: ['', [Validators.required, Validators.minLength(6)]],
-      // remember: [false],
     });
   }
-  handleCredentialResponse(response: any) {
-    const idToken = response.credential;
-    console.log(idToken);
-    this.authService.googleLogin({ token: idToken }).then(() => {
-      this.authService.redirectToHome();
-    }).catch((err) => {
-      this.message.error(err.message || err.error);
-    })
-  }
 
-  get username() { return this.loginForm.get('username')!; }
+  get email() { return this.loginForm.get('email')!; }
   get password() { return this.loginForm.get('password')!; }
 
   onSubmit(): void {
@@ -86,8 +62,6 @@ export class LoginComponent implements OnInit {
 
     this.isLoading = true;
     this.loginError = '';
-
-    // Replace this with your real AuthService call
 
     const payload = this.loginForm.value;
 

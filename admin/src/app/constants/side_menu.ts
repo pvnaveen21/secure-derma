@@ -1,10 +1,6 @@
 import { Icons } from "../shared/icons";
 
-
-// const assets = Assets;
 const icons = Icons
-
-
 
 export const SideMenu: { [key: string]: any[] } = {
 
@@ -88,81 +84,8 @@ export const SideMenu: { [key: string]: any[] } = {
             currentUrl: ['orders'],
             permissions: [1]
         },
-        // {
-        //     title: 'Executives',
-        //     icon: icons.sideMenu.userCheck,
-        //     routerLink: '/executives',
-        //     currentUrl: ['executives'],
-        //     permissions: [1]
-        // },
-        // {
-        //     title: 'SIS Users',
-        //     icon: icons.sideMenu.warehouse,
-        //     routerLink: '/sis-user',
-        //     currentUrl: ['sis-user'],
-        //     permissions: [1]
-        // },
-        // {
-        //     title: 'Retailers',
-        //     icon: icons.sideMenu.store,
-        //     routerLink: '/retailers',
-        //     currentUrl: ['retailers'],
-        //     permissions: [1]
-        // },
-        // {
-        //     title: 'Share',
-        //     icon: icons.sideMenu.share2,
-        //     routerLink: '/share',
-        //     currentUrl: ['share'],
-        //     permissions: [1, 6, 7, 9]
-
-        // },
-        // {
-        //     title: 'Wishlist Approval',
-        //     icon:icons.sideMenu.archive,
-        //     routerLink: '/wishlist-approval',
-        //     currentUrl: ['wishlist-approval']
-        // },
-        // {
-        //     title: 'Collection Videos',
-        //     icon: icons.sideMenu.video,
-        //     routerLink: '/collection-videos',
-        //     currentUrl: ['collection-videos'],
-        //     permissions: [1]
-        // },
-        // {
-        //     title: 'Feedback',
-        //     icon: icons.sideMenu.feedback,
-        //     routerLink: '/feedback',
-        //     currentUrl: ['feedback'],
-        //     permissions: [1]
-        // }
     ],
-    
-
-    
     "Account": [
-        // {
-        //     title: 'Profile',
-        //     icon: icons.sideMenu.user,
-        //     routerLink: '/profile',
-        //     currentUrl: ['profile'],
-        //     permissions: [1, 6, 7, 9]
-        // },
-        // {
-        //     title: 'Maintenance',
-        //     icon: icons.sideMenu.maintenance,
-        //     routerLink: '/maintenance',
-        //     currentUrl: ['maintenance'],
-        //     permissions: [1, 6, 7, 9]
-        // },
-        // {
-        //     title: 'Support',
-        //     icon: icons.sideMenu.help,
-        //     routerLink: '/support',
-        //     currentUrl: ['support'],
-        //     permissions: [1, 6, 7, 9]
-        // },
         {
             title: 'Logout',
             icon: icons.sideMenu.logout,
