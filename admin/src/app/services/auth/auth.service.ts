@@ -38,36 +38,6 @@ export class AuthService extends InterfaceService {
     this.setupActivityMonitor();
   }
 
-  googleLogin(payload: any): Promise<any> {
-    return new Promise((resolve, reject) => {
-
-      this.http.post(
-        this.getApiUrl('/auth/google/'),
-        payload,
-        this.getHttpOptions("json")
-      ).subscribe({
-
-        next: (response: any) => {
-          // Save tokens
-          setToken(response.access, ACCESS_TOKEN);
-          setToken(response.refresh, REFRESH_TOKEN);
-
-          // Fetch user details and navigate to home
-          this.getUserDetails(false, true)
-            .then(user => resolve(user))
-            .catch(error => reject(error));
-        },
-
-        error: (error) => {
-          unsetToken();
-          reject(error.error);
-        }
-
-      });
-
-    });
-  }
-
   loadAppData(): Promise<unknown> {
     return new Promise<unknown>((resolve, reject) => {
       if (!isTokenExpired(REFRESH_TOKEN)) {

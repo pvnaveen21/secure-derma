@@ -1,20 +1,16 @@
 import { Component, HostListener } from '@angular/core';
-import { SvgLoad } from '@app/shared/assets/svg-load';
 import { Assets } from '@app/shared/assets';
 import { NzFlexModule } from 'ng-zorro-antd/flex';
 import { NavigationEnd, Router } from '@angular/router';
-import { Subscription } from 'rxjs';
 import { SideMenu } from '@app/constants/side_menu';
 import { LucideAngularModule } from 'lucide-angular';
 import { Icons } from '@app/shared/icons';
 import { NzDrawerModule, NzDrawerPlacement } from 'ng-zorro-antd/drawer';
 import { SideNavComponent } from '../side-nav/side-nav.component';
 
-
 @Component({
   selector: 'app-header',
   imports: [
-    SvgLoad,
     NzFlexModule,
     LucideAngularModule,
     NzDrawerModule,
@@ -24,13 +20,13 @@ import { SideNavComponent } from '../side-nav/side-nav.component';
   styleUrl: './header.component.scss'
 })
 export class HeaderComponent {
-
   assets = Assets;
   activeMenu: any = null;
   sideMenu = SideMenu;
   icons = Icons
   visible = false;
   placement: NzDrawerPlacement = 'left';
+
   open(): void {
     this.visible = true;
   }
@@ -48,9 +44,6 @@ export class HeaderComponent {
       }
     });
   }
-  ngOnInit() {
-    // Any additional setup can be done here
-  }
 
   @HostListener('window:resize', [])
   onResize() {
@@ -63,7 +56,6 @@ export class HeaderComponent {
     }
   }
 
-
   getActiveMenu() {
     const currentUrl = this.router.url;
     if (currentUrl === '/dashboard') {
@@ -73,7 +65,7 @@ export class HeaderComponent {
     for (const [_, items] of Object.entries(this.sideMenu)) {
       const found = items.find(item => item.routerLink === currentUrl);
       if (found) {
-        return found; // return the whole object { title, routerLink, ... }
+        return found;
       }
     }
 
@@ -83,6 +75,4 @@ export class HeaderComponent {
   navigateToDashboard() {
     this.router.navigate(['/dashboard']);
   }
-
-
 }
