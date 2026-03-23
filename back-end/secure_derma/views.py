@@ -1,6 +1,5 @@
 import hashlib
 import hmac
-import os
 import re
 import uuid
 
@@ -2369,8 +2368,6 @@ class FilterProductsAPIView(APIView):
         # Handle price filtering differently for ManyToMany relations
         if min_price or max_price:
             # Create a subquery for products with details matching price criteria
-            from django.db.models import Exists
-            
             price_filter = Q()
             if min_price:
                 price_filter &= Q(product_details__selling_price__gte=min_price)

@@ -1,4 +1,3 @@
-from django.shortcuts import render
 from rest_framework.parsers import MultiPartParser, FormParser
 
 from product.models import Product, ProductDetails, ProductImage, ProductReview, ProductReviewImage

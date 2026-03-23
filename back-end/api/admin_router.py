@@ -8,7 +8,7 @@ from product.views import ProductDetailAPIView, ProductDetailDeleteAPIView, Prod
 from product_type.views import ProductTypeDetailAPIView, ProductTypeListCreateAPIView
 from skin_concern.views import SkinConcernsDetailAPIView, SkinConcernsListCreateAPIView
 from secure_derma.views import AdminOrderDetailAPIView, AdminOrderListAPIView, AdminOrderSummaryAPIView
-from user.views import AdminLoginApiView, AdminTokenRefreshView  , AdminDetailApiView, google_login  
+from user.views import AdminDetailApiView, AdminLoginApiView, AdminTokenRefreshView, google_login
 
 urlpatterns = [
     path('auth/login/', AdminLoginApiView.as_view()),
@@ -23,7 +23,6 @@ urlpatterns = [
     
     
     # Top Brand actions
-    # path('brands/top/', TopBrandListAPIView.as_view()),
     path('brands/<int:pk>/add-top-brand/', AddTopBrandAPIView.as_view()),
     path('brands/<int:pk>/remove-top-brand/', RemoveTopBrandAPIView.as_view()),
     

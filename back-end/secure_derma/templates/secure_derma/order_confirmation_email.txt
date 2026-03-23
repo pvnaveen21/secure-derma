@@ -1,0 +1,25 @@
+Secure Derma
+
+Your order has been confirmed.
+
+Hi {{ recipient_name }},
+
+Thank you for shopping with Secure Derma. We have received your payment and started processing your order.
+
+Order Number: {{ order.order_number }}
+Payment ID: {{ order.razorpay_payment_id }}
+Paid Amount: Rs. {{ grand_total }}
+
+Delivery Address:
+{{ order.customer_name }}
+{{ order.customer_address }}{% if order.customer_address_line_2 %}, {{ order.customer_address_line_2 }}{% endif %}
+{{ order.customer_city }}, {{ order.customer_state }} - {{ order.customer_postal_code }}
+
+Items Ordered:
+{% for item in order.items.all %}- {{ item.product_name }} | Qty: {{ item.quantity }} | Rs. {{ item.line_total }}
+{% endfor %}
+
+We will notify you as your order progresses.
+
+Secure Derma
+Trusted access for your skin, hair, and wellness journey.
