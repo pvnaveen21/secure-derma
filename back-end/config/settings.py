@@ -56,6 +56,7 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:4201",
     "http://localhost:4200",
     "http://127.0.0.1:4200",
+    "https://secure-derma-admin.vercel.app",
 ]
 extra_cors_origins = [
     origin.strip()
