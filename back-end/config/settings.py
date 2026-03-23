@@ -10,34 +10,35 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
-import os
 from pathlib import Path
 from datetime import timedelta
 
-from .env import load_local_env
-from .confiq import *
+from django.core.exceptions import ImproperlyConfigured
+
+from .env import env_bool, env_int, env_list, env_str, load_local_env
 
 load_local_env()
+
+from .confiq import DATABASES
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+DEBUG = env_bool('DJANGO_DEBUG', default=True)
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
+if DEBUG:
+    SECRET_KEY = env_str('DJANGO_SECRET_KEY', default='django-insecure-dev-only-change-me')
+else:
+    SECRET_KEY = env_str('DJANGO_SECRET_KEY', required=True)
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-oma_(v&4e1!@je7)0frn6og8mp^4+^1u-7oth^0oi@76ki$!5_')
+ALLOWED_HOSTS = env_list(
+    'DJANGO_ALLOWED_HOSTS',
+    default=['localhost', '127.0.0.1'] if DEBUG else [],
+)
+if not DEBUG and not ALLOWED_HOSTS:
+    raise ImproperlyConfigured('DJANGO_ALLOWED_HOSTS must be set when DJANGO_DEBUG is false.')
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv('DJANGO_DEBUG', 'true').lower() == 'true'
-
-ALLOWED_HOSTS = [
-    host.strip()
-    for host in os.getenv('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
-    if host.strip()
-]
-APPS =[
+APPS = [
     'user',
     'brand',
     'banner_images',
@@ -48,28 +49,22 @@ APPS =[
     'product',
     'product_type',
     'send_otp',
-    'secure_derma'
+    'secure_derma',
+]
 
+local_cors_origins = [
+    'http://localhost:38373',
+    'http://localhost:4201',
+    'http://localhost:4200',
+    'http://127.0.0.1:4200',
+    'https://secure-derma-admin.vercel.app',
 ]
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:38373",
-    "http://localhost:4201",
-    "http://localhost:4200",
-    "http://127.0.0.1:4200",
-    "https://secure-derma-admin.vercel.app",
-]
-extra_cors_origins = [
-    origin.strip()
-    for origin in os.getenv('CORS_ALLOWED_ORIGINS', '').split(',')
-    if origin.strip()
-]
-if extra_cors_origins:
-    CORS_ALLOWED_ORIGINS = [*CORS_ALLOWED_ORIGINS, *extra_cors_origins]
+CORS_ALLOWED_ORIGINS = [*local_cors_origins, *env_list('CORS_ALLOWED_ORIGINS')]
+CORS_ALLOWED_ORIGINS = list(dict.fromkeys(CORS_ALLOWED_ORIGINS))
+CSRF_TRUSTED_ORIGINS = env_list('CSRF_TRUSTED_ORIGINS')
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
-
-# Application definition
 
 INSTALLED_APPS = [
     'corsheaders',
@@ -79,7 +74,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-]+ APPS
+] + APPS
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
@@ -111,16 +106,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'config.wsgi.application'
 
-
-# Database
-# https://docs.djangoproject.com/en/6.0/ref/settings/#databases
-
-DATABASES = DATABASES
-
-
-# Password validation
-# https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
-
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
@@ -136,21 +121,11 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
-# Internationalization
-# https://docs.djangoproject.com/en/6.0/topics/i18n/
-
 LANGUAGE_CODE = 'en-us'
-
 TIME_ZONE = 'UTC'
-
 USE_I18N = True
-
 USE_TZ = True
 
-
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/6.0/howto/static-files/
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
@@ -158,23 +133,21 @@ REST_FRAMEWORK = {
 }
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=15),
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=30),
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=env_int('JWT_ACCESS_TOKEN_MINUTES', 15)),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=env_int('JWT_REFRESH_TOKEN_DAYS', 30)),
 }
 
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+SECURE_SSL_REDIRECT = env_bool('DJANGO_SECURE_SSL_REDIRECT', default=not DEBUG)
+SESSION_COOKIE_SECURE = env_bool('DJANGO_SESSION_COOKIE_SECURE', default=not DEBUG)
+CSRF_COOKIE_SECURE = env_bool('DJANGO_CSRF_COOKIE_SECURE', default=not DEBUG)
 
-if not DEBUG:
-    SESSION_COOKIE_SECURE = True
-    CSRF_COOKIE_SECURE = True
+AUTH_USER_MODEL = 'user.User'
 
-# AUTH_USER_MODEL = 'user.User'
-AUTH_USER_MODEL = "user.User"
-
-SENDGRID_API_KEY = os.getenv('SENDGRID_API_KEY', '')
-SENDGRID_FROM_EMAIL = os.getenv('SENDGRID_FROM_EMAIL', '')
-SENDGRID_FROM_NAME = os.getenv('SENDGRID_FROM_NAME', 'Secure Derma')
-DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', SENDGRID_FROM_EMAIL or 'noreply@securederma.local')
+SENDGRID_API_KEY = env_str('SENDGRID_API_KEY', default='')
+SENDGRID_FROM_EMAIL = env_str('SENDGRID_FROM_EMAIL', default='')
+SENDGRID_FROM_NAME = env_str('SENDGRID_FROM_NAME', default='Secure Derma')
+DEFAULT_FROM_EMAIL = env_str('DEFAULT_FROM_EMAIL', default=SENDGRID_FROM_EMAIL or 'noreply@securederma.local')

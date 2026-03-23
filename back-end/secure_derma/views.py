@@ -5,6 +5,7 @@ import re
 import uuid
 
 import requests
+from config.env import env_str
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
@@ -543,8 +544,8 @@ class RazorpayCreateOrderAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
-        razorpay_key_id = os.getenv("RAZORPAY_KEY_ID", "").strip()
-        razorpay_key_secret = os.getenv("RAZORPAY_KEY_SECRET", "").strip()
+        razorpay_key_id = env_str("RAZORPAY_KEY_ID", default="")
+        razorpay_key_secret = env_str("RAZORPAY_KEY_SECRET", default="")
 
         if not razorpay_key_id or not razorpay_key_secret:
             return Response(
@@ -696,12 +697,6 @@ class RazorpayCreateOrderAPIView(APIView):
             return Response(
                 {
                     "detail": "Failed to create Razorpay order.",
-                    "debug": {
-                        "key_id_prefix": razorpay_key_id[:12],
-                        "key_id_length": len(razorpay_key_id),
-                        "key_secret_present": bool(razorpay_key_secret),
-                        "key_secret_length": len(razorpay_key_secret),
-                    },
                     "razorpay_error": response.json() if response.content else None,
                 },
                 status=status.HTTP_502_BAD_GATEWAY,
@@ -777,7 +772,7 @@ class RazorpayVerifyPaymentAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
-        razorpay_key_secret = os.getenv("RAZORPAY_KEY_SECRET", "").strip()
+        razorpay_key_secret = env_str("RAZORPAY_KEY_SECRET", default="")
         if not razorpay_key_secret:
             return Response(
                 {"detail": "Razorpay credentials are not configured on the server."},

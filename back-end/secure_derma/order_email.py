@@ -1,9 +1,9 @@
-import os
-
 from django.template.loader import render_to_string
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Email, Mail
 from python_http_client.exceptions import HTTPError
+
+from config.env import env_str
 
 
 class OrderEmailError(Exception):
@@ -25,10 +25,18 @@ def send_order_confirmation_email(order) -> bool:
     if not recipient:
         return False
 
-    api_key = os.getenv("SENDGRID_API_KEY", "").strip()
-    from_email = os.getenv("ORDER_EMAIL_FROM", "").strip() or os.getenv("OTP_EMAIL_FROM", "").strip() or os.getenv("SENDGRID_FROM_EMAIL", "").strip()
-    from_name = os.getenv("ORDER_EMAIL_FROM_NAME", "").strip() or os.getenv("OTP_EMAIL_FROM_NAME", "").strip() or os.getenv("SENDGRID_FROM_NAME", "Secure Derma").strip()
-    subject = os.getenv("ORDER_EMAIL_SUBJECT", f"Secure Derma order confirmed: {order.order_number}").strip()
+    api_key = env_str("SENDGRID_API_KEY", default="")
+    from_email = (
+        env_str("ORDER_EMAIL_FROM", default="")
+        or env_str("OTP_EMAIL_FROM", default="")
+        or env_str("SENDGRID_FROM_EMAIL", default="")
+    )
+    from_name = (
+        env_str("ORDER_EMAIL_FROM_NAME", default="")
+        or env_str("OTP_EMAIL_FROM_NAME", default="")
+        or env_str("SENDGRID_FROM_NAME", default="Secure Derma")
+    )
+    subject = env_str("ORDER_EMAIL_SUBJECT", default=f"Secure Derma order confirmed: {order.order_number}")
 
     if not api_key or not from_email:
         raise OrderEmailError("Order email is not configured on the server.")

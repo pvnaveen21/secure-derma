@@ -207,7 +207,9 @@ from google.oauth2 import id_token
 from google.auth.transport import requests
 from rest_framework.decorators import api_view
 
-GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "").strip()
+from config.env import env_str
+
+GOOGLE_CLIENT_ID = env_str("GOOGLE_CLIENT_ID", default="")
 
 @api_view(['POST'])
 def google_login(request):
