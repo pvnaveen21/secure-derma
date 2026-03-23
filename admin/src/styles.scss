@@ -39,7 +39,7 @@ h4,
     height: 100%;
     width: 100%;
     position: relative;
-    --background-image: url("http://localhost:4200/assets/images/preloader/preloader-bg.png");
+    --background-image: url("/assets/images/preloader/preloader-bg.png");
     background-image: var(--background-image);
     background-repeat: no-repeat;
     background-position: center;
