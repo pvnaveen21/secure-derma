@@ -276,23 +276,19 @@ export class AuthService extends InterfaceService {
 
 
   logout() {
-    // this.logout$.next('open');
     return this.http
       .post(this.getApiUrl('/auth/logout/'), { 'refresh': getToken(REFRESH_TOKEN) }, this.getHttpOptions('json')).subscribe({
-        next: (res: any) => {
-          // console.log('result', res)
+        next: () => {
           unsetToken();
           void this.cartService.hydrateCart();
           this.router.navigate(['/account/login']).then(res => res).catch(error => {
           });
-          // this.logout$.next('close');
         },
-        error: (err) => {
+        error: () => {
           unsetToken();
           void this.cartService.hydrateCart();
           this.router.navigate(['/account/login']).then(res => res).catch(error => {
           });
-          // this.logout$.next('close');
         }
       })
   }
@@ -304,10 +300,7 @@ export class AuthService extends InterfaceService {
         allowCredentials: true
       })).subscribe({
         next: (response: any) => {
-          // console.log(response.token);
           setToken(response.token, ACCESS_TOKEN);
-          // this.authService.setLogoutActivityToken();
-          // setToken("response.refresh_token", REFRESH_TOKEN);
           this.cartService.syncGuestCartToServer()
             .then(() => this.getUserDetails())
             .then(user => resolve(user))
@@ -385,19 +378,4 @@ export class AuthService extends InterfaceService {
     );
   }
 
-  getAccessToken(): string | null {
-    return localStorage.getItem('access_token');
-  }
-
-  saveAccessToken(token: string): void {
-    localStorage.setItem('access_token', token);
-  }
-
-  getRefreshToken(): string | null {
-    return localStorage.getItem('refresh_token');
-  }
-
-  saveRefreshToken(token: string): void {
-    localStorage.setItem('refresh_token', token);
-  }
 }

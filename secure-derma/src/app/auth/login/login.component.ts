@@ -34,6 +34,7 @@ export class LoginComponent implements AfterViewInit {
   protected readonly assets = Assets;
   protected readonly icons = Icons;
   private readonly googleClientId = environment.GOOGLE_CLIENT_ID;
+  protected readonly isGoogleLoginEnabled = !!this.googleClientId;
   timer = 3;
   googleReady = false;
   googleLoading = false;
@@ -207,6 +208,11 @@ export class LoginComponent implements AfterViewInit {
   }
 
   continueWithGoogle() {
+    if (!this.isGoogleLoginEnabled) {
+      this.message.warning('Google sign-in is not configured for this environment.');
+      return;
+    }
+
     const googleButton = document.querySelector('#googleBtn [role="button"]') as HTMLElement | null;
     if (!googleButton) {
       this.message.warning('Google sign-in is not ready yet. Please try again.');
@@ -296,7 +302,7 @@ export class LoginComponent implements AfterViewInit {
   }
 
   private initializeGoogleLogin() {
-    if (typeof window === 'undefined') {
+    if (typeof window === 'undefined' || !this.isGoogleLoginEnabled) {
       return;
     }
 

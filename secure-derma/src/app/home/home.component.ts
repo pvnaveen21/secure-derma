@@ -114,9 +114,6 @@ export class HomeComponent {
     this.homeService.getTrendingProductList().subscribe({
       next: (res: any) => {
         this.trendingProductList = res.trending_products
-        console.log(this.trendingProductList);
-        
-        // this.cdr.detectChanges();
       },
       error: (err) => {
         console.error('Error fetching brands:', err);
