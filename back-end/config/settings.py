@@ -31,9 +31,14 @@ if DEBUG:
 else:
     SECRET_KEY = env_str('DJANGO_SECRET_KEY', required=True)
 
+default_allowed_hosts = ['localhost', '127.0.0.1']
+render_external_hostname = env_str('RENDER_EXTERNAL_HOSTNAME', default='')
+if render_external_hostname:
+    default_allowed_hosts.append(render_external_hostname)
+
 ALLOWED_HOSTS = env_list(
     'DJANGO_ALLOWED_HOSTS',
-    default=['localhost', '127.0.0.1'] if DEBUG else [],
+    default=default_allowed_hosts,
 )
 if not DEBUG and not ALLOWED_HOSTS:
     raise ImproperlyConfigured('DJANGO_ALLOWED_HOSTS must be set when DJANGO_DEBUG is false.')
