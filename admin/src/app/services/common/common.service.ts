@@ -2,14 +2,12 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { catchError, map, Observable } from 'rxjs';
 import { InterfaceService } from '../core/interface.service';
-import { environment } from '../../../environments/environment.development';
 import { ACCESS_TOKEN, getToken } from '@app/core/token';
 
 @Injectable({
   providedIn: 'root'
 })
 export class CommonService extends InterfaceService {
-  baseUrl: string = environment.BASEURL_API;
   constructor(
     http: HttpClient,
   ) {
@@ -31,7 +29,7 @@ export class CommonService extends InterfaceService {
   }
 
   fileUpload(file: any, type: any, confirm: boolean = false) {
-    const url = `${this.baseUrl}/admin-panel/file-upload/`;
+    const url = this.getApiUrl("/admin-panel/file-upload/");
     const formData: FormData = new FormData();
     const _confirm = confirm ? true : false;
     // append file
@@ -49,7 +47,7 @@ export class CommonService extends InterfaceService {
     return this.http.post(url, formData, { headers });
   }
   chainfileUpload(file:any){
-    const url = `${this.baseUrl}/projects/chain/`;
+    const url = this.getApiUrl("/projects/chain/");
     const formData: FormData = new FormData();
     // append file
     formData.append('file', file, file.name);
@@ -95,7 +93,7 @@ export class CommonService extends InterfaceService {
   }
 
   addProfile(file: any) {
-    const url = `${this.baseUrl}/users/user/set-profile-image/`;
+    const url = this.getApiUrl("/users/user/set-profile-image/");
     const formData: FormData = new FormData();
 
     // append file
