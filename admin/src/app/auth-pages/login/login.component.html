@@ -5,14 +5,15 @@
 
   <div class="login-card">
     <div class="brand">
-      <div class="brand-icon">
-        <span nz-icon nzType="appstore" nzTheme="outline"></span>
+      <img class="brand-logo" src="assets/brand/secure-derma-dark.png" alt="Secure Derma" />
+      <div class="brand-copy">
+        <p class="brand-eyebrow">Secure Derma Admin</p>
+        <p class="brand-description">Operations console for catalog, orders, banners, and storefront content.</p>
       </div>
-      <span class="brand-name">Nexus</span>
     </div>
 
-    <h2 class="card-title">Welcome back</h2>
-    <p class="card-sub">Sign in to your account</p>
+    <h2 class="card-title">Admin sign in</h2>
+    <p class="card-sub">Use your authorized team account to access the Secure Derma control panel.</p>
 
     <form nz-form nzLayout="vertical" [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="form" autocomplete="on">
       <nz-form-item>
