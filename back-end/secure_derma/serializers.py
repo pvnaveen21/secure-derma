@@ -5,8 +5,7 @@ from hair_concern.models import HairConcerns
 from ingredient.models import Ingredients
 from product_type.models import ProductType
 from skin_concern.models import SkinConcerns
-from product.models import Product, ProductDetails, ProductImage, ProductReview
-from django.conf import settings
+from product.models import Product, ProductDetails, ProductImage
 from .models import SecureDermaNewsletterSubscriber
 
 

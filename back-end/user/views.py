@@ -6,7 +6,6 @@ from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenRefreshView
 from rest_framework_simplejwt.exceptions import TokenError, InvalidToken
-import os
 import re
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
