@@ -31,10 +31,11 @@
     height: 25rem;
     border-radius: 0.75rem;
     overflow: hidden;
+    background-color: var(--section-bg, #f1f5f9);
 
     @media only screen and (max-width:59.9375rem) {
         height: auto;
-        border-radius:unset
+        border-radius: unset
     }
 }
 
@@ -161,7 +162,7 @@
     }
 
     @media only screen and (max-width:59.9375rem) {
-            min-width: 7rem;
+        min-width: 8rem;
     }
 }
 
@@ -206,6 +207,9 @@
     font-weight: 600;
     color: var(--text-heading);
     margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
     transition: color 0.3s ease;
 }
 
@@ -1704,6 +1708,7 @@
 
 :host-context(html.dark),
 :host-context(html.coloured) {
+
     .routine-builder-mini,
     .concern-strip,
     .concern-product-card {

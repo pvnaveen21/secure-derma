@@ -772,7 +772,7 @@
     justify-content: center;
     gap: 0.45rem;
     padding: 0.45rem 0.55rem;
-    min-height:1rem;
+    min-height: 1rem;
 }
 
 .quantity-selector--compact .quantity-selector__button {
@@ -948,7 +948,7 @@
     width: 100%;
     display: grid;
     grid-template-columns: auto 1fr auto;
-    align-items: start;
+    align-items: center;
     gap: 0.8rem;
     min-width: 0;
     padding: 0.95rem 1rem;
@@ -972,9 +972,8 @@
 }
 
 .product-info-tab-copy {
-    display: grid;
-    gap: 0.2rem;
-    padding-top: 0.25rem;
+    min-width: 0;
+    overflow: hidden;
 }
 
 .product-info-tab-title {
@@ -982,6 +981,9 @@
     font-weight: 700;
     color: var(--text-primary);
     line-height: 1.25;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .product-info-tab-action {
@@ -1163,7 +1165,8 @@
     font-size: 2.2rem !important;
     line-height: 2.2rem !important;
 }
-::ng-deep nz-rate.rating-star-icon{
+
+::ng-deep nz-rate.rating-star-icon {
     line-height: 0rem;
 }
 
@@ -1306,16 +1309,20 @@
     display: block;
     margin-top: 0.75rem;
 }
+
 // .review-card-rating{
-::ng-deep .ng-untouched{
+::ng-deep .ng-untouched {
     line-height: 0rem !important;
 }
-::ng-deep .ant-rate-star:not(:last-child){
+
+::ng-deep .ant-rate-star:not(:last-child) {
     margin-right: 0.5rem;
 }
+
 ::ng-deep.ant-rate {
     font-size: 0rem !important;
 }
+
 // }
 
 .ratings-score-label {
@@ -2197,12 +2204,11 @@
     }
 
     .product-info-trigger {
-        grid-template-columns: auto 1fr;
+        grid-template-columns: auto 1fr auto;
     }
 
     .product-info-tab-action {
-        grid-column: 2;
-        justify-self: start;
+        justify-self: end;
     }
 
     .customer-rating {
@@ -2264,10 +2270,11 @@
     .secure-home-container {
         padding-inline: 0.75rem;
     }
-.pro-detail-view {
-    grid-template-columns: 1fr;
-    gap: 1.5rem;
-}
+
+    .pro-detail-view {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
 
     .view-img-main {
         height: 17rem;
@@ -2600,12 +2607,12 @@
     ::ng-deep .location-drawer-shell .ant-drawer-content-wrapper {
         width: 100% !important;
         max-width: 100% !important;
+        height: 100dvh !important;
     }
 
     ::ng-deep .location-drawer-shell .ant-drawer-content {
-        border-top-left-radius: 1.3rem;
-        border-top-right-radius: 1.3rem;
-        border-bottom-left-radius: 0;
+        height: 100dvh;
+        border-radius: 0;
     }
 }
 

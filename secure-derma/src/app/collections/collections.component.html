@@ -246,9 +246,19 @@
 
     <!-- Mobile fixed action bar -->
     <div class="mobile-fixed-actions">
-        <button class="secure-btn mobile-fixed-btn" (click)="openSortDrawer()">Sort By: {{ sortByLabel }}</button>
-        <button class="secure-btn mobile-fixed-btn" (click)="openFilterDrawer()">
-            Filters
+        <button class="secure-btn mobile-fixed-btn mobile-fixed-btn--sort" (click)="openSortDrawer()">
+            <lucide-angular class="mobile-fixed-btn__icon" [size]="15" [img]="icons.feature.sendToBack"></lucide-angular>
+            <span class="mobile-fixed-btn__copy">
+                <span class="mobile-fixed-btn__title">Sort By</span>
+                <span class="mobile-fixed-btn__subtitle">{{ sortByLabel }}</span>
+            </span>
+        </button>
+        <button class="secure-btn mobile-fixed-btn mobile-fixed-btn--filter" (click)="openFilterDrawer()">
+            <lucide-angular class="mobile-fixed-btn__icon" [size]="15" [img]="icons.header.categories"></lucide-angular>
+            <span class="mobile-fixed-btn__copy">
+                <span class="mobile-fixed-btn__title">Filter</span>
+                <span class="mobile-fixed-btn__subtitle">{{ mobileFilterFooterLabel }}</span>
+            </span>
             @if (selectedFilterCount > 0) {
             <span class="mobile-fixed-badge">{{ selectedFilterCount }}</span>
             }

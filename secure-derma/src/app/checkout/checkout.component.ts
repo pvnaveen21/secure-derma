@@ -124,6 +124,24 @@ export class CheckoutComponent {
     return this.checkoutSession?.source === 'cart';
   }
 
+
+  openProduct(item: CheckoutSessionItem): void {
+    const productSlug = this.slugify(item.productName || '');
+    if (!productSlug) {
+      return;
+    }
+
+    void this.router.navigate(['/products', productSlug]);
+  }
+
+  private slugify(value: string): string {
+    return String(value || '')
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+  }
+
   onCheckoutFieldChange(field: keyof PaymentCustomerPayload, value: string): void {
     this.checkoutCustomer = {
       ...this.checkoutCustomer,

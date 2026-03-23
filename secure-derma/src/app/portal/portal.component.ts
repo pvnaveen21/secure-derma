@@ -21,7 +21,7 @@ export class PortalComponent {
   private navigationSubscription?: Subscription;
   @ViewChild('pageContent') private pageContent?: ElementRef<HTMLElement>;
 
-  constructor(private readonly router: Router) {}
+  constructor(private readonly router: Router) { }
 
   ngOnInit(): void {
     this.navigationSubscription = this.router.events.subscribe((event) => {
@@ -37,7 +37,40 @@ export class PortalComponent {
         event instanceof NavigationError
       ) {
         this.releaseContentHeight();
+
+        if (event instanceof NavigationEnd) {
+          this.scrollToTop();
+        }
       }
+    });
+  }
+
+  private scrollToTop(): void {
+    const forceScroll = () => {
+      const html = document.documentElement;
+
+      if (html.classList.contains('cdk-global-scrollblock')) {
+        html.classList.remove('cdk-global-scrollblock');
+      }
+      html.style.position = '';
+      html.style.top = '';
+      html.style.width = '';
+      html.style.overflow = '';
+      html.style.scrollBehavior = 'auto';
+
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.overflow = '';
+
+      window.scrollTo(0, 0);
+      html.scrollTop = 0;
+      document.body.scrollTop = 0;
+    };
+
+    forceScroll();
+
+    [100, 300, 600].forEach((delay) => {
+      setTimeout(() => forceScroll(), delay);
     });
   }
 

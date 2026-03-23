@@ -186,16 +186,34 @@
 
                 <div class="checkout-summary__list cart-items-container">
                     <div class="checkout-item cart-item" *ngFor="let item of session.items">
-                        <div class="checkout-item__media item-image">
+                        <button type="button" class="secure-btn checkout-item__media item-image checkout-item__link" (click)="openProduct(item)" [attr.aria-label]="'Open ' + item.productName">
                             <img *ngIf="item.thumbnail" [src]="item.thumbnail" [alt]="item.productName" class="checkout-item__image" />
-                        </div>
-                        <div class="checkout-item__copy item-details">
-                            <h4 class="checkout-item__title item-name mb-0">{{ item.productName }}</h4>
-                            <div class="checkout-item__meta-row">
-                                <p class="checkout-item__quality mb-0" *ngIf="item.qualityLabel">
-                                    Quality: {{ item.qualityLabel }}
-                                </p>
-                                <p class="checkout-item__meta item-sku mb-0">SKU-{{ item.detailId }}</p>
+                        </button>
+                        <div class="checkout-item__content">
+                            <div class="checkout-item__body">
+                                <div class="checkout-item__copy item-details">
+                                    <div class="checkout-item__header-row">
+                                        <button type="button" class="secure-btn checkout-item__title-link" (click)="openProduct(item)">{{ item.productName }}</button>
+                                        <span class="checkout-item__save save-badge" *ngIf="getDiscountPercent(item) > 0">
+                                            Save {{ getDiscountPercent(item) }}%
+                                        </span>
+                                    </div>
+                                    <div class="checkout-item__meta-row">
+                                        <p class="checkout-item__quality mb-0" *ngIf="item.qualityLabel">
+                                            Quality: {{ item.qualityLabel }}
+                                        </p>
+                                        <p class="checkout-item__meta item-sku mb-0">SKU-{{ item.detailId }}</p>
+                                    </div>
+                                </div>
+                                <div class="checkout-item__price item-price">
+                                    <div class="checkout-item__price-row">
+                                        <strong class="price">₹{{ item.unitPrice }}</strong>
+                                        <span class="original-price" *ngIf="item.originalPrice && item.originalPrice > item.unitPrice">
+                                            ₹{{ item.originalPrice }}
+                                        </span>
+                                    </div>
+                                    <span class="checkout-item__unit-price">Qty {{ item.quantity }} · Total ₹{{ item.lineTotal }}</span>
+                                </div>
                             </div>
                             <div class="checkout-item__actions item-controls">
                                 <div class="checkout-item__quantity quantity-list">
@@ -207,16 +225,6 @@
                                 </div>
                                 <button type="button" class="secure-btn checkout-item__remove" (click)="removeItem(item)">Delete</button>
                             </div>
-                        </div>
-                        <div class="checkout-item__price item-price">
-                            <span class="checkout-item__save save-badge" *ngIf="getDiscountPercent(item) > 0">
-                                Save {{ getDiscountPercent(item) }}%
-                            </span>
-                            <strong class="price">₹{{ item.unitPrice }}</strong>
-                            <span class="original-price" *ngIf="item.originalPrice && item.originalPrice > item.unitPrice">
-                                ₹{{ item.originalPrice }}
-                            </span>
-                            <span class="checkout-item__unit-price">Qty {{ item.quantity }} · Total ₹{{ item.lineTotal }}</span>
                         </div>
                     </div>
                 </div>
