@@ -1,4 +1,4 @@
-import { Component, inject, Inject, OnDestroy, PLATFORM_ID } from '@angular/core';
+import { Component, HostListener, inject, Inject, OnDestroy, PLATFORM_ID } from '@angular/core';
 import { NzCarouselModule } from 'ng-zorro-antd/carousel';
 import { CommonModule, DOCUMENT, isPlatformBrowser } from '@angular/common';
 import { LucideAngularModule } from 'lucide-angular';
@@ -12,6 +12,8 @@ import { Icons } from '../shared/icons';
 import { HomeService } from '../services/home.service';
 import { CartService } from '../services/cart.service';
 import { HorizontalScrollComponent } from '../shared/horizontal-scroll/horizontal-scroll.component';
+import { forkJoin } from 'rxjs';
+import { SeoService } from '../services/seo.service';
 
 @Component({
   selector: 'app-home',
@@ -32,11 +34,19 @@ export class HomeComponent {
   icons = Icons
   isBrowser:any = false
   main_image_url:any=''
+  mainImageWebUrl = ''
+  mainImageMobileUrl = ''
+  mainImageFallbackUrl = ''
+  landingPageWebImages: any[] = []
+  landingPageMobileImages: any[] = []
+  landingPageFallbackImages: any[] = []
+  isMobileViewport = false
   constructor(
     private homeService: HomeService,
     private router: Router,
     private cartService: CartService,
     private message: NzMessageService,
+    private seoService: SeoService,
     @Inject(PLATFORM_ID) private platformId: object,
     @Inject(DOCUMENT) private document: Document
   ) {
@@ -45,24 +55,43 @@ export class HomeComponent {
    }
 
   ngOnInit() {
+    this.seoService.updateSeo({
+      title: 'Dermatologist Recommended Skin, Hair & Wellness Store',
+      description: 'Shop dermatologist-recommended skin care, hair care, supplements, and pediatric essentials at Secure Derma with trusted brands and clear product guidance.',
+      canonicalPath: '/',
+      type: 'website',
+      keywords: 'secure derma, skin care, hair care, supplements, pediatric care, dermatologist recommended products'
+    });
+    this.updateViewportState();
     this.getTopBrandsList()
     this.getShowCategoryList()
     this.getBannerImage()
     this.getTrendingProduct()
-    this.getMainBannerImage('main_image')
+    this.getMainBannerImage()
     this.getWhySecureDermaImage('why_secure_derma')
     this.loadConcernProducts(this.selectedConcern)
   }
   trendingProductList: any = []
   why_secure_derma:any=''
 
-  getMainBannerImage(type:any){
-    this.homeService.getImageByType(type).subscribe({
-      next: (res: any) => {
-        console.log(res);
-        if (res?.images){
-        this.main_image_url = res?.images[0].image
-        }
+  @HostListener('window:resize')
+  onWindowResize(): void {
+    this.updateViewportState();
+    this.updateMainBannerUrl();
+    this.updateLandingBannerImages(this.landingPageWebImages, this.landingPageMobileImages, this.landingPageFallbackImages);
+  }
+
+  getMainBannerImage(){
+    forkJoin({
+      web: this.homeService.getImageByType('main_image_web'),
+      mobile: this.homeService.getImageByType('main_image_mobile'),
+      fallback: this.homeService.getImageByType('main_image')
+    }).subscribe({
+      next: ({ web, mobile, fallback }: any) => {
+        this.mainImageWebUrl = web?.images?.[0]?.image || '';
+        this.mainImageMobileUrl = mobile?.images?.[0]?.image || '';
+        this.mainImageFallbackUrl = fallback?.images?.[0]?.image || '';
+        this.updateMainBannerUrl();
       },
       error: (err) => {
         console.error('Error fetching brands:', err);
@@ -72,7 +101,6 @@ export class HomeComponent {
   getWhySecureDermaImage(type: any) {
     this.homeService.getImageByType(type).subscribe({
       next: (res: any) => {
-        console.log(res);
         if (res?.images) {
           this.why_secure_derma = res?.images[0].image
         }
@@ -86,9 +114,6 @@ export class HomeComponent {
     this.homeService.getTrendingProductList().subscribe({
       next: (res: any) => {
         this.trendingProductList = res.trending_products
-        console.log(this.trendingProductList);
-        
-        // this.cdr.detectChanges();
       },
       error: (err) => {
         console.error('Error fetching brands:', err);
@@ -110,16 +135,42 @@ export class HomeComponent {
   }
   bannerImages: any = []
   getBannerImage() {
-    this.homeService.getBannerImages().subscribe({
-      next: (res: any) => {
-        this.bannerImages = res.landing_page_images
-
-        // this.cdr.detectChanges();
+    forkJoin({
+      web: this.homeService.getImageByType('landing_page_web'),
+      mobile: this.homeService.getImageByType('landing_page_mobile'),
+      fallback: this.homeService.getBannerImages()
+    }).subscribe({
+      next: ({ web, mobile, fallback }: any) => {
+        this.landingPageWebImages = web?.images || [];
+        this.landingPageMobileImages = mobile?.images || [];
+        this.landingPageFallbackImages = fallback?.landing_page_images || [];
+        this.updateLandingBannerImages(this.landingPageWebImages, this.landingPageMobileImages, this.landingPageFallbackImages);
       },
       error: (err) => {
         console.error('Error fetching brands:', err);
       }
     });
+  }
+
+  private updateViewportState(): void {
+    if (!this.isBrowser || typeof window === 'undefined') {
+      this.isMobileViewport = false;
+      return;
+    }
+
+    this.isMobileViewport = window.innerWidth <= 768;
+  }
+
+  private updateMainBannerUrl(): void {
+    const preferredImage = this.isMobileViewport ? this.mainImageMobileUrl : this.mainImageWebUrl;
+    const alternateImage = this.isMobileViewport ? this.mainImageWebUrl : this.mainImageMobileUrl;
+    this.main_image_url = preferredImage || alternateImage || this.mainImageFallbackUrl || '';
+  }
+
+  private updateLandingBannerImages(webImages: any[], mobileImages: any[], fallbackImages: any[]): void {
+    this.bannerImages = this.isMobileViewport
+      ? (mobileImages.length ? mobileImages : (webImages.length ? webImages : fallbackImages))
+      : (webImages.length ? webImages : (mobileImages.length ? mobileImages : fallbackImages));
   }
   categoryList: any = []
   getShowCategoryList() {
@@ -150,6 +201,8 @@ export class HomeComponent {
   concernProductsLoading = false
   concernTotalCount = 0
   recentlyAddedProductId: number | null = null
+  newsletterEmail = ''
+  newsletterSubmitting = false
   private addToCartFeedbackTimeout?: ReturnType<typeof setTimeout>
 
   loadConcernProducts(concern: string) {
@@ -198,6 +251,44 @@ export class HomeComponent {
         this.routineLoading = false
       }
     })
+  }
+
+  subscribeToNewsletter() {
+    const email = this.newsletterEmail.trim().toLowerCase();
+    if (!email) {
+      this.message.warning('Enter your email address to subscribe.');
+      return;
+    }
+
+    if (!this.isValidEmail(email)) {
+      this.message.warning('Enter a valid email address.');
+      return;
+    }
+
+    if (this.newsletterSubmitting) {
+      return;
+    }
+
+    this.newsletterSubmitting = true;
+    this.homeService.subscribeToNewsletter({ email }).subscribe({
+      next: (response: any) => {
+        this.newsletterSubmitting = false;
+        this.newsletterEmail = '';
+        this.message.success(
+          response?.created
+            ? 'Thanks for subscribing to Secure Derma updates.'
+            : 'You are already subscribed to Secure Derma updates.'
+        );
+      },
+      error: (error: any) => {
+        this.newsletterSubmitting = false;
+        this.message.error(
+          typeof error === 'string' && error
+            ? error
+            : 'Unable to save your subscription right now.'
+        );
+      }
+    });
   }
 
 
@@ -441,7 +532,10 @@ export class HomeComponent {
               product?.discount_price
               ?? product?.product_details?.[0]?.discount_price
               ?? 0
-            )
+            ),
+            product_weight: product?.product_weight ?? '',
+            weight_type: product?.weight_type ?? '',
+            combo: Number(product?.combo ?? 1)
           }
         : null);
 
@@ -449,6 +543,10 @@ export class HomeComponent {
       ...product,
       details: selectedDetail ? [selectedDetail] : []
     };
+  }
+
+  private isValidEmail(value: string): boolean {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
   }
 
 }

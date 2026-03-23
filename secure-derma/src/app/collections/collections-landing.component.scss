@@ -1,0 +1,209 @@
+.collections-landing {
+    max-width: var(--app-max-width);
+    margin: 0 auto;
+    padding: 1.2rem 1rem 5rem;
+}
+
+.collections-landing__hero {
+    margin-bottom: 1.3rem;
+    padding: 1.2rem;
+    border: 0.0625rem solid color-mix(in srgb, var(--filter-border) 78%, transparent);
+    border-radius: 1rem;
+    background:
+        linear-gradient(145deg,
+            color-mix(in srgb, var(--card-bg) 90%, #ffffff 10%) 0%,
+            color-mix(in srgb, var(--brand-primary) 9%, var(--card-bg)) 100%);
+}
+
+.collections-landing__kicker {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.06rem;
+    text-transform: uppercase;
+    color: var(--brand-primary);
+}
+
+.collections-landing__title {
+    margin-top: 0.35rem !important;
+    font-size: clamp(1.6rem, 3vw, 2.2rem);
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.collections-landing__copy {
+    margin-top: 0.45rem !important;
+    max-width: 42rem;
+    color: var(--text-secondary);
+    line-height: 1.55rem;
+}
+
+.collections-brands-section {
+    padding: 1.1rem;
+    border: 0.0625rem solid color-mix(in srgb, var(--filter-border) 78%, transparent);
+    border-radius: 1rem;
+    background: color-mix(in srgb, var(--card-bg) 96%, #ffffff 4%);
+    box-shadow: 0 0.3rem 1rem rgba(15, 23, 42, 0.05);
+}
+
+.collections-brands-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.collections-brands-kicker {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.05rem;
+    text-transform: uppercase;
+    color: var(--brand-primary);
+}
+
+.collections-brands-title {
+    margin-top: 0.25rem !important;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.collections-brands-count {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    background: color-mix(in srgb, var(--section-bg) 86%, var(--card-bg));
+    border: 0.0625rem solid color-mix(in srgb, var(--filter-border) 78%, transparent);
+    border-radius: 99.9rem;
+    padding: 0.28rem 0.7rem;
+    white-space: nowrap;
+}
+
+.collections-brands-grid {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 0.9rem;
+}
+
+.collections-brand-card {
+    --brand-delay: 0ms;
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+    padding: 0.8rem;
+    border: 0.0625rem solid color-mix(in srgb, var(--filter-border) 76%, transparent);
+    border-radius: 0.9rem;
+    background: var(--card-bg);
+    cursor: pointer;
+    transition: transform 0.24s ease, box-shadow 0.24s ease, border-color 0.24s ease;
+    box-shadow: 0 0.28rem 0.8rem rgba(15, 23, 42, 0.05);
+    animation: collectionsBrandReveal 0.45s ease both;
+    animation-delay: var(--brand-delay);
+}
+
+.collections-brand-card:hover {
+    transform: translateY(-0.18rem);
+    border-color: color-mix(in srgb, var(--brand-primary) 30%, var(--filter-border));
+    box-shadow: 0 0.7rem 1.4rem rgba(15, 23, 42, 0.1);
+}
+
+.collections-brand-card__frame {
+    height: 5.8rem;
+    border-radius: 0.8rem;
+    background: color-mix(in srgb, var(--section-bg) 82%, var(--card-bg));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.75rem;
+}
+
+.collections-brand-card__image {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.collections-brand-card__name {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    text-align: center;
+    line-height: 1.25rem;
+    min-height: 2.5rem;
+}
+
+.collections-brands-actions {
+    display: flex;
+    justify-content: center;
+    margin-top: 1rem;
+}
+
+.collections-brands-load-more {
+    min-width: 10rem;
+    border: 0.0625rem solid color-mix(in srgb, var(--brand-primary) 48%, transparent);
+    border-radius: 0.7rem;
+    background: color-mix(in srgb, var(--card-bg) 90%, #ffffff 10%);
+    color: var(--text-primary);
+    font-size: 0.88rem;
+    font-weight: 700;
+    padding: 0.68rem 1.1rem;
+    transition: transform 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.collections-brands-load-more:hover {
+    transform: translateY(-0.08rem);
+    background: color-mix(in srgb, var(--hover-bg) 76%, var(--card-bg));
+    border-color: color-mix(in srgb, var(--brand-primary) 62%, transparent);
+}
+
+@keyframes collectionsBrandReveal {
+    from {
+        opacity: 0;
+        transform: translateY(0.6rem);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media only screen and (max-width: 64rem) {
+    .collections-brands-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+@media only screen and (max-width: 48rem) {
+    .collections-landing {
+        padding: 1rem 1rem 5rem;
+    }
+
+    .collections-landing__hero,
+    .collections-brands-section {
+        padding: 0.95rem;
+    }
+
+    .collections-brands-header {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .collections-brands-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.75rem;
+    }
+
+    .collections-brand-card {
+        padding: 0.7rem;
+    }
+
+    .collections-brand-card__frame {
+        height: 5rem;
+    }
+
+    .collections-brand-card__name {
+        font-size: 0.84rem;
+        min-height: 2.25rem;
+    }
+}

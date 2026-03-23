@@ -3,13 +3,11 @@ import { InterfaceService } from '../core/interface.service';
 import { HttpClient } from '@angular/common/http';
 import { catchError, map, Observable } from 'rxjs';
 import { ACCESS_TOKEN, getToken } from '@app/core/token'; 
-import { environment } from '../../../environments/environment.development';
 
 @Injectable({
   providedIn: 'root'
 })
 export class BannersService extends InterfaceService {
-  baseUrl: string = environment.BASEURL_API;
 
   constructor(http: HttpClient) {
     super("/auth", http)
@@ -54,7 +52,7 @@ export class BannersService extends InterfaceService {
   }
 
   addNewBanner(file: File, type: any) {
-    const url = `${this.baseUrl}images/create/`;
+    const url = this.getApiUrl("/images/create/");
     const formData: FormData = new FormData();
 
     // append file

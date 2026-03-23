@@ -11,15 +11,15 @@ import { NzCarouselModule } from 'ng-zorro-antd/carousel';
 import { NzDividerModule } from 'ng-zorro-antd/divider';
 import { NzTagModule } from 'ng-zorro-antd/tag';
 import { NzSelectModule } from 'ng-zorro-antd/select';
-import { NzPaginationModule } from 'ng-zorro-antd/pagination';
 import { NzDrawerModule } from 'ng-zorro-antd/drawer';
 import { NzMessageService } from 'ng-zorro-antd/message';
-import { distinctUntilChanged, map } from 'rxjs';
+import { combineLatest, distinctUntilChanged, map } from 'rxjs';
 import { Icons } from '../shared/icons';
 import { CollectionsService } from '../services/collections.service';
 import { CommonModule, DOCUMENT, isPlatformBrowser } from '@angular/common';
 import { CartItem, CartService } from '../services/cart.service';
 import { Subscription } from 'rxjs';
+import { SeoService } from '../services/seo.service';
 
 interface Product {
   id: number;
@@ -39,7 +39,23 @@ interface Product {
 
 interface FilterItem {
   name: string;
-  value?: string;
+  slug: string;
+  applicable?: boolean;
+  count?: number;
+}
+
+interface FilterPanel {
+  key: string;
+  title: string;
+  apiParam: string;
+  items: FilterItem[];
+}
+
+interface SelectedFilterTag {
+  panelKey: string;
+  panelTitle: string;
+  itemSlug: string;
+  displayName: string;
 }
 
 @Component({
@@ -56,7 +72,6 @@ interface FilterItem {
     NzRateModule,
     NzTagModule,
     NzSelectModule,
-    NzPaginationModule,
     NzDrawerModule,
   ],
   templateUrl: './collections.component.html',
@@ -71,7 +86,8 @@ export class CollectionsComponent implements OnInit {
     @Inject(DOCUMENT) private document: Document,
     private cdr: ChangeDetectorRef,
     private cartService: CartService,
-    private message: NzMessageService
+    private message: NzMessageService,
+    private seoService: SeoService
   ) { }
 
   bannerType: any;
@@ -90,11 +106,11 @@ export class CollectionsComponent implements OnInit {
   allProducts: Product[] = [];
   filteredProducts: Product[] = [];
   productsData: any = {};
-  filterPanels: any[] = [];
+  filterPanels: FilterPanel[] = [];
   totalProducts = 0;
-  pageIndex = 1;
-  pageSize = 5;
+  pageSize = 10;
   isProductsLoading = false;
+  isLoadingMore = false;
   isFilterDrawerVisible = false;
   isSortDrawerVisible = false;
   private readonly mobileBreakpoint = 1024;
@@ -105,7 +121,20 @@ export class CollectionsComponent implements OnInit {
   cartSavings = 0;
   recentlyAddedProductId: number | null = null;
   private addToCartFeedbackTimeout?: ReturnType<typeof setTimeout>;
+  private productRevealTimeout?: ReturnType<typeof setTimeout>;
   private cartSubscription?: Subscription;
+  private readonly defaultVisibleFilterItems = 6;
+  private previousCollectionSlug: string | null = null;
+  expandedFilterPanels = new Set<string>();
+  private revealedProductIds = new Set<number>();
+  private revealDelayByProductId = new Map<number, string>();
+  private readonly filterPanelConfig: Array<{ key: string; title: string; apiParam: string }> = [
+    { key: 'product_types', title: 'Product Type', apiParam: 'product_type' },
+    { key: 'hair_concerns', title: 'Hair Concerns', apiParam: 'hair_concern' },
+    { key: 'skin_concerns', title: 'Skin Concerns', apiParam: 'skin_concern' },
+    { key: 'ingredients', title: 'Ingredients', apiParam: 'ingredient' },
+    { key: 'brands', title: 'Brand', apiParam: 'brand' },
+  ];
 
   ngOnInit() {
     this.syncViewportState();
@@ -120,40 +149,39 @@ export class CollectionsComponent implements OnInit {
       }, 0);
     });
 
-    this.route.paramMap
-      .pipe(
-        map(params => params.get('slug')),
-        distinctUntilChanged()
-      )
-      .subscribe(slug => {
-        if (!slug) return;
+    combineLatest([this.route.paramMap, this.route.queryParamMap]).subscribe(([params, queryParams]) => {
+      const slug = params.get('slug');
+      if (!slug) {
+        return;
+      }
 
-        this.filterProduectValue = this.slugChangesValues[slug] ?? slug;
-        this.bannerType = slug;
+      this.filterProduectValue = this.slugChangesValues[slug] ?? slug;
+      this.bannerType = slug;
 
-        if (isPlatformBrowser(this.platformId)) {
-          const shouldScrollToTop = Boolean(history.state?.scrollToTop);
+      if (isPlatformBrowser(this.platformId)) {
+        const shouldScrollToTop = Boolean(history.state?.scrollToTop);
+        const isCollectionRouteChange = this.previousCollectionSlug !== null && this.previousCollectionSlug !== slug;
 
-          if (shouldScrollToTop) {
-            requestAnimationFrame(() => {
-              window.scrollTo({
-                top: 0,
-                behavior: 'auto'
-              });
+        if (shouldScrollToTop || isCollectionRouteChange) {
+          requestAnimationFrame(() => {
+            window.scrollTo({
+              top: 0,
+              behavior: 'auto'
             });
-          }
+          });
         }
+      }
 
-        // Reset filters on route change
-        this.selectedFilters.clear();
-        this.pageIndex = this.getPageFromQueryParam();
-        this.isFilterDrawerVisible = false;
-        this.isSortDrawerVisible = false;
-        this.updatePaginationSeoTags();
-        this.getBanner();
-        this.getProductsList();
-        this.getProductSideMenu();
-      });
+      this.selectedFilters = this.readFiltersFromQueryParams();
+      this.draftSelectedFilters = this.cloneFiltersMap(this.selectedFilters);
+      this.isFilterDrawerVisible = false;
+      this.isSortDrawerVisible = false;
+      this.updatePaginationSeoTags();
+      this.getBanner();
+      this.loadProductsForCurrentRoute();
+      this.getProductSideMenu();
+      this.previousCollectionSlug = slug;
+    });
   }
 
   ngOnDestroy() {
@@ -161,24 +189,30 @@ export class CollectionsComponent implements OnInit {
     if (this.addToCartFeedbackTimeout) {
       clearTimeout(this.addToCartFeedbackTimeout);
     }
+    if (this.productRevealTimeout) {
+      clearTimeout(this.productRevealTimeout);
+    }
   }
 
   @HostListener('window:resize')
   onWindowResize() {
     this.syncViewportState();
+    if (this.bannerType) {
+      this.getBanner();
+    }
   }
 
   getProductSideMenu() {
     this.collectionsService.getProducetSideMenu().subscribe({
       next: (response: any) => {
-        // console.log(response);
       }
     });
   }
 
   getBanner() {
     this.bannerImages = [];
-    this.collectionsService.getBanner(this.bannerType).subscribe({
+    const device: 'web' | 'mobile' = this.isDesktopViewport() ? 'web' : 'mobile';
+    this.collectionsService.getBanner(this.bannerType, device).subscribe({
       next: (response: any) => {
         this.bannerImages = response.data;
       }
@@ -186,103 +220,133 @@ export class CollectionsComponent implements OnInit {
   }
 
   getProductsList() {
-    this.isProductsLoading = true;
+    this.fetchProducts(false);
+  }
+
+  fetchProductsWithFilters() {
+    this.fetchProducts(false);
+  }
+
+  loadMoreProducts() {
+    if (!this.hasMoreProducts || this.isProductsLoading || this.isLoadingMore) {
+      return;
+    }
+
+    this.shouldScrollToProductsTop = false;
+    this.fetchProducts(true);
+  }
+
+  private fetchProducts(append: boolean) {
+    const filterParams = this.buildFilterQueryParams();
+    const pagination = this.getPagination(append);
+
+    if (append) {
+      this.isLoadingMore = true;
+    } else {
+      this.isProductsLoading = true;
+    }
+
     this.collectionsService.getProductsList(
       this.filterProduectValue,
-      undefined,
-      this.getPagination()
+      Object.keys(filterParams).length ? filterParams : undefined,
+      pagination
     ).subscribe({
       next: (response: any) => {
-        this.allProducts = response.products?.results || [];
+        const incomingProducts = response.products?.results || [];
+        const mergedProducts = append
+          ? [...(this.productsData?.products?.results || []), ...incomingProducts]
+          : incomingProducts;
+
+        if (append) {
+          this.markProductsForReveal(incomingProducts);
+        } else {
+          this.clearProductRevealState();
+        }
+
+        this.allProducts = mergedProducts;
         this.totalProducts = response.products?.count || 0;
         this.productsData = {
           ...response,
           products: {
             ...response.products,
-            results: this.allProducts
+            results: mergedProducts
           }
         };
 
-        const filters = response.filters;
-        this.filterPanels = []
-        this.filterPanels = [
-          { key: 'product_types', title: 'Product Type', items: filters.product_types || [] },
-          { key: 'hair_concerns', title: 'Hair Concerns', items: filters.hair_concerns || [] },
-          { key: 'skin_concerns', title: 'Skin Concerns', items: filters.skin_concerns || [] },
-          { key: 'ingredients', title: 'Ingredients', items: filters.ingredients || [] },
-        ];
+        this.filterPanels = this.buildFilterPanels(response.filters);
+        this.validateSelectedFilters();
 
-        this.applySorting();
-        if (this.shouldScrollToProductsTop) {
+        if (!append) {
+          this.applySorting();
+        }
+        if (!append && this.shouldScrollToProductsTop) {
           this.scrollToProductsTop();
           this.shouldScrollToProductsTop = false;
         }
         this.isProductsLoading = false;
+        this.isLoadingMore = false;
       },
       error: () => {
         this.isProductsLoading = false;
+        this.isLoadingMore = false;
       }
     });
   }
 
-  // Fetch products with filter query parameters
-  fetchProductsWithFilters() {
-    const filterParams = this.buildFilterQueryParams();
-    this.isProductsLoading = true;
+  isProductRevealing(productId: number): boolean {
+    return this.revealedProductIds.has(productId);
+  }
 
-    this.collectionsService.getProductsList(
-      this.filterProduectValue,
-      filterParams,
-      this.getPagination()
-    ).subscribe({
-      next: (response: any) => {
-        this.allProducts = response.products?.results || [];
-        this.totalProducts = response.products?.count || 0;
-        this.productsData = {
-          ...response,
-          products: {
-            ...response.products,
-            results: this.allProducts
-          }
-        };
-        const filters = response.filters;
-        this.filterPanels = [
-          { key: 'product_types', title: 'Product Type', items: filters.product_types || [] },
-          { key: 'hair_concerns', title: 'Hair Concerns', items: filters.hair_concerns || [] },
-          { key: 'skin_concerns', title: 'Skin Concerns', items: filters.skin_concerns || [] },
-          { key: 'ingredients', title: 'Ingredients', items: filters.ingredients || [] },
-        ];
+  getProductRevealDelay(productId: number): string {
+    return this.revealDelayByProductId.get(productId) ?? '0ms';
+  }
 
-        this.applySorting();
-        if (this.shouldScrollToProductsTop) {
-          this.scrollToProductsTop();
-          this.shouldScrollToProductsTop = false;
-        }
-        this.isProductsLoading = false;
-      },
-      error: () => {
-        this.isProductsLoading = false;
-      }
-    });
+  private markProductsForReveal(products: Product[]): void {
+    if (!products.length) {
+      this.clearProductRevealState();
+      return;
+    }
+
+    this.revealedProductIds = new Set(products.map((product) => product.id));
+    this.revealDelayByProductId = new Map(
+      products.map((product, index) => [product.id, `${index * 55}ms`])
+    );
+
+    if (this.productRevealTimeout) {
+      clearTimeout(this.productRevealTimeout);
+    }
+
+    this.productRevealTimeout = setTimeout(() => {
+      this.clearProductRevealState();
+    }, 900);
+  }
+
+  private clearProductRevealState(): void {
+    this.revealedProductIds.clear();
+    this.revealDelayByProductId.clear();
+
+    if (this.productRevealTimeout) {
+      clearTimeout(this.productRevealTimeout);
+      this.productRevealTimeout = undefined;
+    }
+  }
+
+  get displayedProductsCount(): number {
+    return this.productsData?.products?.results?.length || 0;
+  }
+
+  get hasMoreProducts(): boolean {
+    return this.displayedProductsCount < this.totalProducts;
   }
 
   // Build query parameters from selected filters
   buildFilterQueryParams(): any {
     const params: any = {};
 
-    // Convert filter panel keys to API parameter names
-    const filterKeyMapping: any = {
-      'product_types': 'product_type',
-      'hair_concerns': 'hair_concern',
-      'skin_concerns': 'skin_concern',
-      'ingredients': 'ingredient'
-    };
-
     this.selectedFilters.forEach((items, panelKey) => {
       if (items.size > 0) {
-        const apiParamName = filterKeyMapping[panelKey] || panelKey;
-        // Convert Set to array and join with commas, then slugify each value
-        const values = Array.from(items).map(item => this.slugify(item));
+        const apiParamName = this.getApiParamForPanelKey(panelKey);
+        const values = Array.from(items).filter(Boolean);
         params[apiParamName] = values.join(',');
       }
     });
@@ -291,61 +355,81 @@ export class CollectionsComponent implements OnInit {
   }
 
   // Check if a filter item is selected
-  isFilterSelected(panelKey: string, itemName: string): boolean {
+  isFilterSelected(panelKey: string, itemSlug: string): boolean {
     return this.selectedFilters.has(panelKey) &&
-      this.selectedFilters.get(panelKey)!.has(itemName);
+      this.selectedFilters.get(panelKey)!.has(itemSlug);
+  }
+
+  isFilterDisabled(panelKey: string, itemSlug: string): boolean {
+    const panel = this.filterPanels.find((entry) => entry.key === panelKey);
+    if (!panel) {
+      return true;
+    }
+
+    const item = panel.items.find((entry) => entry.slug === itemSlug);
+    if (!item) {
+      return true;
+    }
+
+    if (this.isFilterSelected(panelKey, itemSlug)) {
+      return false;
+    }
+
+    return item.applicable === false;
   }
 
   // Handle filter change
-  onFilterChange(panelKey: string, itemName: string, checked: boolean) {
+  onFilterChange(panelKey: string, itemSlug: string, checked: boolean) {
+    if (!this.isValidFilterSelection(panelKey, itemSlug)) {
+      this.message.warning('This filter is no longer available. Please choose another option.');
+      return;
+    }
+
     if (checked) {
       if (!this.selectedFilters.has(panelKey)) {
         this.selectedFilters.set(panelKey, new Set());
       }
-      this.selectedFilters.get(panelKey)!.add(itemName);
+      this.selectedFilters.get(panelKey)!.add(itemSlug);
     } else {
       if (this.selectedFilters.has(panelKey)) {
-        this.selectedFilters.get(panelKey)!.delete(itemName);
+        this.selectedFilters.get(panelKey)!.delete(itemSlug);
         if (this.selectedFilters.get(panelKey)!.size === 0) {
           this.selectedFilters.delete(panelKey);
         }
       }
     }
-    this.pageIndex = 1;
     this.updatePageQueryParam();
-    this.fetchProductsWithFilters();
   }
 
   // Remove a specific filter
-  removeFilter(panelKey: string, itemName: string) {
+  removeFilter(panelKey: string, itemSlug: string) {
     if (this.selectedFilters.has(panelKey)) {
-      this.selectedFilters.get(panelKey)!.delete(itemName);
+      this.selectedFilters.get(panelKey)!.delete(itemSlug);
       if (this.selectedFilters.get(panelKey)!.size === 0) {
         this.selectedFilters.delete(panelKey);
       }
     }
-    this.pageIndex = 1;
     this.updatePageQueryParam();
-    this.fetchProductsWithFilters();
   }
 
   // Clear all filters
   clearAllFilters() {
     this.selectedFilters.clear();
-    this.pageIndex = 1;
     this.updatePageQueryParam();
-    this.fetchProductsWithFilters();
   }
 
   // Get all selected filters as a flat array for display
-  getAllSelectedFilters(): Array<{ panelKey: string, itemName: string, displayName: string }> {
-    const filters: Array<{ panelKey: string, itemName: string, displayName: string }> = [];
+  getAllSelectedFilters(): SelectedFilterTag[] {
+    const filters: SelectedFilterTag[] = [];
     this.selectedFilters.forEach((items, panelKey) => {
-      items.forEach(itemName => {
+      const panel = this.filterPanels.find((entry) => entry.key === panelKey);
+      items.forEach(itemSlug => {
+        const filterItem = panel?.items.find((item) => item.slug === itemSlug);
         filters.push({
           panelKey,
-          itemName,
-          displayName: itemName
+          panelTitle: panel?.title || this.toTitleCase(panelKey.replace(/_/g, ' ')),
+          itemSlug,
+          displayName: filterItem?.name || this.toTitleCase(itemSlug.replace(/-/g, ' '))
         });
       });
     });
@@ -358,13 +442,6 @@ export class CollectionsComponent implements OnInit {
       total += items.size;
     });
     return total;
-  }
-
-  // Apply filters to products
-  applyFilters() {
-    // This method is now deprecated since we're fetching from API
-    // Kept for backwards compatibility if needed
-    this.applySorting();
   }
 
   // Get product values for a specific filter category
@@ -411,11 +488,11 @@ export class CollectionsComponent implements OnInit {
   }
 
   // Get count of products for each filter item
-  getItemCount(panelKey: string, itemName: string): number {
+  getItemCount(panelKey: string, itemSlug: string): number {
     // Return count from filter data if available
     const panel = this.filterPanels.find(p => p.key === panelKey);
     if (panel) {
-      const item = panel.items.find((i: any) => i.name === itemName);
+      const item = panel.items.find((i) => i.slug === itemSlug);
       if (item && item.count !== undefined) {
         return item.count;
       }
@@ -425,8 +502,8 @@ export class CollectionsComponent implements OnInit {
     return this.allProducts.filter(product => {
       const productValues = this.getProductFilterValues(product, panelKey);
       return productValues.some(value =>
-        value.toLowerCase().includes(itemName.toLowerCase()) ||
-        itemName.toLowerCase().includes(value.toLowerCase())
+        this.slugify(value) === itemSlug ||
+        value.toLowerCase().includes(itemSlug.replace(/-/g, ' '))
       );
     }).length;
   }
@@ -482,6 +559,12 @@ export class CollectionsComponent implements OnInit {
     this.applySorting();
   }
 
+  get mobileFilterFooterLabel(): string {
+    return this.selectedFilterCount > 0
+      ? `${this.selectedFilterCount} Filter${this.selectedFilterCount === 1 ? '' : 's'} Applied`
+      : 'No Filter Applied';
+  }
+
   get sortByLabel(): string {
     switch (this.sortBy) {
       case 'za':
@@ -494,20 +577,6 @@ export class CollectionsComponent implements OnInit {
       default:
         return 'A-Z';
     }
-  }
-
-  onPageIndexChange(page: number) {
-    this.pageIndex = page;
-    this.updatePageQueryParam();
-    this.shouldScrollToProductsTop = true;
-    this.fetchProductsWithFilters();
-  }
-
-  onPageSizeChange(size: number) {
-    this.pageSize = size;
-    this.pageIndex = 1;
-    this.updatePageQueryParam();
-    this.fetchProductsWithFilters();
   }
 
   openFilterDrawer() {
@@ -525,9 +594,7 @@ export class CollectionsComponent implements OnInit {
 
   applyFilterChanges() {
     this.selectedFilters = this.cloneFiltersMap(this.draftSelectedFilters);
-    this.pageIndex = 1;
     this.updatePageQueryParam();
-    this.fetchProductsWithFilters();
     this.closeFilterDrawer();
   }
 
@@ -605,23 +672,20 @@ export class CollectionsComponent implements OnInit {
     }
   }
 
-  private getPagination() {
+  private getPagination(append = false) {
     return {
       limit: this.pageSize,
-      offset: (this.pageIndex - 1) * this.pageSize
+      offset: append ? this.displayedProductsCount : 0
     };
   }
 
-  private getPageFromQueryParam(): number {
-    const pageValue = Number(this.route.snapshot.queryParamMap.get('page'));
-    return Number.isInteger(pageValue) && pageValue > 0 ? pageValue : 1;
-  }
-
   private updatePageQueryParam() {
+    const filterParams = this.buildFilterQueryParams();
     this.router.navigate([], {
       relativeTo: this.route,
-      queryParams: { page: this.pageIndex > 1 ? this.pageIndex : null },
-      queryParamsHandling: 'merge',
+      queryParams: {
+        ...filterParams,
+      },
       replaceUrl: true
     });
     this.updatePaginationSeoTags();
@@ -633,59 +697,57 @@ export class CollectionsComponent implements OnInit {
     }
 
     const slug = this.route.snapshot.paramMap.get('slug') || '';
-    const pageSuffix = this.pageIndex > 1 ? `?page=${this.pageIndex}` : '';
-    const canonicalHref = `${this.document.location.origin}/collections/${slug}${pageSuffix}`;
-    const prevHref = this.pageIndex > 2
-      ? `${this.document.location.origin}/collections/${slug}?page=${this.pageIndex - 1}`
-      : `${this.document.location.origin}/collections/${slug}`;
-    const nextHref = `${this.document.location.origin}/collections/${slug}?page=${this.pageIndex + 1}`;
-
-    this.upsertLinkTag('canonical', canonicalHref);
-    if (this.pageIndex > 1) {
-      this.upsertLinkTag('prev', prevHref);
-    } else {
-      this.removeLinkTag('prev');
-    }
-    this.upsertLinkTag('next', nextHref);
-
     const collectionName = slug.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()) || 'Collections';
-    this.document.title = this.pageIndex > 1
-      ? `${collectionName} - Page ${this.pageIndex} | Secure Derma`
-      : `${collectionName} | Secure Derma`;
+    const filterSummary = this.getAllSelectedFilters().map((filter) => filter.displayName).join(', ');
+
+    this.seoService.updateSeo({
+      title: `${collectionName} Collection`,
+      description: filterSummary
+        ? `Browse ${collectionName} products on Secure Derma. Active filters: ${filterSummary}.`
+        : `Browse ${collectionName} products on Secure Derma by type, concern, ingredients, and brand.`,
+      canonicalPath: `/collections/${slug}`,
+      type: 'website',
+      keywords: `${collectionName.toLowerCase()}, secure derma collection, dermatology products`
+    });
   }
 
-  private upsertLinkTag(rel: string, href: string) {
-    const head = this.document.head;
-    let link = head.querySelector(`link[rel="${rel}"]`) as HTMLLinkElement | null;
-    if (!link) {
-      link = this.document.createElement('link');
-      link.setAttribute('rel', rel);
-      head.appendChild(link);
-    }
-    link.setAttribute('href', href);
-  }
-
-  private removeLinkTag(rel: string) {
-    const link = this.document.head.querySelector(`link[rel="${rel}"]`);
-    if (link) {
-      link.remove();
-    }
-  }
-
-  isDraftFilterSelected(panelKey: string, itemName: string): boolean {
+  isDraftFilterSelected(panelKey: string, itemSlug: string): boolean {
     return this.draftSelectedFilters.has(panelKey) &&
-      this.draftSelectedFilters.get(panelKey)!.has(itemName);
+      this.draftSelectedFilters.get(panelKey)!.has(itemSlug);
   }
 
-  onDraftFilterChange(panelKey: string, itemName: string, checked: boolean) {
+  isDraftFilterDisabled(panelKey: string, itemSlug: string): boolean {
+    const panel = this.filterPanels.find((entry) => entry.key === panelKey);
+    if (!panel) {
+      return true;
+    }
+
+    const item = panel.items.find((entry) => entry.slug === itemSlug);
+    if (!item) {
+      return true;
+    }
+
+    if (this.isDraftFilterSelected(panelKey, itemSlug)) {
+      return false;
+    }
+
+    return item.applicable === false;
+  }
+
+  onDraftFilterChange(panelKey: string, itemSlug: string, checked: boolean) {
+    if (!this.isValidFilterSelection(panelKey, itemSlug)) {
+      this.message.warning('This filter is no longer available. Please choose another option.');
+      return;
+    }
+
     if (checked) {
       if (!this.draftSelectedFilters.has(panelKey)) {
         this.draftSelectedFilters.set(panelKey, new Set());
       }
-      this.draftSelectedFilters.get(panelKey)!.add(itemName);
+      this.draftSelectedFilters.get(panelKey)!.add(itemSlug);
     } else {
       if (this.draftSelectedFilters.has(panelKey)) {
-        this.draftSelectedFilters.get(panelKey)!.delete(itemName);
+        this.draftSelectedFilters.get(panelKey)!.delete(itemSlug);
         if (this.draftSelectedFilters.get(panelKey)!.size === 0) {
           this.draftSelectedFilters.delete(panelKey);
         }
@@ -705,12 +767,141 @@ export class CollectionsComponent implements OnInit {
     return total;
   }
 
+  getVisibleFilterItems(panel: FilterPanel): FilterItem[] {
+    if (this.expandedFilterPanels.has(panel.key)) {
+      return panel.items;
+    }
+
+    return panel.items.slice(0, this.defaultVisibleFilterItems);
+  }
+
+  canToggleFilterPanel(panel: FilterPanel): boolean {
+    return panel.items.length > this.defaultVisibleFilterItems;
+  }
+
+  isFilterPanelExpanded(panelKey: string): boolean {
+    return this.expandedFilterPanels.has(panelKey);
+  }
+
+  toggleFilterPanel(panelKey: string) {
+    if (this.expandedFilterPanels.has(panelKey)) {
+      this.expandedFilterPanels.delete(panelKey);
+      return;
+    }
+
+    this.expandedFilterPanels.add(panelKey);
+  }
+
   private cloneFiltersMap(source: Map<string, Set<string>>): Map<string, Set<string>> {
     const clone = new Map<string, Set<string>>();
     source.forEach((items, key) => {
       clone.set(key, new Set(items));
     });
     return clone;
+  }
+
+  private buildFilterPanels(filters: Record<string, FilterItem[]> | undefined): FilterPanel[] {
+    if (!filters) {
+      return [];
+    }
+
+    return this.filterPanelConfig
+      .map((config) => ({
+        key: config.key,
+        title: config.title,
+        apiParam: config.apiParam,
+        items: (filters[config.key] || [])
+          .filter((item) => item?.slug && item?.name)
+          .map((item) => ({
+            name: item.name,
+            slug: item.slug,
+            applicable: item.applicable !== false,
+            count: item.count,
+          })),
+      }))
+      .filter((panel) => panel.items.length > 0);
+  }
+
+  private validateSelectedFilters() {
+    let removedAny = false;
+    const cleanedFilters = new Map<string, Set<string>>();
+
+    this.selectedFilters.forEach((items, panelKey) => {
+      const panel = this.filterPanels.find((entry) => entry.key === panelKey);
+      if (!panel) {
+        removedAny = true;
+        return;
+      }
+
+      const validApplicableSlugs = new Set(
+        panel.items
+          .filter((item) => item.applicable !== false)
+          .map((item) => item.slug)
+      );
+      const retained = new Set(
+        Array.from(items).filter((itemSlug) => validApplicableSlugs.has(itemSlug))
+      );
+
+      if (retained.size > 0) {
+        cleanedFilters.set(panelKey, retained);
+      }
+
+      if (retained.size !== items.size) {
+        removedAny = true;
+      }
+    });
+
+    this.selectedFilters = cleanedFilters;
+    this.draftSelectedFilters = this.cloneFiltersMap(cleanedFilters);
+
+    if (removedAny) {
+      this.updatePageQueryParam();
+    }
+  }
+
+  private isValidFilterSelection(panelKey: string, itemSlug: string): boolean {
+    const panel = this.filterPanels.find((entry) => entry.key === panelKey);
+    return Boolean(panel?.items.some((item) => item.slug === itemSlug));
+  }
+
+  private toTitleCase(value: string): string {
+    return value.replace(/\b\w/g, (char) => char.toUpperCase());
+  }
+
+  private getApiParamForPanelKey(panelKey: string): string {
+    return this.filterPanelConfig.find((panel) => panel.key === panelKey)?.apiParam || panelKey;
+  }
+
+  private readFiltersFromQueryParams(): Map<string, Set<string>> {
+    const result = new Map<string, Set<string>>();
+    const queryParams = this.route.snapshot.queryParamMap;
+
+    this.filterPanelConfig.forEach((panel) => {
+      const rawValue = queryParams.get(panel.apiParam);
+      if (!rawValue) {
+        return;
+      }
+
+      const slugs = rawValue
+        .split(',')
+        .map((item) => item.trim())
+        .filter(Boolean);
+
+      if (slugs.length) {
+        result.set(panel.key, new Set(slugs));
+      }
+    });
+
+    return result;
+  }
+
+  private loadProductsForCurrentRoute() {
+    if (this.selectedFilterCount > 0) {
+      this.fetchProductsWithFilters();
+      return;
+    }
+
+    this.getProductsList();
   }
 
   private scrollToProductsTop() {

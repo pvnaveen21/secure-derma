@@ -10,7 +10,8 @@ import { AuthService } from '../services/auth/auth.service';
 import { Icons } from '../shared/icons';
 import { User } from '../models/users';
 import { AccountOrder, OrdersService } from '../services/orders.service';
-import { CartService } from '../services/cart.service';
+import { SeoService } from '../services/seo.service';
+import { PincodeService } from '../services/pincode.service';
 
 interface AccountSection {
   id: string;
@@ -46,6 +47,7 @@ type AddressFormErrors = Partial<Record<keyof PaymentCustomerPayload, string>>;
 })
 export class AccountComponent implements OnInit, OnDestroy {
   private readonly defaultSection = 'personal-details';
+  private readonly mobileBreakpoint = 768;
   icons = Icons;
   user = new User();
   savedAddress: PaymentCustomerPayload;
@@ -57,6 +59,7 @@ export class AccountComponent implements OnInit, OnDestroy {
   isEditingAddress = false;
   isSavingProfile = false;
   isSavingAddress = false;
+  isAddressLocationLoading = false;
   profileFeedback = '';
   addressFeedback = '';
   orders: AccountOrder[] = [];
@@ -67,9 +70,14 @@ export class AccountComponent implements OnInit, OnDestroy {
   ordersError = '';
   orderDetailError = '';
   activeOrderId: number | null = null;
+  ordersPage = 1;
+  readonly ordersPerPage = 6;
   private userSubscription?: Subscription;
   private routeSubscription?: Subscription;
+  private lastResolvedAddressPostalCode = '';
   activeSection = this.defaultSection;
+  isMobileView = false;
+  showMobileSectionMenu = false;
 
   sections: AccountSection[] = [
     {
@@ -113,16 +121,19 @@ export class AccountComponent implements OnInit, OnDestroy {
     private readonly authService: AuthService,
     private readonly paymentService: PaymentService,
     private readonly ordersService: OrdersService,
-    private readonly cartService: CartService,
     private readonly route: ActivatedRoute,
     private readonly router: Router,
     private readonly message: NzMessageService,
+    private readonly seoService: SeoService,
+    private readonly pincodeService: PincodeService,
   ) {
     this.savedAddress = this.paymentService.loadCheckoutCustomer();
     this.addressForm = this.paymentService.normalizeCheckoutCustomer(this.savedAddress);
   }
 
   ngOnInit(): void {
+    this.syncMobileView();
+
     if (!this.authService.isLoggedIn()) {
       this.authService.redirectUrl = '/account';
       void this.router.navigate(['/account/login']);
@@ -138,13 +149,12 @@ export class AccountComponent implements OnInit, OnDestroy {
 
     this.routeSubscription = this.route.paramMap.subscribe((params) => {
       const orderIdParam = params.get('orderId');
-      const section = orderIdParam ? 'orders' : (params.get('section') || this.defaultSection);
+      const explicitSection = params.get('section');
+      const section = orderIdParam ? 'orders' : (explicitSection || this.defaultSection);
       this.activeSection = this.isValidSection(section) ? section : this.defaultSection;
       this.activeOrderId = orderIdParam ? Number(orderIdParam) : null;
-
-      if (this.activeOrderId) {
-        this.scrollToTop();
-      }
+      this.showMobileSectionMenu = this.isMobileView && !this.activeOrderId && !explicitSection;
+      this.resetInlineEditState();
 
       if (this.activeSection === 'orders') {
         if (!this.orders.length && !this.isOrdersLoading) {
@@ -157,12 +167,16 @@ export class AccountComponent implements OnInit, OnDestroy {
           this.isOrderDetailLoading = false;
         }
       }
+
+      this.updateSeo();
     });
+
   }
 
   ngOnDestroy(): void {
     this.userSubscription?.unsubscribe();
     this.routeSubscription?.unsubscribe();
+
   }
 
   get fullName(): string {
@@ -202,12 +216,63 @@ export class AccountComponent implements OnInit, OnDestroy {
     return this.selectedOrderAddressLines;
   }
 
+  get hasValidAddressPostalCode(): boolean {
+    return /^\d{6}$/.test(this.addressForm.postal_code || '');
+  }
+
+  get isAddressPostalCodeVerified(): boolean {
+    return this.hasValidAddressPostalCode && this.addressForm.postal_code === this.lastResolvedAddressPostalCode;
+  }
+
+  get isAddressLocationEditable(): boolean {
+    return this.isEditingAddress && this.isAddressPostalCodeVerified;
+  }
+
   get totalOrders(): number {
     return this.orders.length;
   }
 
+  get totalOrderPages(): number {
+    return Math.max(1, Math.ceil(this.totalOrders / this.ordersPerPage));
+  }
+
+  get paginatedOrders(): AccountOrder[] {
+    const start = (this.ordersPage - 1) * this.ordersPerPage;
+    return this.orders.slice(start, start + this.ordersPerPage);
+  }
+
+  get ordersRangeStart(): number {
+    if (!this.totalOrders) {
+      return 0;
+    }
+
+    return (this.ordersPage - 1) * this.ordersPerPage + 1;
+  }
+
+  get ordersRangeEnd(): number {
+    return Math.min(this.ordersPage * this.ordersPerPage, this.totalOrders);
+  }
+
   get totalOrderSpend(): number {
     return this.orders.reduce((sum, order) => sum + order.amount_rupees, 0);
+  }
+
+  get activeSectionConfig(): AccountSection | undefined {
+    return this.sections.find((section) => section.id === this.activeSection);
+  }
+
+  get activeSectionIndex(): number {
+    return this.sections.findIndex((section) => section.id === this.activeSection);
+  }
+
+  get previousSection(): AccountSection | null {
+    return this.activeSectionIndex > 0 ? this.sections[this.activeSectionIndex - 1] : null;
+  }
+
+  get nextSection(): AccountSection | null {
+    return this.activeSectionIndex >= 0 && this.activeSectionIndex < this.sections.length - 1
+      ? this.sections[this.activeSectionIndex + 1]
+      : null;
   }
 
   get totalOrderSavings(): number {
@@ -359,6 +424,22 @@ export class AccountComponent implements OnInit, OnDestroy {
     };
   }
 
+  private resetInlineEditState(): void {
+    this.isEditingProfile = false;
+    this.isSavingProfile = false;
+    this.profileFeedback = '';
+    this.profileErrors = {};
+    this.profileForm = this.createProfileForm(this.user);
+
+    this.isEditingAddress = false;
+    this.isSavingAddress = false;
+    this.isAddressLocationLoading = false;
+    this.addressFeedback = '';
+    this.addressErrors = {};
+    this.addressForm = this.paymentService.normalizeCheckoutCustomer(this.savedAddress);
+    this.lastResolvedAddressPostalCode = this.addressForm.postal_code || '';
+  }
+
   startProfileEdit(): void {
     this.isEditingProfile = true;
     this.profileFeedback = '';
@@ -376,17 +457,21 @@ export class AccountComponent implements OnInit, OnDestroy {
   startAddressEdit(): void {
     this.isEditingAddress = true;
     this.isSavingAddress = false;
+    this.isAddressLocationLoading = false;
     this.addressFeedback = '';
     this.addressErrors = {};
     this.addressForm = this.paymentService.normalizeCheckoutCustomer(this.savedAddress);
+    this.lastResolvedAddressPostalCode = '';
   }
 
   cancelAddressEdit(): void {
     this.isEditingAddress = false;
     this.isSavingAddress = false;
+    this.isAddressLocationLoading = false;
     this.addressFeedback = '';
     this.addressErrors = {};
     this.addressForm = this.paymentService.normalizeCheckoutCustomer(this.savedAddress);
+    this.lastResolvedAddressPostalCode = this.addressForm.postal_code || '';
   }
 
   onAddressInput(field: keyof PaymentCustomerPayload, value: string): void {
@@ -395,6 +480,26 @@ export class AccountComponent implements OnInit, OnDestroy {
       ...this.addressForm,
       [field]: this.paymentService.normalizeCheckoutField(field, value)
     };
+
+    if (field === 'postal_code') {
+      if (!this.hasValidAddressPostalCode) {
+        this.lastResolvedAddressPostalCode = '';
+        this.isAddressLocationLoading = false;
+        this.addressForm = {
+          ...this.addressForm,
+          city: '',
+          state: ''
+        };
+        this.addressErrors = {
+          ...this.addressErrors,
+          city: undefined,
+          state: undefined
+        };
+      } else if (this.addressForm.postal_code !== this.lastResolvedAddressPostalCode) {
+        this.lastResolvedAddressPostalCode = '';
+        this.lookupAddressLocationByPostalCode(this.addressForm.postal_code);
+      }
+    }
 
     if (this.addressErrors[field]) {
       this.addressErrors = {
@@ -410,6 +515,71 @@ export class AccountComponent implements OnInit, OnDestroy {
       ...this.addressErrors,
       [field]: this.paymentService.validateCheckoutCustomer(this.addressForm)[field]
     };
+
+    if (field === 'postal_code' && this.hasValidAddressPostalCode && !this.isAddressPostalCodeVerified) {
+      this.lookupAddressLocationByPostalCode(this.addressForm.postal_code);
+    }
+  }
+
+  private lookupAddressLocationByPostalCode(postalCode: string): void {
+    if (!this.isEditingAddress || !/^\d{6}$/.test(postalCode) || this.isAddressLocationLoading) {
+      return;
+    }
+
+    this.isAddressLocationLoading = true;
+
+    this.pincodeService.checkServiceability(postalCode).subscribe({
+      next: (response) => {
+        this.isAddressLocationLoading = false;
+
+        if (!response.serviceable) {
+          this.lastResolvedAddressPostalCode = '';
+          this.addressForm = {
+            ...this.addressForm,
+            city: '',
+            state: ''
+          };
+          this.addressErrors = {
+            ...this.addressErrors,
+            postal_code: response.suggested_pincodes?.length
+              ? `Pincode not found in the official India directory. Did you mean ${response.suggested_pincodes[0].pincode}?`
+              : 'Delivery is not available for this pincode yet.',
+            city: undefined,
+            state: undefined
+          };
+          return;
+        }
+
+        this.lastResolvedAddressPostalCode = postalCode;
+        this.addressForm = this.paymentService.normalizeCheckoutCustomer({
+          ...this.addressForm,
+          postal_code: postalCode,
+          city: response.city || this.addressForm.city,
+          state: response.state || this.addressForm.state
+        });
+        this.addressErrors = {
+          ...this.addressErrors,
+          postal_code: undefined,
+          city: undefined,
+          state: undefined
+        };
+      },
+      error: (error) => {
+        this.isAddressLocationLoading = false;
+        this.lastResolvedAddressPostalCode = '';
+        this.addressForm = {
+          ...this.addressForm,
+          city: '',
+          state: ''
+        };
+        this.addressErrors = {
+          ...this.addressErrors,
+          postal_code: typeof error === 'string' ? error : error?.detail || 'Unable to validate this postal code right now.',
+          city: undefined,
+          state: undefined
+        };
+      }
+    });
   }
 
   saveProfile(): void {
@@ -442,6 +612,13 @@ export class AccountComponent implements OnInit, OnDestroy {
     this.addressForm = this.paymentService.normalizeCheckoutCustomer(this.addressForm);
     this.addressErrors = this.paymentService.validateCheckoutCustomer(this.addressForm);
 
+    if (!this.isAddressPostalCodeVerified) {
+      this.addressErrors = {
+        ...this.addressErrors,
+        postal_code: 'Enter a real postal code and wait for City and State to load.'
+      };
+    }
+
     if (Object.keys(this.addressErrors).length) {
       return;
     }
@@ -461,7 +638,23 @@ export class AccountComponent implements OnInit, OnDestroy {
     }
 
     this.activeOrderId = null;
+    this.showMobileSectionMenu = false;
     void this.router.navigate(['/account', sectionId]);
+  }
+
+  openMobileSectionMenu(): void {
+    if (!this.isMobileView || this.isOrderDetailView) {
+      return;
+    }
+
+    this.activeOrderId = null;
+    this.showMobileSectionMenu = true;
+    this.scrollToTop();
+    void this.router.navigate(['/account']);
+  }
+
+  private scrollToTop(): void {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   logout(): void {
@@ -475,6 +668,7 @@ export class AccountComponent implements OnInit, OnDestroy {
     this.ordersService.getOrders().subscribe({
       next: (response) => {
         this.orders = response.results || [];
+        this.ordersPage = 1;
         if (!this.activeOrderId) {
           this.selectedOrder = this.orders[0] || null;
         }
@@ -489,6 +683,22 @@ export class AccountComponent implements OnInit, OnDestroy {
 
   selectOrder(order: AccountOrder): void {
     this.selectedOrder = order;
+  }
+
+  goToPreviousOrdersPage(): void {
+    if (this.ordersPage <= 1) {
+      return;
+    }
+
+    this.ordersPage -= 1;
+  }
+
+  goToNextOrdersPage(): void {
+    if (this.ordersPage >= this.totalOrderPages) {
+      return;
+    }
+
+    this.ordersPage += 1;
   }
 
   openOrderDetail(orderId: number): void {
@@ -548,59 +758,36 @@ export class AccountComponent implements OnInit, OnDestroy {
     });
   }
 
-  async startShopping(): Promise<void> {
-    if (!this.selectedOrder?.items?.length || this.isReordering) {
+  async startShopping(order: AccountOrder | null = this.selectedOrder): Promise<void> {
+    const orderItems = (order?.items || []).filter((item) => item.product_id && item.product_detail_id);
+    if (!orderItems.length || this.isReordering) {
+      this.message.error('Unable to open Buy Now for this order right now.');
       return;
     }
 
     this.isReordering = true;
 
-    let addedCount = 0;
-    let updatedCount = 0;
-    let limitedCount = 0;
-
     try {
-      for (const item of this.selectedOrder.items) {
-        const result = await this.cartService.addItemByDetail(item.product_detail_id, item.quantity);
+      this.paymentService.saveCheckoutSession({
+        source: 'buy_now',
+        items: orderItems.map((item) => ({
+          productId: item.product_id,
+          detailId: item.product_detail_id,
+          quantity: item.quantity,
+          productName: item.product_name || 'Product',
+          thumbnail: item.thumbnail || '',
+          productWeight: item.product_weight,
+          weightType: item.weight_type,
+          qualityLabel: item.quality_label,
+          unitPrice: item.unit_price,
+          originalPrice: item.original_price,
+          lineTotal: item.line_total,
+        }))
+      });
 
-        switch (result.status) {
-          case 'added':
-            addedCount += 1;
-            break;
-          case 'updated':
-            updatedCount += 1;
-            break;
-          case 'limit_reached':
-            limitedCount += 1;
-            break;
-          default:
-            break;
-        }
-      }
-
-      if (addedCount || updatedCount) {
-        const parts: string[] = [];
-        if (addedCount) {
-          parts.push(`${addedCount} item${addedCount > 1 ? 's' : ''} added`);
-        }
-        if (updatedCount) {
-          parts.push(`${updatedCount} item${updatedCount > 1 ? 's were' : ' was'} already in your cart`);
-        }
-        if (limitedCount) {
-          parts.push(`${limitedCount} item${limitedCount > 1 ? 's' : ''} hit the quantity limit`);
-        }
-        this.message.success(parts.join('. ') + '.');
-        return;
-      }
-
-      if (limitedCount) {
-        this.message.info('These items are already at the maximum quantity in your cart.');
-        return;
-      }
-
-      this.message.error('Unable to add this order to your cart right now.');
+      await this.router.navigate(['/checkout']);
     } catch {
-      this.message.error('Unable to add this order to your cart right now.');
+      this.message.error('Unable to open Buy Now for this order right now.');
     } finally {
       this.isReordering = false;
     }
@@ -614,10 +801,12 @@ export class AccountComponent implements OnInit, OnDestroy {
       next: (order) => {
         this.selectedOrder = order;
         this.isOrderDetailLoading = false;
+        this.updateSeo();
       },
       error: (error) => {
         this.orderDetailError = typeof error === 'string' ? error : 'Unable to load this order right now.';
         this.isOrderDetailLoading = false;
+        this.updateSeo();
       }
     });
   }
@@ -666,13 +855,32 @@ export class AccountComponent implements OnInit, OnDestroy {
     return date.toISOString();
   }
 
-  private scrollToTop(): void {
+  private syncMobileView(): void {
     if (typeof window === 'undefined') {
       return;
     }
 
-    window.requestAnimationFrame(() => {
-      window.scrollTo({ top: 0, behavior: 'auto' });
+    this.isMobileView = window.innerWidth <= this.mobileBreakpoint;
+    if (!this.isMobileView) {
+      this.showMobileSectionMenu = false;
+    }
+  }
+
+  private updateSeo(): void {
+    const section = this.sections.find((item) => item.id === this.activeSection);
+    const title = this.activeOrderId
+      ? `Order ${this.selectedOrder?.order_number || this.activeOrderId}`
+      : section?.title || 'My Account';
+    const description = this.activeOrderId
+      ? 'Track your Secure Derma order status, delivery details, and purchased items.'
+      : section?.description || 'Manage your Secure Derma account details, addresses, and orders.';
+
+    this.seoService.updateSeo({
+      title,
+      description,
+      canonicalPath: this.activeOrderId ? `/account/orders/${this.activeOrderId}` : `/account/${this.activeSection}`,
+      robots: 'noindex,nofollow',
+      type: 'website'
     });
   }
 

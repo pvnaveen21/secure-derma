@@ -1,6 +1,6 @@
 from django.urls import path
 
-from secure_derma.views import BrandListAPIView, CollectionBannerAPIView, ConcernProductsAPIView, CurrentLocationPincodeAPIView, HairBannerAPIView, HomeProductTypeAPIView, ImagesAPIView, LandingPageImagesAPIView, PincodeServiceabilityAPIView, ProductDetailAPIView, ProductListWithFiltersAPIView, ProductSideMenuAPIView, RazorpayCreateOrderAPIView, RazorpayVerifyPaymentAPIView, RoutineBuilderAPIView, SecureDermaCartAPIView, SecureDermaCartItemAPIView, SecureDermaCartSyncAPIView, SkinBannerAPIView, SupplementBannerAPIView, TopBrandsAPIView, TrendingProductsFastAPIView, UserOrderDetailAPIView, UserOrderListAPIView
+from secure_derma.views import BrandListAPIView, CollectionBannerAPIView, ConcernProductsAPIView, CurrentLocationPincodeAPIView, HairBannerAPIView, HomeProductTypeAPIView, ImagesAPIView, LandingPageImagesAPIView, NewsletterSubscriptionAPIView, PincodeServiceabilityAPIView, ProductDetailAPIView, ProductListWithFiltersAPIView, ProductSideMenuAPIView, RazorpayCreateOrderAPIView, RazorpayVerifyPaymentAPIView, RoutineBuilderAPIView, SecureDermaCartAPIView, SecureDermaCartItemAPIView, SecureDermaCartSyncAPIView, SkinBannerAPIView, SupplementBannerAPIView, TopBrandsAPIView, TrendingProductsFastAPIView, UserOrderDetailAPIView, UserOrderListAPIView
 from send_otp.views import SendOTPView, VerifyOTPView
 from user.views import UserDetailApiView, UserTokenRefreshView, google_login
 
@@ -22,6 +22,7 @@ urlpatterns = [
     path('collection-banner/', CollectionBannerAPIView.as_view(), name='combined-banner'),
     path('concern-products/', ConcernProductsAPIView.as_view(), name='concern-products'),
     path('routine-builder/', RoutineBuilderAPIView.as_view(), name='routine-builder'),
+    path('newsletter-subscriptions/', NewsletterSubscriptionAPIView.as_view(), name='newsletter-subscriptions'),
     path('cart/', SecureDermaCartAPIView.as_view(), name='secure-derma-cart'),
     path('cart/sync/', SecureDermaCartSyncAPIView.as_view(), name='secure-derma-cart-sync'),
     path('cart/items/', SecureDermaCartItemAPIView.as_view(), name='secure-derma-cart-item-create'),

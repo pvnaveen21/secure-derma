@@ -2,7 +2,9 @@
     @if(isBrowser){
 
     <div class="main-image-container">
-        <img [src]="main_image_url" alt="banner" loading="lazy" class="main-image" />
+        @if(main_image_url) {
+        <img [src]="main_image_url" alt="" loading="eager" class="main-image" />
+        }
     </div>
 
     <!-- cate -->
@@ -102,7 +104,7 @@
             <nz-carousel [nzAutoPlay]="isBrowser" class="banner-carousel">
                 @for (data of bannerImages; track data) {
                 <div nz-carousel-content class="banner-slide">
-                    <img [src]="data.image" alt="banner" loading="lazy" class="banner-image" />
+                    <img [src]="data.image" alt="" loading="lazy" class="banner-image" />
                 </div>
                 }
             </nz-carousel>
@@ -157,7 +159,7 @@
             <option value="medium">Medium</option>
             <option value="high">High</option>
         </select>
-        <button class="add-to-cart-btn routine-builder-mini__btn" (click)="submitRoutineBuilder()">
+        <button class="secure-btn add-to-cart-btn routine-builder-mini__btn" (click)="submitRoutineBuilder()">
             {{ routineLoading ? 'Building...' : 'Build Routine' }}
         </button>
     </div>
@@ -191,7 +193,7 @@
     </div>
     <div class="concern-strip__tabs">
         @for (concern of concernList; track concern) {
-        <button class="concern-strip__tab" [class.is-active]="selectedConcern === concern"
+        <button class="secure-btn concern-strip__tab" [class.is-active]="selectedConcern === concern"
             (click)="loadConcernProducts(concern)">
             {{ concern }}
         </button>
@@ -232,7 +234,7 @@
                         <span class="original-price">₹ {{ product.original_price }}</span>
                     </div>
 
-                    <button class="add-to-cart-btn" (click)="addToCart(product)">
+                    <button class="secure-btn add-to-cart-btn" (click)="addToCart(product)">
                         {{ recentlyAddedProductId === product.id ? 'Added to cart' : 'Add to Cart' }}
                     </button>
                 </div>
@@ -243,7 +245,7 @@
 
     @if (concernTotalCount > 10) {
     <div class="concern-strip__footer">
-        <button class="add-to-cart-btn concern-strip__view-all-btn" (click)="viewAllConcernProducts()">
+        <button class="secure-btn add-to-cart-btn concern-strip__view-all-btn" (click)="viewAllConcernProducts()">
             View All
         </button>
     </div>
@@ -294,7 +296,7 @@
                         <span class="original-price">₹ {{ product.product_details[0]?.original_price }}</span>
                     </div>
 
-                    <button class="add-to-cart-btn" (click)="addToCart(product)">
+                    <button class="secure-btn add-to-cart-btn" (click)="addToCart(product)">
                         {{ recentlyAddedProductId === product.id ? 'Added to cart' : 'Add to Cart' }}
                     </button>
                     <!-- </div> -->
@@ -393,19 +395,23 @@
             <ul class="brand-spotlight__features">
                 <li class="brand-spotlight__feature">
                     <span class="brand-spotlight__icon" aria-hidden="true">✓</span>
-                    <span class="brand-spotlight__feature-text">Clear ingredient rationale, not vague marketing language</span>
+                    <span class="brand-spotlight__feature-text">Clear ingredient rationale, not vague marketing
+                        language</span>
                 </li>
                 <li class="brand-spotlight__feature">
                     <span class="brand-spotlight__icon" aria-hidden="true">✓</span>
-                    <span class="brand-spotlight__feature-text">Routine-first discovery built around concern, category, and skin tolerance</span>
+                    <span class="brand-spotlight__feature-text">Routine-first discovery built around concern, category,
+                        and skin tolerance</span>
                 </li>
                 <li class="brand-spotlight__feature">
                     <span class="brand-spotlight__icon" aria-hidden="true">✓</span>
-                    <span class="brand-spotlight__feature-text">Consistent safety and storage standards across listed brands</span>
+                    <span class="brand-spotlight__feature-text">Consistent safety and storage standards across listed
+                        brands</span>
                 </li>
                 <li class="brand-spotlight__feature">
                     <span class="brand-spotlight__icon" aria-hidden="true">✓</span>
-                    <span class="brand-spotlight__feature-text">Focused guidance for Indian skin concerns and climate context</span>
+                    <span class="brand-spotlight__feature-text">Focused guidance for Indian skin concerns and climate
+                        context</span>
                 </li>
             </ul>
         </article>
@@ -485,7 +491,7 @@
 
 <div class="newsletter">
     <h2 class="newsletter__title">
-        Be the first to hear about all things Secra
+        Be the first to hear about all things Secure Derma
     </h2>
 
     <p class="newsletter__description">
@@ -496,14 +502,16 @@
         <div class="newsletter__input-wrapper">
             <div class="dropdown-search px-1">
                 <nz-input-group class="nz-input-group">
-                    <input type="text" nz-input placeholder="Enter Your Email" nzSize="large" />
+                    <input type="email" nz-input placeholder="Enter your email" nzSize="large"
+                        [(ngModel)]="newsletterEmail" (keydown.enter)="subscribeToNewsletter()" />
                 </nz-input-group>
             </div>
         </div>
 
         <div class="newsletter__button-wrapper">
-            <button class="newsletter__button secure-btn btn-primary btn-lg ">
-                Sign in
+            <button class="newsletter__button secure-btn btn-primary btn-lg " (click)="subscribeToNewsletter()"
+                [disabled]="newsletterSubmitting">
+                {{ newsletterSubmitting ? 'Submitting...' : 'Subscribe' }}
             </button>
         </div>
     </div>

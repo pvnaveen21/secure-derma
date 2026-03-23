@@ -226,7 +226,7 @@ export class PaymentService extends InterfaceService {
       errors.name = 'Enter the full name shown on the delivery address.';
     }
 
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedCustomer.email)) {
+    if (normalizedCustomer.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedCustomer.email)) {
       errors.email = 'Enter a valid email address.';
     }
 
@@ -251,7 +251,7 @@ export class PaymentService extends InterfaceService {
     }
 
     if (!/^\d{6}$/.test(normalizedCustomer.postal_code)) {
-      errors.postal_code = 'Enter a valid 6-digit postal code.';
+      errors.postal_code = 'Enter a valid 6-digit postal code to continue.';
     }
 
     return errors;

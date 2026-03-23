@@ -41,10 +41,13 @@
     width: 100%;
 }
 
-.page-content,
-.footer-container {
-    max-width: 90rem;
+.page-content {
+    max-width: var(--app-max-width);
     margin: auto;
+}
+
+.footer-container {
+    width: 100%;
 }
 
 @media (max-width: 76.8rem) {

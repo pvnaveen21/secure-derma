@@ -1,5 +1,5 @@
 <section class="account-shell" [class.account-shell--detail]="isOrderDetailView">
-    <div class="account-hero" *ngIf="!isOrderDetailView">
+    <div class="account-hero" *ngIf="!isOrderDetailView && (!isMobileView || showMobileSectionMenu)">
         <div class="account-hero__copy">
             <p class="account-eyebrow m-0">My Account</p>
             <h1 class="account-title m-0">{{ fullName }}</h1>
@@ -24,24 +24,68 @@
     </div>
 
     <div class="account-layout" [class.account-layout--detail]="isOrderDetailView">
-        <aside class="account-nav" *ngIf="!isOrderDetailView">
+        <aside class="account-nav" *ngIf="!isOrderDetailView && !isMobileView">
             <p class="account-nav__title m-0">My Account</p>
             <button
                 *ngFor="let section of sections"
                 type="button"
-                class="account-nav__item"
+                class="secure-btn account-nav__item"
                 [class.account-nav__item--active]="activeSection === section.id"
                 (click)="openSection(section.id)">
                 <lucide-angular class="d-flex" [img]="section.icon" [size]="18"></lucide-angular>
                 <span>{{ section.title }}</span>
             </button>
-            <button type="button" class="account-nav__item account-nav__item--logout" (click)="logout()">
+            <button type="button" class="secure-btn account-nav__item account-nav__item--logout" (click)="logout()">
                 <lucide-angular class="d-flex" [img]="icons.account.logout" [size]="18"></lucide-angular>
                 <span>Logout</span>
             </button>
         </aside>
 
-        <div class="account-content" [class.account-content--detail]="isOrderDetailView">
+        <div class="account-mobile-hub" *ngIf="isMobileView && !isOrderDetailView && showMobileSectionMenu">
+            <div class="account-mobile-hub__head">
+                <p class="account-card__eyebrow m-0">My Account</p>
+                <h2 class="account-mobile-hub__title m-0">Choose a section</h2>
+                <p class="account-mobile-hub__caption m-0">Open one section at a time from this menu.</p>
+            </div>
+
+            <div class="account-mobile-hub__list">
+                <button
+                    *ngFor="let section of sections"
+                    type="button"
+                    class="secure-btn account-mobile-hub__item"
+                    (click)="openSection(section.id)">
+                    <div class="account-mobile-hub__item-copy">
+                        <lucide-angular class="d-flex" [img]="section.icon" [size]="18"></lucide-angular>
+                        <div>
+                            <strong>{{ section.title }}</strong>
+                            <p class="m-0">{{ section.description }}</p>
+                        </div>
+                    </div>
+                    <span>{{ section.actionLabel }}</span>
+                </button>
+
+                <button type="button" class="secure-btn account-mobile-hub__item account-mobile-hub__item--logout" (click)="logout()">
+                    <div class="account-mobile-hub__item-copy">
+                        <lucide-angular class="d-flex" [img]="icons.account.logout" [size]="18"></lucide-angular>
+                        <div>
+                            <strong>Logout</strong>
+                            <p class="m-0">End this account session on this device.</p>
+                        </div>
+                    </div>
+                </button>
+            </div>
+        </div>
+
+        <div class="account-content" *ngIf="!showMobileSectionMenu || !isMobileView || isOrderDetailView" [class.account-content--detail]="isOrderDetailView">
+            <div class="account-mobile-section-bar" *ngIf="isMobileView && !isOrderDetailView && activeSectionConfig as mobileSection">
+                <button type="button" class="secure-btn account-mobile-section-bar__back" (click)="openMobileSectionMenu()">
+                    Back
+                </button>
+                <div class="account-mobile-section-bar__copy">
+                    <p class="account-card__eyebrow m-0">My Account</p>
+                    <strong>{{ mobileSection.title }}</strong>
+                </div>
+            </div>
             <section class="account-card" *ngIf="activeSection === 'personal-details'">
                 <div class="account-card__head account-card__head--start">
                     <div>
@@ -54,7 +98,7 @@
                     <button
                         *ngIf="!isEditingProfile"
                         type="button"
-                        class="account-action-btn"
+                        class="secure-btn account-action-btn"
                         (click)="startProfileEdit()">
                         Edit Details
                     </button>
@@ -126,10 +170,10 @@
                 <p class="profile-feedback m-0" *ngIf="profileFeedback">{{ profileFeedback }}</p>
 
                 <div class="profile-actions" *ngIf="isEditingProfile">
-                    <button type="button" class="account-secondary-btn" (click)="cancelProfileEdit()" [disabled]="isSavingProfile">
+                    <button type="button" class="secure-btn account-secondary-btn" (click)="cancelProfileEdit()" [disabled]="isSavingProfile">
                         Cancel
                     </button>
-                    <button type="button" class="account-action-btn" (click)="saveProfile()" [disabled]="isSavingProfile">
+                    <button type="button" class="secure-btn account-action-btn" (click)="saveProfile()" [disabled]="isSavingProfile">
                         {{ isSavingProfile ? 'Saving...' : 'Save Changes' }}
                     </button>
                 </div>
@@ -158,8 +202,8 @@
                     <div class="orders-list orders-list--full">
                         <button
                             type="button"
-                            class="order-card"
-                            *ngFor="let order of orders"
+                            class="secure-btn order-card"
+                            *ngFor="let order of paginatedOrders"
                             (click)="openOrderDetail(order.id)">
                             <div class="order-card__top">
                                 <div class="order-card__headline">
@@ -170,7 +214,7 @@
                             </div>
 
                             <div class="order-card__body" *ngIf="getOrderPrimaryItem(order) as leadItem">
-                                <button type="button" class="order-card__image-wrap order-media-btn" (click)="openOrderProduct(leadItem); $event.stopPropagation()">
+                                <button type="button" class="secure-btn order-card__image-wrap order-media-btn" (click)="openOrderProduct(leadItem); $event.stopPropagation()">
                                     <img *ngIf="leadItem.thumbnail" [src]="leadItem.thumbnail" [alt]="leadItem.product_name" class="order-card__image" />
                                 </button>
                                 <div class="order-card__content">
@@ -195,19 +239,47 @@
                             <div class="order-card__footer">
                                 <div class="order-card__footer-meta">
                                     <span>{{ order.item_count }} item{{ order.item_count > 1 ? 's' : '' }}</span>
-                                    <span>{{ shipmentProviderLabel }}</span>
+                                    <span>{{ order.shipping_provider || 'Secure Derma Logistics' }}</span>
                                 </div>
-                                <span class="order-link-btn">View order details</span>
+                                <div class="order-card__footer-actions">
+                                    <span class="order-link-btn">View order details</span>
+                                    <button
+                                        type="button"
+                                        class="secure-btn order-card__buy-again"
+                                        (click)="startShopping(order); $event.stopPropagation()"
+                                        [disabled]="isReordering">
+                                        {{ isReordering ? 'Opening Buy Now...' : 'Buy Again' }}
+                                    </button>
+                                </div>
                             </div>
                         </button>
+                    </div>
+
+                    <div class="orders-pagination" *ngIf="totalOrders > ordersPerPage">
+                        <p class="orders-pagination__meta m-0">
+                            Showing {{ ordersRangeStart }}-{{ ordersRangeEnd }} of {{ totalOrders }} orders
+                        </p>
+                        <div class="orders-pagination__actions">
+                            <button type="button" class="secure-btn orders-pagination__button"
+                                [disabled]="ordersPage === 1"
+                                (click)="goToPreviousOrdersPage()">
+                                Previous page
+                            </button>
+                            <span class="orders-pagination__status">Page {{ ordersPage }} of {{ totalOrderPages }}</span>
+                            <button type="button" class="secure-btn orders-pagination__button"
+                                [disabled]="ordersPage === totalOrderPages"
+                                (click)="goToNextOrdersPage()">
+                                Next page
+                            </button>
+                        </div>
                     </div>
                 </div>
 
                 <div class="order-detail-page" *ngIf="isOrderDetailView && !isOrderDetailLoading && !orderDetailError && selectedOrder; else orderDetailState">
                     <div class="order-breadcrumbs mb-3 ms-2">
-                        <button type="button" class="order-breadcrumbs__link" (click)="openSection('personal-details')">My Account</button>
+                        <button type="button" class="secure-btn order-breadcrumbs__link" (click)="openSection('personal-details')">My Account</button>
                         <span class="order-breadcrumbs__separator">/</span>
-                        <button type="button" class="order-breadcrumbs__link" (click)="backToOrders()">Orders</button>
+                        <button type="button" class="secure-btn order-breadcrumbs__link" (click)="backToOrders()">Orders</button>
                         <span class="order-breadcrumbs__separator">/</span>
                         <span class="order-breadcrumbs__current">{{ selectedOrder.order_number }}</span>
                     </div>
@@ -219,7 +291,7 @@
                                 <h2 class="order-detail-page__title m-0">{{ selectedOrder.order_number }}</h2>
                                 <p class="order-detail-page__subtitle m-0">Track delivery, review items, and manage this order in one place.</p>
                             </div>
-                            <button type="button" class="order-back-btn" (click)="backToOrders()">
+                            <button type="button" class="secure-btn order-back-btn" (click)="backToOrders()">
                                 Back to Orders
                             </button>
                         </div>
@@ -240,7 +312,7 @@
                                 <div class="order-detail__hero-card" *ngIf="selectedOrderPrimaryItem as leadItem">
                                     <button *ngIf="leadItem.thumbnail; else orderHeroMediaFallback"
                                         type="button"
-                                        class="order-detail__hero-media order-media-btn"
+                                        class="secure-btn order-detail__hero-media order-media-btn"
                                         (click)="openOrderProduct(leadItem)">
                                         <img [src]="leadItem.thumbnail" [alt]="leadItem.product_name" />
                                     </button>
@@ -325,7 +397,7 @@
 
                                 <div class="order-items">
                                     <div class="order-item" *ngFor="let item of selectedOrder.items">
-                                        <button type="button" class="order-item__media order-media-btn" (click)="openOrderProduct(item)">
+                                        <button type="button" class="secure-btn order-item__media order-media-btn" (click)="openOrderProduct(item)">
                                             <img *ngIf="item.thumbnail" [src]="item.thumbnail" [alt]="item.product_name" />
                                         </button>
                                         <div class="order-item__copy">
@@ -338,7 +410,7 @@
                                         </div>
                                         <div class="order-item__actions">
                                             <strong>₹{{ item.line_total }}</strong>
-                                            <button type="button" class="order-link-btn" (click)="openOrderProduct(item)">View product</button>
+                                            <button type="button" class="secure-btn order-link-btn" (click)="openOrderProduct(item)">View product</button>
                                         </div>
                                     </div>
                                 </div>
@@ -357,7 +429,7 @@
                                 <div class="order-switcher__list">
                                     <button
                                         type="button"
-                                        class="order-switcher__item"
+                                        class="secure-btn order-switcher__item"
                                         *ngFor="let order of orders"
                                         [class.order-switcher__item--active]="order.id === selectedOrder.id"
                                         (click)="openOrderDetail(order.id)">
@@ -412,17 +484,17 @@
                             </div>
 
                             <div class="order-detail__actions order-detail__actions--sidebar">
-                                <button type="button" class="account-secondary-btn order-detail__btn" (click)="openSection('addresses')">
+                                <button type="button" class="secure-btn account-secondary-btn order-detail__btn" (click)="openSection('addresses')">
                                     Delivery Details
                                 </button>
-                                <button type="button" class="account-secondary-btn order-detail__btn" (click)="openSection('contact-us')">
+                                <button type="button" class="secure-btn account-secondary-btn order-detail__btn" (click)="openSection('contact-us')">
                                     Need Help
                                 </button>
-                                <button type="button" class="account-secondary-btn order-detail__btn" (click)="downloadInvoice()">
+                                <button type="button" class="secure-btn account-secondary-btn order-detail__btn" (click)="downloadInvoice()">
                                     Download Invoice
                                 </button>
-                                <button type="button" class="account-action-btn order-detail__btn" (click)="startShopping()" [disabled]="isReordering">
-                                    {{ isReordering ? 'Adding to cart...' : 'Order Again' }}
+                                <button type="button" class="secure-btn account-action-btn order-detail__btn" (click)="startShopping()" [disabled]="isReordering">
+                                    {{ isReordering ? 'Opening Buy Now...' : 'Buy Again' }}
                                 </button>
                             </div>
                         </div>
@@ -456,7 +528,7 @@
                     <div class="orders-empty" *ngIf="!isOrdersLoading && !ordersError && !orders.length">
                         <p class="orders-empty__title m-0">No paid orders yet</p>
                         <p class="orders-empty__text m-0">Finish a purchase and your completed paid orders will appear here with product, savings, and delivery details.</p>
-                        <button type="button" class="account-action-btn" (click)="startShopping()">Start Shopping</button>
+                        <button type="button" class="secure-btn account-action-btn" (click)="startShopping()">Start Shopping</button>
                     </div>
                 </ng-template>
             </section>
@@ -473,13 +545,13 @@
                     <button
                         *ngIf="!isEditingAddress"
                         type="button"
-                        class="account-action-btn"
+                        class="secure-btn account-action-btn"
                         (click)="startAddressEdit()">
                         Edit Address
                     </button>
                 </div>
 
-                <div class="profile-panel">
+                <div class="profile-panel" [class.profile-panel--editing]="isEditingAddress">
                     <div class="profile-form">
                         <label class="profile-field">
                             <span class="profile-field__label">Recipient Name</span>
@@ -549,7 +621,7 @@
                                 [value]="addressForm.city"
                                 (input)="onAddressInput('city', $any($event.target).value)"
                                 (blur)="onAddressBlur('city')"
-                                [disabled]="!isEditingAddress"
+                                [disabled]="!isAddressLocationEditable"
                                 placeholder="Enter city" />
                             <span class="profile-field__error" *ngIf="addressErrors.city">{{ addressErrors.city }}</span>
                         </label>
@@ -561,7 +633,7 @@
                                 [value]="addressForm.state"
                                 (input)="onAddressInput('state', $any($event.target).value)"
                                 (blur)="onAddressBlur('state')"
-                                [disabled]="!isEditingAddress"
+                                [disabled]="!isAddressLocationEditable"
                                 placeholder="Enter state" />
                             <span class="profile-field__error" *ngIf="addressErrors.state">{{ addressErrors.state }}</span>
                         </label>
@@ -577,6 +649,8 @@
                                 [disabled]="!isEditingAddress"
                                 placeholder="Enter 6-digit postal code" />
                             <span class="profile-field__error" *ngIf="addressErrors.postal_code">{{ addressErrors.postal_code }}</span>
+                            <span class="profile-field__hint" *ngIf="isEditingAddress && !hasValidAddressPostalCode">Enter a valid 6-digit postal code to verify the address.</span>
+                            <span class="profile-field__hint" *ngIf="isEditingAddress && hasValidAddressPostalCode && isAddressLocationLoading">Verifying postal code and fetching City and State...</span>
                         </label>
                     </div>
 
@@ -595,10 +669,10 @@
                 <p class="profile-feedback m-0" *ngIf="addressFeedback">{{ addressFeedback }}</p>
 
                 <div class="profile-actions" *ngIf="isEditingAddress">
-                    <button type="button" class="account-secondary-btn" (click)="cancelAddressEdit()" [disabled]="isSavingAddress">
+                    <button type="button" class="secure-btn account-secondary-btn" (click)="cancelAddressEdit()" [disabled]="isSavingAddress">
                         Cancel
                     </button>
-                    <button type="button" class="account-action-btn" (click)="saveAddress()" [disabled]="isSavingAddress">
+                    <button type="button" class="secure-btn account-action-btn" (click)="saveAddress()" [disabled]="isSavingAddress">
                         {{ isSavingAddress ? 'Saving...' : 'Save Address' }}
                     </button>
                 </div>

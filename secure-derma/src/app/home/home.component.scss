@@ -3,7 +3,7 @@
 .banner-wrapper {
     margin-top: 0.5rem; // 0.8rem
 
-    @media only screen and (max-width:76.8rem) {
+    @media only screen and (max-width:59.9375rem) {
         padding-inline: 1rem;
     }
 }
@@ -15,7 +15,7 @@
     position: relative;
     z-index: 1;
 
-    @media only screen and (max-width:76.8rem) {
+    @media only screen and (max-width:59.9375rem) {
         height: 10.0625rem;
     }
 
@@ -30,9 +30,12 @@
     width: 100%;
     height: 25rem;
     border-radius: 0.75rem;
+    overflow: hidden;
+    background-color: var(--section-bg, #f1f5f9);
 
-    @media only screen and (max-width:76.8rem) {
+    @media only screen and (max-width:59.9375rem) {
         height: auto;
+        border-radius: unset
     }
 }
 
@@ -69,7 +72,7 @@
 ::ng-deep .ant-carousel .slick-dots-bottom {
     bottom: 1rem !important;
 
-    @media only screen and (max-width:76.8rem) {
+    @media only screen and (max-width:59.9375rem) {
         bottom: 0rem !important;
     }
 }
@@ -113,7 +116,7 @@
 }
 
 /* Responsive */
-@media (max-width: 76.8rem) {
+@media (max-width: 59.9375rem) {
     .trust-wrapper {
         grid-template-columns: repeat(2, 1fr);
     }
@@ -156,6 +159,10 @@
         .circle-title {
             color: #0d9488;
         }
+    }
+
+    @media only screen and (max-width:59.9375rem) {
+        min-width: 8rem;
     }
 }
 
@@ -200,6 +207,9 @@
     font-weight: 600;
     color: var(--text-heading);
     margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
     transition: color 0.3s ease;
 }
 
@@ -216,18 +226,18 @@
 }
 
 /* Responsive */
-@media (max-width: 76.8rem) {
+@media (max-width: 59.9375rem) {
     .modern-title {
         font-size: 1.8rem !important;
     }
 
     .circle-image-wrapper {
-        width: 8rem;
-        height: 8rem;
+        width: 7rem;
+        height: 7rem;
     }
 
     .category-scroll-wrapper {
-        gap: 1.5rem;
+        gap: 1rem;
     }
 }
 
@@ -367,16 +377,23 @@
 .testimonial-card__meta {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.35rem;
+    align-items: center;
+    gap: 0.45rem;
+    min-height: 1.9rem;
 }
 
 .testimonial-card__chip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 1.7rem;
     font-size: 0.68rem;
     color: var(--text-secondary);
     background: var(--card-bg);
     border: 0.0625rem solid rgba(148, 163, 184, 0.2);
     border-radius: 99.9rem;
     padding: 0.15rem 0.45rem;
+    white-space: nowrap;
 }
 
 .testimonial-card__user {
@@ -502,9 +519,9 @@
 
 .brand-spotlight__container {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+    grid-template-columns: minmax(18rem, 0.98fr) minmax(0, 1.05fr);
     gap: clamp(1rem, 3vw, 2.5rem);
-    align-items: stretch;
+    align-items: center;
     margin: 0 auto;
     max-width: 78rem;
     background: var(--card-bg);
@@ -515,14 +532,18 @@
 }
 
 .brand-spotlight__image-wrapper {
+    width: 100%;
     height: 100%;
-    min-height: 22rem;
+    min-width: 0;
+    min-height: clamp(18rem, 32vw, 24rem);
+    aspect-ratio: 5 / 4;
     background: linear-gradient(140deg, rgba(15, 118, 110, 0.08), rgba(20, 184, 166, 0.03));
 }
 
 .brand-spotlight__image {
     width: 100%;
     height: 100%;
+    min-height: 100%;
     object-fit: cover;
     display: block;
 }
@@ -532,6 +553,7 @@
     display: grid;
     gap: 1rem;
     align-content: start;
+    align-self: center;
     min-width: 0;
 }
 
@@ -609,7 +631,12 @@
 
 @media (max-width: 102.4rem) {
     .brand-spotlight__container {
-        grid-template-columns: minmax(0, 0.95fr) minmax(0, 1fr);
+        grid-template-columns: minmax(16rem, 0.9fr) minmax(0, 1fr);
+        gap: 1.25rem;
+    }
+
+    .brand-spotlight__image-wrapper {
+        min-height: clamp(17rem, 34vw, 21rem);
     }
 
     .brand-spotlight__features {
@@ -617,18 +644,19 @@
     }
 }
 
-@media (max-width: 76.8rem) {
+@media (max-width: 59.9375rem) {
     .brand-spotlight {
         padding-inline: 0.8rem;
     }
 
     .brand-spotlight__container {
-        grid-template-columns: 1fr;
+        grid-template-columns: minmax(14rem, 0.88fr) minmax(0, 1fr);
+        gap: 1rem;
     }
 
     .brand-spotlight__image-wrapper {
-        min-height: 13rem;
-        max-height: 16rem;
+        min-height: clamp(14rem, 36vw, 18rem);
+        aspect-ratio: auto;
     }
 
     .brand-spotlight__content {
@@ -638,6 +666,16 @@
 }
 
 @media (max-width: 48rem) {
+    .brand-spotlight__container {
+        grid-template-columns: 1fr;
+    }
+
+    .brand-spotlight__image-wrapper {
+        min-height: 13rem;
+        max-height: 16rem;
+        aspect-ratio: 16 / 10;
+    }
+
     .brand-spotlight__title {
         font-size: 1.32rem;
     }
@@ -765,9 +803,9 @@
     }
 }
 
-@media (max-width: 76.8rem) {
+@media (max-width: 59.9375rem) {
     .about-site {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 0.75rem;
         padding: 1rem 0.8rem 1.4rem;
     }
@@ -892,7 +930,7 @@
     }
 }
 
-@media (max-width: 76.8rem) {
+@media (max-width: 59.9375rem) {
     .newsletter {
         margin: 0.8rem;
         padding: 1rem 0.85rem 1.1rem;
@@ -1231,7 +1269,7 @@
     color: var(--text-secondary);
 }
 
-@media (max-width: 76.8rem) {
+@media (max-width: 59.9375rem) {
     .brands-showcase-v2 {
         padding: 1.2rem 0.9rem;
     }
@@ -1283,6 +1321,16 @@
     }
 
     .care-guidance-block__grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 48rem) {
+    .about-site {
+        grid-template-columns: 1fr;
+    }
+
+    .care-guidance-block__grid {
         grid-template-columns: 1fr;
     }
 }
@@ -1306,7 +1354,7 @@
     max-width: 100%;
     background: var(--card-bg);
     border-radius: 1rem;
-    padding: 0.9rem;
+    padding: 0.5rem;
     border: 0.0625rem solid rgba(148, 163, 184, 0.2);
     box-shadow: 0 0.45rem 1rem rgba(15, 23, 42, 0.08);
     transition: transform 0.3s ease, box-shadow 0.3s ease;
@@ -1591,11 +1639,6 @@
     padding: 0 .2rem .4rem;
 }
 
-.concern-strip .concern-product-card {
-    flex: 0 0 16rem;
-    min-width: 16rem;
-}
-
 .concern-product-card {
     border: 0.1rem solid color-mix(in srgb, var(--brand-primary) 22%, var(--border-color));
     box-shadow: 0 0.35rem 0.9rem color-mix(in srgb, var(--brand-primary) 10%, transparent);
@@ -1665,6 +1708,7 @@
 
 :host-context(html.dark),
 :host-context(html.coloured) {
+
     .routine-builder-mini,
     .concern-strip,
     .concern-product-card {
@@ -1697,10 +1741,5 @@
 @media (max-width: 99.1rem) {
     .routine-builder-mini__form {
         grid-template-columns: 1fr 1fr;
-    }
-
-    .concern-strip .concern-product-card {
-        flex-basis: 13.5rem;
-        min-width: 13.5rem;
     }
 }

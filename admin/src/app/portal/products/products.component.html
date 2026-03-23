@@ -1,5 +1,5 @@
 <!-- <div>
-    <button class="tej-btn border-0 rounded-lg btn-primary b2 fw-semibold " (click)="showUploadModal()">
+    <button class="secure-derma-btn border-0 rounded-lg btn-primary b2 fw-semibold " (click)="showUploadModal()">
         <lucide-angular [img]="icons.common.upload" class="d-flex me-1" [size]="20"></lucide-angular>
         Add Product
     </button>
@@ -9,11 +9,11 @@
 <app-common-data-table [tableColumns]="customDataTableColumns" [tableConfig]="customDataTableConfig"
     (modelAction)="modelAction($event)" #custumtable >
     <div>
-        <button class="tej-btn border-0 h-btn" [ngClass]="{'active-btn':trendingStatus}"
+        <button class="secure-derma-btn border-0 h-btn" [ngClass]="{'active-btn':trendingStatus}"
             (click)="headerBtnStatus(1,!trendingStatus)">Trending Product</button>
     </div>
     <div>
-        <button class="tej-btn border-0 h-btn" [ngClass]="{'active-btn':bestSellerStatus}"
+        <button class="secure-derma-btn border-0 h-btn" [ngClass]="{'active-btn':bestSellerStatus}"
             (click)="headerBtnStatus(2,!bestSellerStatus)">Best Seller</button>
     </div>
 </app-common-data-table>
@@ -26,7 +26,7 @@
                 <h2 class="m-0">{{ editUser ? 'Update' : 'Add' }} Product
                 </h2>
             </div>
-            <div class="border rounded-pill tej-close-icon clickable" (click)=handleCancel()>
+            <div class="border rounded-pill secure-derma-close-icon clickable" (click)=handleCancel()>
                 <lucide-angular [img]="icons.common.close" [size]="20"></lucide-angular>
             </div>
         </div>
@@ -436,9 +436,9 @@
         <nz-divider></nz-divider>
 
         <div class=" buttons  d-flex footer-btn-main align-items-center w-100 px-4 pb-4 gap-5">
-            <button class="tej-btn btn-lg  border-0 rounded-lg bg-danger-50 text-primary b2 fw-semibold w-100"
+            <button class="secure-derma-btn btn-lg  border-0 rounded-lg bg-danger-50 text-primary b2 fw-semibold w-100"
                 type="button" (click)="handleCancel()">Cancel</button>
-            <button class="tej-btn btn-lg border-0 rounded-lg btn-primary b2 fw-semibold w-100" type="submit"
+            <button class="secure-derma-btn btn-lg border-0 rounded-lg btn-primary b2 fw-semibold w-100" type="submit"
                 [disabled]="submitAPILoading" (click)="submitForm()">
                 {{editUser ? "Update" : "Save"}} @if (submitAPILoading) {
                 <nz-icon class="ms-2" nzType="loading"></nz-icon>
@@ -456,7 +456,7 @@
         <div class=" flex-box">
             <div>
             </div>
-            <div class="border rounded-pill tej-close-icon clickable" (click)=handleSucessCancel()>
+            <div class="border rounded-pill secure-derma-close-icon clickable" (click)=handleSucessCancel()>
                 <lucide-angular [img]="icons.common.close" [size]="20"></lucide-angular>
             </div>
         </div>
