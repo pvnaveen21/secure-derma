@@ -1,6 +1,12 @@
 import os
 from pathlib import Path
 
+from django.core.exceptions import ImproperlyConfigured
+
+
+TRUE_VALUES = {"1", "true", "yes", "on"}
+FALSE_VALUES = {"0", "false", "no", "off"}
+
 
 def _parse_env_line(raw_line):
     line = raw_line.strip()
@@ -34,3 +40,54 @@ def load_local_env():
         key, value = _parse_env_line(raw_line)
         if key:
             os.environ.setdefault(key, value)
+
+
+def env_str(name: str, default=None, *, required: bool = False, allow_blank: bool = False) -> str:
+    value = os.getenv(name)
+    if value is None:
+        if required:
+            raise ImproperlyConfigured(f"Environment variable {name} is required.")
+        return default
+
+    value = value.strip()
+    if not value and not allow_blank:
+        if required:
+            raise ImproperlyConfigured(f"Environment variable {name} cannot be blank.")
+        return default
+
+    return value
+
+
+def env_bool(name: str, default: bool = False) -> bool:
+    value = os.getenv(name)
+    if value is None:
+        return default
+
+    normalized = value.strip().lower()
+    if normalized in TRUE_VALUES:
+        return True
+    if normalized in FALSE_VALUES:
+        return False
+
+    raise ImproperlyConfigured(
+        f"Environment variable {name} must be one of: {', '.join(sorted(TRUE_VALUES | FALSE_VALUES))}."
+    )
+
+
+def env_int(name: str, default: int) -> int:
+    value = os.getenv(name)
+    if value is None:
+        return default
+
+    try:
+        return int(value.strip())
+    except (TypeError, ValueError) as exc:
+        raise ImproperlyConfigured(f"Environment variable {name} must be an integer.") from exc
+
+
+def env_list(name: str, default=None):
+    value = os.getenv(name)
+    if value is None:
+        return list(default or [])
+
+    return [item.strip() for item in value.split(",") if item.strip()]

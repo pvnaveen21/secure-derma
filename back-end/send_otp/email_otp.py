@@ -1,16 +1,16 @@
-import os
-
 from django.template.loader import render_to_string
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Email, Mail
 from python_http_client.exceptions import HTTPError
+
+from config.env import env_int, env_str
 
 
 class EmailOTPError(Exception):
     pass
 
 
-OTP_EXPIRY_SECONDS = int(os.getenv("OTP_EXPIRY_SECONDS", "600"))
+OTP_EXPIRY_SECONDS = env_int("OTP_EXPIRY_SECONDS", 600)
 
 
 def normalize_email(value: str) -> str:
@@ -22,10 +22,10 @@ def normalize_email(value: str) -> str:
 
 def send_email_otp(email: str, otp: str) -> dict:
     recipient = normalize_email(email)
-    api_key = os.getenv("SENDGRID_API_KEY", "").strip()
-    from_email = os.getenv("OTP_EMAIL_FROM", "").strip() or os.getenv("SENDGRID_FROM_EMAIL", "").strip()
-    from_name = os.getenv("OTP_EMAIL_FROM_NAME", "").strip() or os.getenv("SENDGRID_FROM_NAME", "Secure Derma").strip()
-    subject = os.getenv("OTP_EMAIL_SUBJECT", "Secure Derma login verification code").strip()
+    api_key = env_str("SENDGRID_API_KEY", default="")
+    from_email = env_str("OTP_EMAIL_FROM", default="") or env_str("SENDGRID_FROM_EMAIL", default="")
+    from_name = env_str("OTP_EMAIL_FROM_NAME", default="") or env_str("SENDGRID_FROM_NAME", default="Secure Derma")
+    subject = env_str("OTP_EMAIL_SUBJECT", default="Secure Derma login verification code")
 
     if not api_key or not from_email:
         raise EmailOTPError("Twilio SendGrid email OTP is not configured on the server.")
