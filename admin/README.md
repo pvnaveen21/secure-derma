@@ -16,6 +16,13 @@ window.__SECURE_DERMA_ENV__ = {
 
 The committed `public/env.js` is only a local default. Replace it during deployment with environment-specific values and do not put secrets in the Angular source files.
 
+For Vercel:
+
+- Set the project root to `admin`
+- Add `BASEURL_API` in Project Settings -> Environment Variables
+- The build now generates `public/env.js` automatically from that value
+- Add `https://secure-derma-admin.vercel.app` to your Django `CORS_ALLOWED_ORIGINS`
+
 ## Development server
 
 To start a local development server, run:
