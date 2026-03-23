@@ -3,7 +3,7 @@
 @use "portal/portal" as *;
 
 
-.tej-colour svg {
+.secure-derma-colour svg {
   height: 20px !important;
 }
 
@@ -24,7 +24,7 @@
   }
 
   .text-toggle {
-    fill: var(--tej-text-color);
+    fill: var(--secure-derma-text-color);
   }
 }
 
@@ -110,17 +110,17 @@ lucide-angular {
 }
 
 .bg-primary {
-  background-color: var(--tej-bg-primary) !important;
+  background-color: var(--secure-derma-bg-primary) !important;
 }
 
 .bg-secondary {
-  background-color: var(--tej-bg-secondary) !important;
+  background-color: var(--secure-derma-bg-secondary) !important;
 }
 
 
 .order-options-main {
   .ant-select-selector {
-    background-color: var(--tej-bg-primary) !important;
+    background-color: var(--secure-derma-bg-primary) !important;
     border: none !important;
     border-radius: 20px !important;
     min-width: 90px !important;

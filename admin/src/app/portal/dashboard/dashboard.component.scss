@@ -300,12 +300,12 @@
     }
 
     .cal-main {
-        background-color: var(--tej-bg-primary);
+        background-color: var(--secure-derma-bg-primary);
         border-radius: 15px;
     }
 
     ::ng-deep .ant-picker-body {
-        background-color: var(--tej-bg-primary) !important;
+        background-color: var(--secure-derma-bg-primary) !important;
         border-bottom-left-radius: 15px;
         border-bottom-right-radius: 15px;
     }
@@ -429,7 +429,7 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
-        background: var(--tej-bg-primary);
+        background: var(--secure-derma-bg-primary);
         border-radius: 12px;
         padding: 12px 16px;
         margin-bottom: 15px;
@@ -617,7 +617,7 @@
     padding: 6px 12px;
     border-radius: 15px;
     color: var(--muted);
-    background-color: var(--tej-bg-primary);
+    background-color: var(--secure-derma-bg-primary);
 }
 
 .zone-container {
@@ -697,7 +697,7 @@
     padding: 6px 12px;
     border-radius: 15px;
     color: var(--muted);
-    background-color: var(--tej-bg-primary);
+    background-color: var(--secure-derma-bg-primary);
 }
 
 
@@ -772,7 +772,7 @@
 }
 
 .switch-main {
-    background-color: var(--tej-bg-primary);
+    background-color: var(--secure-derma-bg-primary);
 }
 
 .height-container {
@@ -790,7 +790,7 @@
 }
 
 .edit-box {
-    background-color: var(--tej-bg-primary);
+    background-color: var(--secure-derma-bg-primary);
 }
 
 .list-main-container {
@@ -801,7 +801,7 @@
 }
 
 .cmn-list-bg {
-    background-color: var(--tej-bg-primary);
+    background-color: var(--secure-derma-bg-primary);
 }
 
 .selected-clr {
@@ -844,11 +844,11 @@
     padding: 6px 12px;
     border-radius: 15px;
     color: var(--muted);
-    background-color: var(--tej-bg-primary);
+    background-color: var(--secure-derma-bg-primary);
 }
 
 .left-icon {
-    color: var(--tej-text-color) !important;
+    color: var(--secure-derma-text-color) !important;
 }
 
 .c-not {

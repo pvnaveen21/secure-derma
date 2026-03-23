@@ -12,7 +12,7 @@
             <div class="pt-4">
                 <div class="flex-box px-4 pb-3">
                     <h2 class="m-0">{{editUser ? 'Update': 'Add New'}} Skin Concern</h2>
-                    <div class="border rounded-pill tej-close-icon clickable" (click)=handleCancel()>
+                    <div class="border rounded-pill secure-derma-close-icon clickable" (click)=handleCancel()>
                         <lucide-angular [img]="icons.common.close" [size]="20"></lucide-angular>
                     </div>
                 </div>
@@ -36,9 +36,9 @@
 
 
                 <div class=" buttons  d-flex footer-btn-main align-items-center w-100 px-4 pb-4">
-                    <button class="tej-btn btn-lg  border-0 rounded-lg bg-danger-50 text-primary b2 fw-semibold w-100"
+                    <button class="secure-derma-btn btn-lg  border-0 rounded-lg bg-danger-50 text-primary b2 fw-semibold w-100"
                         type="button" (click)="handleCancel()">Cancel</button>
-                    <button class="tej-btn btn-lg border-0 rounded-lg btn-primary b2 fw-semibold w-100" type="submit"
+                    <button class="secure-derma-btn btn-lg border-0 rounded-lg btn-primary b2 fw-semibold w-100" type="submit"
                         [disabled]="submitAPILoading">
                         {{editUser ? "Update" : "Save"}} @if (submitAPILoading) {
                         <nz-icon class="ms-2" nzType="loading"></nz-icon>

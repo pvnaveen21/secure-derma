@@ -5,12 +5,12 @@
 
      .ant-collapse {
          border: none !important;
-         background-color: var(--tej-bg-primary) !important;
+         background-color: var(--secure-derma-bg-primary) !important;
      }
 
      .ant-collapse-content {
          border-top: none !important;
-         background-color: var(--tej-bg-secondary);
+         background-color: var(--secure-derma-bg-secondary);
      }
 
      .ant-collapse-content-box .ant-collapse-icon-position-start {
@@ -19,7 +19,7 @@
 
      .ant-collapse>.ant-collapse-item {
          border: none !important;
-         background-color: var(--tej-bg-secondary) !important;
+         background-color: var(--secure-derma-bg-secondary) !important;
          border-radius: 20px !important;
          margin-bottom: 20px !important;
          overflow: hidden !important;

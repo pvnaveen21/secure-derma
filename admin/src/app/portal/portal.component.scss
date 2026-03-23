@@ -36,12 +36,12 @@ nz-content {
 
 .header-container {
     padding-bottom: 2px;
-    border-bottom: 2px solid var(--tej-border-color);
+    border-bottom: 2px solid var(--secure-derma-border-color);
 
 }
 
 .sider-container {
-    border-right: 2px solid var(--tej-border-color);
+    border-right: 2px solid var(--secure-derma-border-color);
     overflow-x: hidden;
     overflow-y: auto;
     scrollbar-width: thin;
@@ -61,11 +61,11 @@ nz-content {
     display: flex;
     align-items: center;
     background-color: var(--white);
-    border-bottom: 2px solid var(--tej-border-color);
+    border-bottom: 2px solid var(--secure-derma-border-color);
 }
 
 .header-side-container {
-    // border-right: 1px solid var(--tej-border-color);
+    // border-right: 1px solid var(--secure-derma-border-color);
     min-width: 300px;
 }
 
