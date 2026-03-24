@@ -1,4 +1,3 @@
-import { Assets } from './shared/assets';
 import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 
@@ -8,10 +7,4 @@ import { RouterOutlet } from '@angular/router';
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss'
 })
-export class AppComponent {
-  assets = Assets;
-
-  ngOnInit() {
-    document.body.style.setProperty('--eclipse', `url(${this.assets.common.eclipse})`);
-  }
-}
+export class AppComponent {}

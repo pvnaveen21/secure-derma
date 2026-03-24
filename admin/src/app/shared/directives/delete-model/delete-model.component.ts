@@ -1,6 +1,4 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { Assets } from '@app/shared/assets';
-import { SvgLoad } from '@app/shared/assets/svg-load';
 import { Icons } from '@app/shared/icons';
 import { LucideAngularModule } from 'lucide-angular';
 import { NzButtonModule } from 'ng-zorro-antd/button';
@@ -13,8 +11,7 @@ import { NzModalModule } from 'ng-zorro-antd/modal';
     NzModalModule,
     LucideAngularModule,
     NzIconModule,
-    NzButtonModule,
-    SvgLoad
+    NzButtonModule
   ],
   templateUrl: './delete-model.component.html',
   styleUrl: './delete-model.component.scss'
@@ -22,40 +19,34 @@ import { NzModalModule } from 'ng-zorro-antd/modal';
 export class DeleteModelComponent {
   @Input() headerText: string = '';
   @Input() subText: string = '';
-  @Output() confirmDelete = new EventEmitter()
-  @Input() buttonName = 'Confirm'
+  @Output() confirmDelete = new EventEmitter();
+  @Input() buttonName = 'Confirm';
   isVisible = false;
-  icons = Icons
-  assets = Assets
-  submitAPILoading: boolean = false;
-  returnType: any = true
-  constructor() { }
-  ngOnInit() { }
+  icons = Icons;
+  submitAPILoading = false;
+  returnType: any = true;
 
   showModal(type?: any) {
-    this.returnType = type
-    this.submitAPILoading = false
-    this.isVisible = true
+    this.returnType = type;
+    this.submitAPILoading = false;
+    this.isVisible = true;
   }
 
   handleCancel(): void {
-    this.submitAPILoading = false
+    this.submitAPILoading = false;
     this.isVisible = false;
   }
 
   deleteConfirm(): void {
     this.submitAPILoading = true;
-    this.confirmDelete.emit(this.returnType)
+    this.confirmDelete.emit(this.returnType);
   }
 
   deleteModelStatus(status: any) {
     if (status) {
-      this.handleCancel()
+      this.handleCancel();
+    } else {
+      this.submitAPILoading = false;
     }
-    else {
-      this.submitAPILoading = false
-    }
-
   }
-
 }
