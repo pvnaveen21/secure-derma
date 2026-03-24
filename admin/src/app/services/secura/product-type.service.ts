@@ -73,7 +73,6 @@ export class ProductTypeService extends InterfaceService {
       else if (key != 'image'){
         formData.append(key, value);
       }
-      console.log(value);
 
     });
 

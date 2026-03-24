@@ -164,7 +164,6 @@ export class AuthService extends InterfaceService {
           this.getUserDetails(true).then(user => user).catch(error => error);
         },
         error: (error) => {
-          console.error('Failed to refresh token in timer', error);
           // Only redirect if the refresh token is also expired
           if (isTokenExpired(REFRESH_TOKEN)) {
             this.router.navigate(['/users/login']).then(res => res);
@@ -198,7 +197,7 @@ export class AuthService extends InterfaceService {
           if (response['refresh']) setToken(response['refresh'], REFRESH_TOKEN);
           this.refreshTokenTimer();
         },
-        error: (err) => console.warn('Activity-triggered refresh failed', err)
+        error: () => {}
       });
     }
   }
@@ -209,7 +208,6 @@ export class AuthService extends InterfaceService {
     return this.http
       .post(this.getApiUrl('/auth/logout/'), { 'refresh': getToken(REFRESH_TOKEN) }, this.getHttpOptions('json')).subscribe({
         next: (res: any) => {
-          // console.log('result', res)
           unsetToken();
           this.router.navigate(['/users/login']).then(res => res).catch(error => {
           });
@@ -230,8 +228,7 @@ export class AuthService extends InterfaceService {
         auth: false,
         allowCredentials: true
       })).subscribe({
-        next: (response: any) => {
-          // console.log(response.token);
+        next: (response: any) => {;
           setToken(response.token, ACCESS_TOKEN);
           // this.authService.setLogoutActivityToken();
           // setToken("response.refresh_token", REFRESH_TOKEN);

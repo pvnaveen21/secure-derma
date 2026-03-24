@@ -222,8 +222,6 @@ export class ReviewComponent {
   inputValue: any
 
   submitReview() {
-
-    console.log(this.reviewForm.getRawValue());
     if (this.reviewForm.get('reviewer_name')?.invalid) {
       this.message.error('Please add Reviewer Name')
       return;
@@ -275,7 +273,6 @@ export class ReviewComponent {
       next: (response: any) => {
         this.handleCancel()
         this.custumtable.refreshTable()
-        console.log(response);
       }
     })
   }
@@ -344,8 +341,6 @@ export class ReviewComponent {
         preview: URL.createObjectURL(file)
       });
     }
-    console.log("ALL IMAGES:", this.imagesArray.value);
-    console.log("CURRENT IMAGE:", this.imagesArray.at(index).value);
     const statusCheck = this.imagesArray.value.every((value: any) => {
       return value.preview
     })
@@ -357,8 +352,6 @@ export class ReviewComponent {
 
   imagesDeleteIds: any = []
   deleteAddedimagesValue(data: any, index: any) {
-    console.log(data);
-    console.log(index);
 
     if (data) {
       this.imagesDeleteIds.push(data)

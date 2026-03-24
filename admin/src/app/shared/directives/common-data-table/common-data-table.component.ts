@@ -335,10 +335,6 @@ export class CommonDataTableComponent {
       const exportType = exportTypeMap[route] ?? 4;
 
       this.dataExport(exportType);
-
-
-
-      // console.log(this.listOfData)
       // const fields = this.tableConfig.exportData;
       // const filteredData = this.listOfData.map((item: any) => {
       //   const arr: any[] = [];
@@ -434,7 +430,6 @@ export class CommonDataTableComponent {
       error: (err: any) => {
         this.exportBtnLoader = false
         this.cdr.detectChanges();
-        console.error('Export failed', err);
       }
     });
   }
