@@ -59,11 +59,9 @@ export class InterfaceService {
             }
         } else {
             // non-HTTP errors
-            console.log('errrr', error)
             errorMessage = error?.detail || error;
         }
         const formattedError = errorMessage ? errorMessage : 'Internel server error.';
-        console.error('An error occurred:', errorMessage);
         return throwError(() => formattedError);
     }
 

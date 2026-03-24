@@ -1,12 +1,4 @@
 <div class="sider-group1">
-    <div class="side-brand-card clickable" [routerLink]="'/dashboard'">
-        <img class="side-brand-card__logo" src="assets/brand/secure-derma-light.png" alt="Secure Derma" />
-        <div class="side-brand-card__copy">
-            <p class="side-brand-card__title">Secure Derma</p>
-            <p class="side-brand-card__subtitle">Admin workspace</p>
-        </div>
-    </div>
-
     @for(menu of sideMenu | keyvalue: null; track $index){
     <p class="ms-3 mt-3 b2 menu-name">{{menu.key | titlecase}}</p>
     <ul class="list-unstyled bg-secondary">

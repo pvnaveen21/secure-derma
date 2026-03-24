@@ -39,9 +39,7 @@ export class SideNavComponent {
     this.getActiveMenu()
   }
   ngOnInit() {
-    console.log(this.sideMenu);
-    
-    // this.currentUserType = this.authService.user.user_type
+// this.currentUserType = this.authService.user.user_type
 
     // Any additional setup can be done here
   }
@@ -90,11 +88,7 @@ export class SideNavComponent {
   }
 
   hasPermission(items: any[], permission: number): boolean {
-    console.log(items);
-    console.log(permission);
-    
-    
-    return items?.some(item => item.permissions?.includes(permission));
+return items?.some(item => item.permissions?.includes(permission));
   }
 
   logout() {

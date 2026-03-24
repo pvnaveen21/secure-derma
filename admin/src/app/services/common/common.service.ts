@@ -302,8 +302,7 @@ export class CommonService extends InterfaceService {
         link.setAttribute('download', '');
         document.body.appendChild(link);
         link.click();
-        document.body.removeChild(link);
-        // console.error("Download error:", err);
+        document.body.removeChild(link);;
       }
     });
   }

@@ -72,9 +72,7 @@ export class ThumbnailUploadComponent {
     }
 
     this.currentValueData = value
-    console.log(this.currentValueData);
-    
-  }
+}
   previewUrl: string | null = null;
   icons = Icons
   currentValueData: any = ''

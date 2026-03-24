@@ -146,7 +146,6 @@ export class ProductsComponent {
   // productForm!: FormGroup;
 
   addProductForm(data?: any) {
-    console.log(data);
 
 
     this.productForm = this.fb.group({
@@ -423,9 +422,7 @@ export class ProductsComponent {
     }
   }
   deleteEditImages() {
-    console.log(this.imagesDeleteIds);
-    
-    if (this.imagesDeleteIds.length > 0) {
+if (this.imagesDeleteIds.length > 0) {
       this.imagesDeleteIds.forEach((id: any) => {
         this.productService.deleteSingleImage(id).subscribe()
       })

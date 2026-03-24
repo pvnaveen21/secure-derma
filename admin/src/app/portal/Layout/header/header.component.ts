@@ -1,5 +1,4 @@
 import { Component, HostListener } from '@angular/core';
-import { Assets } from '@app/shared/assets';
 import { NzFlexModule } from 'ng-zorro-antd/flex';
 import { NavigationEnd, Router } from '@angular/router';
 import { SideMenu } from '@app/constants/side_menu';
@@ -20,7 +19,6 @@ import { SideNavComponent } from '../side-nav/side-nav.component';
   styleUrl: './header.component.scss'
 })
 export class HeaderComponent {
-  assets = Assets;
   activeMenu: any = null;
   sideMenu = SideMenu;
   icons = Icons

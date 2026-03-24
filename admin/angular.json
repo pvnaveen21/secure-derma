@@ -37,22 +37,12 @@
               }
             ],
             "styles": [
-              "src/styles.scss",
               {
                 "input": "src/styles/default.less",
                 "bundleName": "default",
                 "inject": false
               },
-              {
-                "input": "src/styles/dark.less",
-                "bundleName": "dark",
-                "inject": false
-              },
-              {
-                "input": "src/styles/coloured.less",
-                "bundleName": "coloured",
-                "inject": false
-              }
+              "src/styles.scss"
             ],
             "stylePreprocessorOptions": {
               "includePaths": [
@@ -117,6 +107,11 @@
               }
             ],
             "styles": [
+              {
+                "input": "src/styles/default.less",
+                "bundleName": "default",
+                "inject": false
+              },
               "src/styles.scss"
             ],
             "scripts": []

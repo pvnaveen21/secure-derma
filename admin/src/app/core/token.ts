@@ -26,7 +26,6 @@ export const getTokenExpiration = (flag: string): Date | null => {
             const { exp } = jwtDecode<{ exp: number }>(token);
             return exp ? new Date(exp * 1000) : null;
         } catch (error) {
-            console.error('Invalid token format', error);
             return null;
         }
     }
