@@ -1,12 +1,16 @@
-@if(!viewReviews){
-<app-common-data-table [tableColumns]="customDataTableColumns"
-    [tableConfig]="customDataTableConfig"></app-common-data-table>
-}
-@else{
-    
-<h2>{{reviewProdutDetails.brand.brand_name}} | {{reviewProdutDetails.product_name}}</h2>
+    <app-common-data-table [hidden]="viewReviews"[tableColumns]="customDataTableColumns" [tableConfig]="customDataTableConfig"
+        #productTable></app-common-data-table>
+
+@if(viewReviews){
+<div class="review-view-header">
+    <button type="button" class="secure-derma-back-btn" (click)="backToProductReviews()">
+        <span aria-hidden="true">←</span>
+        <span>Back</span>
+    </button>
+    <h2 class="m-0">{{reviewProdutDetails.brand.brand_name}} | {{reviewProdutDetails.product_name}}</h2>
+</div>
 <app-common-data-table [tableColumns]="reviewDataTableColumns" [tableConfig]="customReviewDataTableConfig"
-    (modelAction)="modelAction($event)" #custumtable></app-common-data-table>
+    (modelAction)="modelAction($event)" #reviewTable></app-common-data-table>
 }
 
 

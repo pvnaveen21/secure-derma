@@ -1,20 +1,114 @@
 <div class="orders-dashboard">
-  <div class="orders-dashboard__header">
-    <div>
-      <p class="orders-dashboard__eyebrow m-0">Payments</p>
-      <h2 class="orders-dashboard__title m-0">Paid orders overview</h2>
-    </div>
-    <button nz-button nzType="default" (click)="loadDashboard()">Refresh</button>
-  </div>
+
 
   @if (loadError) {
-    <nz-card class="orders-dashboard__error">
-      <p class="m-0">{{ loadError }}</p>
-    </nz-card>
+  <nz-card class="orders-dashboard__error">
+    <p class="m-0">{{ loadError }}</p>
+  </nz-card>
   }
 
   <nz-spin [nzSpinning]="loading">
-    <div class="orders-dashboard__stats">
+    <nz-card class="today-orders-card">
+      <div class="today-orders-card__header">
+        <div>
+          <p class="today-orders-card__eyebrow m-0">Today Orders</p>
+          <h3 class="today-orders-card__title m-0">{{ todayOrdersCount }} paid orders on {{ todayLabel }}</h3>
+        </div>
+        <div class="today-orders-card__count">{{ todayOrdersCount }}</div>
+      </div>
+
+      @if (todayOrders.length) {
+      <div class="orders-list orders-list--compact">
+        @for (order of todayOrders; track order.id) {
+        <div class="orders-list__row">
+          <div>
+            <p class="orders-list__number m-0">{{ order.order_number }}</p>
+            <p class="orders-list__customer m-0">
+              {{ order.customer_name || 'Walk-in customer' }}
+              @if (order.customer_email) {
+              <span>• {{ order.customer_email }}</span>
+              }
+            </p>
+          </div>
+
+          <div class="orders-list__meta-block">
+            <span class="orders-list__amount">{{ formatCurrency(order.amount_rupees) }}</span>
+            <span class="orders-list__items">{{ order.item_count }} item(s)</span>
+            <span class="orders-list__date">{{ order.updated_at | date:'shortTime' }}</span>
+          </div>
+        </div>
+        }
+      </div>
+      } @else {
+      <nz-empty nzNotFoundImage="simple" nzNotFoundContent="No paid orders today"></nz-empty>
+      }
+    </nz-card>
+    <div class="orders-dashboard__header mt-5">
+      <div>
+        <p class="orders-dashboard__eyebrow m-0">Payments</p>
+        <h2 class="orders-dashboard__title m-0">Paid orders overview</h2>
+      </div>
+
+      <div class="orders-dashboard__actions">
+        <div class="orders-dashboard__toggle" role="tablist" aria-label="Order chart grouping">
+          @for (option of groupingOptions; track option.value) {
+          <button nz-button [nzType]="selectedGrouping === option.value ? 'primary' : 'default'"
+            [class.orders-dashboard__toggle-btn--active]="selectedGrouping === option.value"
+            (click)="setGrouping(option.value)">
+            {{ option.label }}
+          </button>
+          }
+        </div>
+
+        @if (selectedGrouping === 'month') {
+        <div class="orders-dashboard__month-filter">
+          <button nz-button nzType="default" (click)="moveAnchorMonth(-1)">Previous</button>
+          <label class="orders-dashboard__month-input-wrap">
+            <span class="orders-dashboard__month-label">Month</span>
+            <input class="orders-dashboard__month-input" type="month" [max]="monthPickerMax"
+              [ngModel]="selectedAnchorMonth" (ngModelChange)="onAnchorMonthChange($event)" />
+          </label>
+          <button nz-button nzType="default" (click)="moveAnchorMonth(1)"
+            [disabled]="selectedAnchorMonth >= monthPickerMax">Next</button>
+        </div>
+        }
+
+        <button nz-button nzType="default" (click)="loadDashboard()">Refresh</button>
+      </div>
+    </div>
+    <nz-card class="orders-chart-card mt-5">
+      <div class="orders-chart-card__header">
+        <div>
+          <p class="orders-chart-card__eyebrow m-0">Order Count Trend</p>
+          <h3 class="orders-chart-card__title m-0">{{ chartTotalLabel }}</h3>
+          <p class="orders-chart-card__meta m-0">{{ chartRangeLabel }}</p>
+        </div>
+
+        <div class="orders-chart-card__peak">
+          <span>Peak</span>
+          <strong>{{ analytics.peak_orders }}</strong>
+        </div>
+      </div>
+
+      @if (chartPoints.length && analytics.total_orders > 0) {
+      <div class="orders-chart" role="img" [attr.aria-label]="chartTotalLabel">
+        @for (point of chartPoints; track point.key) {
+        <div class="orders-chart__item" [attr.aria-label]="formatBarAriaLabel(point)">
+          <span class="orders-chart__count">{{ point.count }}</span>
+          <div class="orders-chart__bar-wrap">
+            <div class="orders-chart__bar" [style.height]="getBarHeight(point.count)"
+              [attr.title]="point.label + ': ' + point.count"></div>
+          </div>
+          <span class="orders-chart__label">{{ point.short_label }}</span>
+        </div>
+        }
+      </div>
+      } @else {
+      <nz-empty nzNotFoundImage="simple" nzNotFoundContent="No paid orders in the selected range"></nz-empty>
+      }
+    </nz-card>
+
+    <div class="orders-dashboard__stats mt-5">
       <nz-card class="metric-card metric-card--orders">
         <p class="metric-card__label m-0">Paid Orders</p>
         <h3 class="metric-card__value m-0">{{ summary.total_orders }}</h3>
@@ -25,53 +119,62 @@
         <h3 class="metric-card__value m-0">{{ formatCurrency(summary.total_revenue) }}</h3>
       </nz-card>
 
-      <nz-card class="metric-card metric-card--average">
-        <p class="metric-card__label m-0">Average Order</p>
-        <h3 class="metric-card__value m-0">{{ formatCurrency(summary.average_order_value) }}</h3>
-      </nz-card>
-
       <nz-card class="metric-card metric-card--pending">
         <p class="metric-card__label m-0">Pending Payments</p>
         <h3 class="metric-card__value m-0">{{ summary.pending_orders }}</h3>
       </nz-card>
     </div>
 
-    <nz-card class="orders-list-card" [nzTitle]="ordersListTitle">
+    <nz-card class="orders-list-card mt-5" [nzTitle]="ordersListTitle">
       <ng-template #ordersListTitle>
         <div class="orders-list-card__title">
           <span>Latest Paid Orders</span>
           <span class="orders-list-card__meta">
-            Last payment:
+            Showing {{ recentOrdersRangeStart }}-{{ recentOrdersRangeEnd }} of {{ recentOrdersTotal }}
+            • Last payment:
             {{ summary.latest_paid_at ? (summary.latest_paid_at | date:'medium') : 'No payments yet' }}
           </span>
         </div>
       </ng-template>
 
       @if (recentOrders.length) {
-        <div class="orders-list">
-          @for (order of recentOrders; track order.id) {
-            <div class="orders-list__row">
-              <div>
-                <p class="orders-list__number m-0">{{ order.order_number }}</p>
-                <p class="orders-list__customer m-0">
-                  {{ order.customer_name || 'Walk-in customer' }}
-                  @if (order.customer_email) {
-                    <span>• {{ order.customer_email }}</span>
-                  }
-                </p>
-              </div>
+      <div class="orders-list">
+        @for (order of recentOrders; track order.id) {
+        <div class="orders-list__row">
+          <div>
+            <p class="orders-list__number m-0">{{ order.order_number }}</p>
+            <p class="orders-list__customer m-0">
+              {{ order.customer_name || 'Walk-in customer' }}
+              @if (order.customer_email) {
+              <span>• {{ order.customer_email }}</span>
+              }
+            </p>
+          </div>
 
-              <div class="orders-list__meta-block">
-                <span class="orders-list__status">{{ order.status }}</span>
-                <span class="orders-list__amount">{{ formatCurrency(order.amount_rupees) }}</span>
-                <span class="orders-list__items">{{ order.item_count }} item(s)</span>
-                <span class="orders-list__date">{{ order.updated_at | date:'medium' }}</span>
-              </div>
-            </div>
-          }
+          <div class="orders-list__meta-block">
+            <span class="orders-list__status">{{ order.status }}</span>
+            <span class="orders-list__amount">{{ formatCurrency(order.amount_rupees) }}</span>
+            <span class="orders-list__items">{{ order.item_count }} item(s)</span>
+            <span class="orders-list__date">{{ order.updated_at | date:'medium' }}</span>
+          </div>
         </div>
+        }
+      </div>
+
+      <div class="orders-list-card__pagination">
+        <nz-pagination
+          [nzPageIndex]="recentOrdersPageIndex"
+          [nzPageSize]="recentOrdersPageSize"
+          [nzTotal]="recentOrdersTotal"
+          [nzShowSizeChanger]="true"
+          [nzPageSizeOptions]="recentOrdersPageSizeOptions"
+          [nzResponsive]="true"
+          (nzPageIndexChange)="onRecentOrdersPageIndexChange($event)"
+          (nzPageSizeChange)="onRecentOrdersPageSizeChange($event)">
+        </nz-pagination>
+      </div>
       } @else {
-        <nz-empty nzNotFoundImage="simple" nzNotFoundContent="No paid orders yet"></nz-empty>
+      <nz-empty nzNotFoundImage="simple" nzNotFoundContent="No paid orders yet"></nz-empty>
       }
     </nz-card>
   </nz-spin>

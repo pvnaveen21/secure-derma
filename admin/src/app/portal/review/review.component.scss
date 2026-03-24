@@ -1,3 +1,23 @@
+.review-view-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.secure-derma-back-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    background: #ffffff;
+    color: var(--text-color);
+    font-weight: 600;
+    cursor: pointer;
+}
+
 .table-pro-image {
     width: 70px;
     height: 70px;

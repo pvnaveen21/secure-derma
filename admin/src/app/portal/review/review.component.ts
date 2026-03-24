@@ -38,7 +38,7 @@ export class ReviewComponent {
   @ViewChild('reviewImageTemplate', { static: true }) reviewImageTemplate!: TemplateRef<any>;
   @ViewChild('reviewActionTemplate', { static: true }) reviewActionTemplate!: TemplateRef<any>;
   @ViewChild('deleteModel') deleteModel!: DeleteModelComponent;
-  @ViewChild('custumtable', { static: false }) custumtable!: CommonDataTableComponent;
+  @ViewChild('reviewTable', { static: false }) reviewTable?: CommonDataTableComponent;
 
 
   icons = Icons
@@ -116,10 +116,15 @@ export class ReviewComponent {
     this.reviewProdutDetails = data
     this.viewReviews = true
     this.customReviewDataTableConfig.remoteUrl = `/products/${data.id}/reviews/`
-    this.reviewTable()
+    this.initializeReviewTableColumns()
   }
 
-  reviewTable() {
+  backToProductReviews() {
+    this.viewReviews = false
+    this.reviewProdutDetails = null
+  }
+
+  initializeReviewTableColumns() {
     this.reviewDataTableColumns = [
       {
         title: 'Reviewer Name',
@@ -210,7 +215,7 @@ export class ReviewComponent {
         // this.submitAPILoading = false
         this.message.success(response.message);
         this.handleCancel();
-        this.custumtable.refreshTable()
+        this.reviewTable?.refreshTable()
       }, error: () => {
         this.deleteModel.deleteModelStatus(false)
         // this.submitAPILoading = false
@@ -263,7 +268,7 @@ export class ReviewComponent {
     this.reviewService.addReview(payload, this.reviewProdutDetails.id).subscribe({
       next: (response: any) => {
         this.handleCancel();
-        this.custumtable.refreshTable()
+        this.reviewTable?.refreshTable()
       }
     })
   }
@@ -272,7 +277,7 @@ export class ReviewComponent {
     this.reviewService.updateReview(payload, this.editId).subscribe({
       next: (response: any) => {
         this.handleCancel()
-        this.custumtable.refreshTable()
+        this.reviewTable?.refreshTable()
       }
     })
   }
@@ -284,7 +289,7 @@ export class ReviewComponent {
     }
     this.imagesDeleteIds = []
     setTimeout(()=>{
-      this.custumtable.refreshTable()
+      this.reviewTable?.refreshTable()
     },1000)
   }
 

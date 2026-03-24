@@ -3,6 +3,8 @@ import hmac
 from unittest.mock import Mock, patch
 
 from django.test import TestCase
+from django.utils import timezone
+from datetime import date, datetime, time, timedelta
 from rest_framework.test import APIClient
 
 from brand.models import Brand
@@ -731,3 +733,77 @@ class UserOrderApiTests(TestCase):
         response = self.client.get(f"/api/orders/{other_order.id}/")
 
         self.assertEqual(response.status_code, 404)
+
+
+class AdminOrderAnalyticsAPIViewTests(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.admin = User.objects.create_superuser(
+            email="admin@example.com",
+            password="adminpass123",
+        )
+        self.client.force_authenticate(user=self.admin)
+
+    def test_returns_zero_filled_daily_series_for_paid_orders(self):
+        today = timezone.localdate()
+        paid_dates = [today - timedelta(days=3), today - timedelta(days=1), today - timedelta(days=1)]
+
+        for index, paid_date in enumerate(paid_dates, start=1):
+            order = SecureDermaOrder.objects.create(
+                order_number=f"SD-DAY-{index}",
+                razorpay_order_id=f"razor-day-{index}",
+                razorpay_payment_id=f"pay-day-{index}",
+                amount_rupees=499,
+                amount_paise=49900,
+                status=OrderStatus.PAID,
+            )
+            SecureDermaOrder.objects.filter(pk=order.pk).update(
+                created_at=timezone.make_aware(datetime.combine(paid_date, time.min)),
+                updated_at=timezone.make_aware(datetime.combine(paid_date, time.min)),
+            )
+
+        response = self.client.get('/api/admin/orders/analytics/', {'grouping': 'day', 'periods': 5})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['grouping'], 'day')
+        self.assertEqual(response.data['periods'], 5)
+        self.assertEqual(response.data['total_orders'], 3)
+        self.assertEqual(response.data['peak_orders'], 2)
+        self.assertEqual(len(response.data['series']), 5)
+        self.assertEqual(response.data['series'][-2]['count'], 2)
+        self.assertEqual(response.data['series'][0]['count'], 0)
+
+    def test_rejects_invalid_grouping(self):
+        response = self.client.get('/api/admin/orders/analytics/', {'grouping': 'week'})
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data['detail'], "Grouping must be either 'day' or 'month'.")
+
+    def test_month_grouping_accepts_anchor_month(self):
+        base_date = date(2025, 6, 1)
+        for index in range(2):
+            order = SecureDermaOrder.objects.create(
+                order_number=f"SD-MONTH-{index}",
+                razorpay_order_id=f"razor-month-{index}",
+                razorpay_payment_id=f"pay-month-{index}",
+                amount_rupees=499,
+                amount_paise=49900,
+                status=OrderStatus.PAID,
+            )
+            paid_date = base_date.replace(day=10 + index)
+            SecureDermaOrder.objects.filter(pk=order.pk).update(
+                created_at=timezone.make_aware(datetime.combine(paid_date, time.min)),
+                updated_at=timezone.make_aware(datetime.combine(paid_date, time.min)),
+            )
+
+        response = self.client.get('/api/admin/orders/analytics/', {'grouping': 'month', 'periods': 3, 'anchor_month': '2025-06'})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['range_end'], '2025-06-01')
+        self.assertEqual(response.data['series'][-1]['count'], 2)
+
+    def test_rejects_invalid_anchor_month(self):
+        response = self.client.get('/api/admin/orders/analytics/', {'grouping': 'month', 'anchor_month': '2025-13'})
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data['detail'], 'anchor_month must be in YYYY-MM format.')
