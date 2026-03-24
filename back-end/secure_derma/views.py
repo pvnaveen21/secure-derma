@@ -1,3 +1,4 @@
+from datetime import date, timedelta
 import hashlib
 import hmac
 import re
@@ -18,6 +19,8 @@ from product.models import Product, ProductDetails, ProductImage, ProductReview
 from product.serializers import ProductListSerializer
 from product_type.models import ProductType
 from django.db.models import Prefetch, Avg, Count, Min, Q, F, Sum
+from django.db.models.functions import TruncDate, TruncMonth
+from django.utils import timezone
 
 from skin_concern.models import SkinConcerns
 from rest_framework import status
@@ -959,6 +962,144 @@ class AdminOrderSummaryAPIView(APIView):
         )
 
 
+def _add_months(value: date, months: int) -> date:
+    month_index = (value.month - 1) + months
+    year = value.year + month_index // 12
+    month = month_index % 12 + 1
+    return date(year, month, 1)
+
+
+class AdminOrderAnalyticsAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def get(self, request, *args, **kwargs):
+        grouping = request.query_params.get("grouping", "day").strip().lower() or "day"
+
+        if grouping not in {"day", "month"}:
+            return Response(
+                {"detail": "Grouping must be either 'day' or 'month'."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        default_periods = 14 if grouping == "day" else 12
+        max_periods = 90 if grouping == "day" else 24
+
+        try:
+            periods = int(request.query_params.get("periods", default_periods))
+        except ValueError:
+            return Response(
+                {"detail": "Periods must be a valid integer."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if periods < 1 or periods > max_periods:
+            return Response(
+                {"detail": f"Periods must be between 1 and {max_periods} for {grouping} grouping."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        today = timezone.localdate()
+        paid_orders = SecureDermaOrder.objects.filter(status=OrderStatus.PAID)
+
+        anchor_month_value = request.query_params.get("anchor_month", "").strip()
+
+        if grouping == "day":
+            end_date = today
+            start_date = end_date - timedelta(days=periods - 1)
+            grouped_rows = (
+                paid_orders
+                .filter(updated_at__date__gte=start_date, updated_at__date__lte=end_date)
+                .annotate(period=TruncDate("updated_at"))
+                .values("period")
+                .annotate(count=Count("id"))
+                .order_by("period")
+            )
+
+            count_map = {row["period"].isoformat(): row["count"] for row in grouped_rows if row["period"]}
+            bucket_dates = [start_date + timedelta(days=index) for index in range(periods)]
+            series = [
+                {
+                    "key": bucket_date.isoformat(),
+                    "label": bucket_date.strftime("%d %b %Y"),
+                    "short_label": bucket_date.strftime("%d %b"),
+                    "count": count_map.get(bucket_date.isoformat(), 0),
+                }
+                for bucket_date in bucket_dates
+            ]
+            range_start = start_date
+            range_end = end_date
+        else:
+            if anchor_month_value:
+                anchor_match = re.fullmatch(r"(\d{4})-(\d{2})", anchor_month_value)
+                if not anchor_match:
+                    return Response(
+                        {"detail": "anchor_month must be in YYYY-MM format."},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+
+                anchor_year = int(anchor_match.group(1))
+                anchor_month = int(anchor_match.group(2))
+                if anchor_month < 1 or anchor_month > 12:
+                    return Response(
+                        {"detail": "anchor_month must be in YYYY-MM format."},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+
+                end_month = date(anchor_year, anchor_month, 1)
+                current_month = today.replace(day=1)
+                if end_month > current_month:
+                    end_month = current_month
+            else:
+                end_month = today.replace(day=1)
+
+            start_month = _add_months(end_month, -(periods - 1))
+            next_month = _add_months(end_month, 1)
+            grouped_rows = (
+                paid_orders
+                .filter(updated_at__date__gte=start_month, updated_at__date__lt=next_month)
+                .annotate(period=TruncMonth("updated_at"))
+                .values("period")
+                .annotate(count=Count("id"))
+                .order_by("period")
+            )
+
+            count_map = {}
+            for row in grouped_rows:
+                raw_period = row.get("period")
+                if not raw_period:
+                    continue
+                period_date = raw_period.date() if hasattr(raw_period, "date") else raw_period
+                count_map[period_date.isoformat()] = row["count"]
+
+            bucket_months = [_add_months(start_month, index) for index in range(periods)]
+            series = [
+                {
+                    "key": bucket_month.isoformat(),
+                    "label": bucket_month.strftime("%b %Y"),
+                    "short_label": bucket_month.strftime("%b"),
+                    "count": count_map.get(bucket_month.isoformat(), 0),
+                }
+                for bucket_month in bucket_months
+            ]
+            range_start = start_month
+            range_end = end_month
+
+        total_orders = sum(point["count"] for point in series)
+        peak_orders = max((point["count"] for point in series), default=0)
+
+        return Response(
+            {
+                "grouping": grouping,
+                "periods": periods,
+                "range_start": range_start.isoformat(),
+                "range_end": range_end.isoformat(),
+                "total_orders": total_orders,
+                "peak_orders": peak_orders,
+                "series": series,
+            }
+        )
+
+
 class AdminOrderListAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -974,6 +1115,7 @@ class AdminOrderListAPIView(APIView):
 
         search_text = request.query_params.get("searchText", "").strip()
         status_filter = request.query_params.get("status", "").strip()
+        paid_on = request.query_params.get("paid_on", "").strip()
 
         queryset = (
             SecureDermaOrder.objects.select_related("user")
@@ -983,6 +1125,16 @@ class AdminOrderListAPIView(APIView):
 
         if status_filter:
             queryset = queryset.filter(status=status_filter)
+
+        if paid_on:
+            try:
+                paid_on_date = date.fromisoformat(paid_on)
+            except ValueError:
+                return Response(
+                    {"detail": "paid_on must be in YYYY-MM-DD format."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            queryset = queryset.filter(updated_at__date=paid_on_date)
 
         if search_text:
             queryset = queryset.filter(
