@@ -12,8 +12,6 @@ import { IngredientService } from '@app/services/secura/ingredient.service';
 import { ProductTypeService } from '@app/services/secura/product-type.service';
 import { ProductService } from '@app/services/secura/product.service';
 import { SkinConcernsService } from '@app/services/secura/skin-concerns.service';
-import { Assets } from '@app/shared/assets';
-import { SvgLoad } from '@app/shared/assets/svg-load';
 import { CommonDataTableComponent } from '@app/shared/directives/common-data-table/common-data-table.component';
 import { DeleteModelComponent } from '@app/shared/directives/delete-model/delete-model.component';
 import { ControlMessagesComponent } from '@app/shared/directives/form-validation/control-messages.component';
@@ -39,7 +37,6 @@ import { NzToolTipModule } from 'ng-zorro-antd/tooltip';
     LucideAngularModule,
     NzPaginationModule,
     NzModalModule,
-    SvgLoad,
     CommonModule,
     NzEmptyModule,
     CommonDataTableComponent,
@@ -70,7 +67,6 @@ export class ProductsComponent {
   @ViewChild('custumtable') custumtable!: CommonDataTableComponent;
   selectedValue = null;
   icons = Icons
-  assets = Assets
   isVisible = false;
   isSuccessVisible: any = false
   viewType: any = 1

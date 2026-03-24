@@ -38,12 +38,7 @@ h4,
 .pre-loader {
     height: 100%;
     width: 100%;
-    position: relative;
-    --background-image: url("/assets/images/preloader/preloader-bg.png");
-    background-image: var(--background-image);
-    background-repeat: no-repeat;
-    background-position: center;
-    background-size: cover;
+    background: linear-gradient(180deg, #f5fbf7 0%, #edf6f1 100%);
 }
 
 .app-max-width {

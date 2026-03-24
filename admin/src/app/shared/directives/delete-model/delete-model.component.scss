@@ -9,3 +9,7 @@
 ::ng-deep .delete-model .ant-modal-content {
     border-radius: 21px !important;
 }
+
+.delete-model__icon {
+    color: var(--danger-color);
+}

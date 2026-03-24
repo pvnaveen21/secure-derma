@@ -1,7 +1,6 @@
 .login-page-container {
-  --background-image_pattern: '';
   position: relative;
-  background: url('/assets/images/login/background.svg');
+  background: linear-gradient(180deg, #f5fbf7 0%, #edf6f1 100%);
   min-height: 100%;
   background-size: cover;
   background-repeat: no-repeat;

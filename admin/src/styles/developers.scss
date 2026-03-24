@@ -1,10 +1,6 @@
 @use "portal/portal" as *;
 
 
-.secure-derma-colour svg {
-  height: 20px !important;
-}
-
 .ant-float-btn-default .ant-float-btn-body {
   width: 36px !important;
   height: 36px !important;
@@ -40,71 +36,8 @@
   border-radius: 1rem !important;
 }
 
-.menu-container {
-  .rounded-pill {
-    .ant-select-selector {
-      border-radius: 50rem !important;
-    }
-  }
-}
-
-.eclipse-icon {
-  position: relative;
-
-  &::after {
-    content: " ";
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
-    width: 100px;
-    height: 100px;
-    background: var(--eclipse);
-    background-size: 96px;
-    background-repeat: no-repeat;
-    background-position: center center;
-  }
-
-  &.end::after {
-    right: 0 !important;
-    left: unset;
-    transform: translate(5px, -50%);
-  }
-
-  &.start::after {
-    left: 0 !important;
-    right: unset;
-    transform: translate(5px, -50%);
-  }
-
-  &.sm::after {
-    background-size: 76px !important;
-  }
-}
-
 lucide-angular {
   line-height: 1 !important;
-}
-
-.borderless-modal {
-
-  .ant-modal-footer,
-  .ant-modal-header {
-    border: none !important;
-  }
-}
-
-.wishlist-modal {
-  .ant-modal-content {
-    border-radius: 20px !important;
-    overflow: hidden !important;
-  }
-
-  .buttons {
-    button {
-      width: 45% !important;
-    }
-  }
 }
 
 .bg-primary {
@@ -127,22 +60,6 @@ lucide-angular {
   }
 }
 
-.header-container, .common-header-container {
-  gap: 20px;
-
-  .menu {
-    --size: 48px;
-    border: 1px solid var(--border-color);
-    backdrop-filter: blur(23.2375px);
-
-    &:not(.w-auto) {
-      width: var(--size);
-    }
-
-    height: var(--size);
-  }
-}
-
 .heart-icon.filled {
   svg {
     fill: var(--ant-danger-color) !important;
@@ -150,10 +67,3 @@ lucide-angular {
   }
 }
 
-.home-container {
-  .ant-carousel {
-    .slick-list {
-      height: 180px;
-    }
-  }
-}

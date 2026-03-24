@@ -1,7 +1,6 @@
 import { Component, HostListener } from '@angular/core';
 import { NzFlexModule } from 'ng-zorro-antd/flex';
-import { NavigationEnd, Router } from '@angular/router';
-import { SideMenu } from '@app/constants/side_menu';
+import { Router } from '@angular/router';
 import { LucideAngularModule } from 'lucide-angular';
 import { Icons } from '@app/shared/icons';
 import { NzDrawerModule, NzDrawerPlacement } from 'ng-zorro-antd/drawer';
@@ -19,9 +18,7 @@ import { SideNavComponent } from '../side-nav/side-nav.component';
   styleUrl: './header.component.scss'
 })
 export class HeaderComponent {
-  activeMenu: any = null;
-  sideMenu = SideMenu;
-  icons = Icons
+  icons = Icons;
   visible = false;
   placement: NzDrawerPlacement = 'left';
 
@@ -35,13 +32,7 @@ export class HeaderComponent {
 
   constructor(
     private router: Router,
-  ) {
-    this.router.events.subscribe((event) => {
-      if (event.constructor === NavigationEnd) {
-        this.activeMenu = this.getActiveMenu();
-      }
-    });
-  }
+  ) {}
 
   @HostListener('window:resize', [])
   onResize() {
@@ -52,22 +43,6 @@ export class HeaderComponent {
     if (window.innerWidth >= 1150 && this.visible) {
       this.close();
     }
-  }
-
-  getActiveMenu() {
-    const currentUrl = this.router.url;
-    if (currentUrl === '/dashboard') {
-      return { title: 'Dashboard', routerLink: '/dashboard' };
-    }
-
-    for (const [_, items] of Object.entries(this.sideMenu)) {
-      const found = items.find(item => item.routerLink === currentUrl);
-      if (found) {
-        return found;
-      }
-    }
-
-    return null;
   }
 
   navigateToDashboard() {
