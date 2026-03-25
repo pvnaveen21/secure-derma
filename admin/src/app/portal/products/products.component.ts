@@ -377,6 +377,10 @@ export class ProductsComponent {
 
   submitBoolean: any = false
   submitForm() {
+    if (this.submitAPILoading) {
+      return;
+    }
+
     this.submitBoolean = true
     this.productForm.markAllAsTouched()
 
@@ -389,6 +393,8 @@ export class ProductsComponent {
       this.message.error('product details fields are must')
       return;
     }
+
+    this.submitAPILoading = true
 
     if (this.editUser) {
       this.updateProduct()
@@ -428,9 +434,13 @@ if (this.imagesDeleteIds.length > 0) {
   updateProduct() {
     const payload = this.productForm.getRawValue()
     this.productService.updateProduct(payload, this.editId).subscribe({
-      next: (response: any) => {
+      next: () => {
+        this.submitAPILoading = false
         this.handleCancel()
         this.custumtable.refreshTable()
+      },
+      error: () => {
+        this.submitAPILoading = false
       }
     })
   }
@@ -538,9 +548,13 @@ if (this.imagesDeleteIds.length > 0) {
     const payload = this.productForm.getRawValue()
 
     this.productService.addProduct(payload).subscribe({
-      next: (response: any) => {
+      next: () => {
+        this.submitAPILoading = false
         this.handleCancel()
         this.custumtable.refreshTable()
+      },
+      error: () => {
+        this.submitAPILoading = false
       }
     })
   }

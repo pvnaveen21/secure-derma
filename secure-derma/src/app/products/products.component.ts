@@ -279,6 +279,25 @@ export class ProductsComponent {
     return ['/collections', this.breadcrumbCollectionSlug];
   }
 
+  get productBrandName() {
+    const brandName = this.productData?.brand?.brand_name || this.productData?.brand_name || '';
+    return typeof brandName === 'string' ? brandName : '';
+  }
+
+  openBrandCollection() {
+    const brandSlug = this.slugify(this.productBrandName);
+
+    if (!brandSlug) {
+      return;
+    }
+
+    void this.router.navigate(['/collections', brandSlug], {
+      state: {
+        scrollToTop: true
+      }
+    });
+  }
+
   getProductDetail() {
     this.productService.getProducetDetail(this.selectedProduectValue).subscribe({
       next: (response: any) => {
@@ -827,8 +846,8 @@ export class ProductsComponent {
         title: 'Product Description',
         eyebrow: 'Overview',
         summary: description.summary || 'What this product is made for and where it fits in a routine.',
-        content: description.content,
-        items: description.items
+        content: description.content || description.summary,
+        items: []
       },
       {
         key: 'benefits',
