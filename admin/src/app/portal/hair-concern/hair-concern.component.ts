@@ -105,6 +105,14 @@ export class HairConcernComponent {
         sortKey: 'hair_concern'
       },
       {
+        title: 'Show Banner',
+        property: 'show_banner',
+      },
+      {
+        title: 'Show in Shop by Concern',
+        property: 'show_home',
+      },
+      {
         title: '',
         property: 'actions',
         cellTemplate: this.actionTemplate
@@ -137,7 +145,8 @@ export class HairConcernComponent {
         data?.hair_concern || '',
         [Validators.required, Validators.maxLength(45)]
       ],
-      show_banner: [data ? data?.show_banner : false]
+      show_banner: [data ? data?.show_banner : false],
+      show_home: [data ? data?.show_home : false]
     });
   }
 
