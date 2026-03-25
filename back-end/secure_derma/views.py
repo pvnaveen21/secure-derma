@@ -1509,6 +1509,49 @@ class TrendingProductsFastAPIView(ListAPIView):
         })
 
 
+class ShopByConcernAPIView(ListAPIView):
+    """API to get concerns enabled for the home Shop by Concern section"""
+    permission_classes = [AllowAny]
+    pagination_class = None
+
+    def get(self, request, *args, **kwargs):
+        skin_concerns = list(
+            SkinConcerns.objects.filter(is_deleted=False, show_home=True)
+            .order_by('skin_concern')
+            .values('id', 'skin_concern', 'slug')
+        )
+        hair_concerns = list(
+            HairConcerns.objects.filter(is_deleted=False, show_home=True)
+            .order_by('hair_concern')
+            .values('id', 'hair_concern', 'slug')
+        )
+
+        concerns = [
+            {
+                'id': item['id'],
+                'name': item['skin_concern'],
+                'slug': item.get('slug') or '',
+                'type': 'skin',
+            }
+            for item in skin_concerns
+        ] + [
+            {
+                'id': item['id'],
+                'name': item['hair_concern'],
+                'slug': item.get('slug') or '',
+                'type': 'hair',
+            }
+            for item in hair_concerns
+        ]
+
+        concerns.sort(key=lambda item: item['name'].lower())
+
+        return Response({
+            'concerns': concerns,
+            'count': len(concerns),
+        })
+
+
 class SkinConcernsBannerAPIView(ListAPIView):
     """API to get skin concerns with show_banner=True"""
     permission_classes = [AllowAny]

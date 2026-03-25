@@ -69,7 +69,7 @@ export class HomeComponent {
     this.getTrendingProduct()
     this.getMainBannerImage()
     this.getWhySecureDermaImage('why_secure_derma')
-    this.loadConcernProducts(this.selectedConcern)
+    this.loadConcernList()
   }
   trendingProductList: any = []
   why_secure_derma:any=''
@@ -186,17 +186,8 @@ export class HomeComponent {
     });
   }
 
-  concernList = [
-    'Acne',
-    'Pigmentation',
-    'Hair Fall',
-    'Dandruff',
-    'Sensitive Skin',
-    'Dryness',
-    'Sun Protection',
-    'Anti Ageing'
-  ]
-  selectedConcern = 'Acne'
+  concernList: string[] = []
+  selectedConcern = ''
   concernProducts: any[] = []
   concernProductsLoading = false
   concernTotalCount = 0
@@ -205,7 +196,54 @@ export class HomeComponent {
   newsletterSubmitting = false
   private addToCartFeedbackTimeout?: ReturnType<typeof setTimeout>
 
+  loadConcernList() {
+    this.homeService.getShopByConcernList().subscribe({
+      next: (response: any) => {
+        const mergedConcerns: string[] = Array.isArray(response?.concerns)
+          ? response.concerns
+              .map((item: any) => item?.name)
+              .filter((item: string): item is string => Boolean(item))
+          : [];
+
+        this.concernList = Array.from(new Map<string, string>(
+          mergedConcerns.map((concern: string) => [concern.toLowerCase(), concern])
+        ).values());
+
+        const nextConcern = this.concernList.includes(this.selectedConcern)
+          ? this.selectedConcern
+          : (this.concernList[0] || '');
+
+        this.selectedConcern = nextConcern;
+        if (!this.concernList.includes(this.routineForm.concern)) {
+          this.routineForm.concern = nextConcern || this.routineForm.concern;
+        }
+
+        if (nextConcern) {
+          this.loadConcernProducts(nextConcern);
+        } else {
+          this.concernProducts = [];
+          this.concernTotalCount = 0;
+          this.concernProductsLoading = false;
+        }
+      },
+      error: () => {
+        this.concernList = [];
+        this.selectedConcern = '';
+        this.concernProducts = [];
+        this.concernTotalCount = 0;
+        this.concernProductsLoading = false;
+      }
+    })
+  }
+
   loadConcernProducts(concern: string) {
+    if (!concern) {
+      this.concernProducts = [];
+      this.concernTotalCount = 0;
+      this.concernProductsLoading = false;
+      return;
+    }
+
     this.selectedConcern = concern
     this.concernProductsLoading = true
     this.homeService.getProductsByConcern(concern.toLocaleLowerCase(), 10).subscribe({
@@ -223,6 +261,10 @@ export class HomeComponent {
   }
 
   viewAllConcernProducts() {
+    if (!this.selectedConcern) {
+      return;
+    }
+
     this.producetNavigation(this.selectedConcern);
   }
 

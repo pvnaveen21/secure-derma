@@ -191,6 +191,7 @@
         <h2 class="section-title modern-title m-0">Shop by Concern</h2>
         <p class="m-0">Select a concern to instantly view relevant products without leaving this page.</p>
     </div>
+    @if (concernList.length > 0) {
     <div class="concern-strip__tabs">
         @for (concern of concernList; track concern) {
         <button class="secure-btn concern-strip__tab" [class.is-active]="selectedConcern === concern"
@@ -199,8 +200,11 @@
         </button>
         }
     </div>
+    }
 
-    @if (concernProductsLoading) {
+    @if (concernList.length === 0) {
+    <p class="concern-strip__state">No concerns are enabled right now.</p>
+    } @else if (concernProductsLoading) {
     <p class="concern-strip__state">Loading products...</p>
     } @else if (concernProducts.length === 0) {
     <p class="concern-strip__state">No products found for {{ selectedConcern }}.</p>

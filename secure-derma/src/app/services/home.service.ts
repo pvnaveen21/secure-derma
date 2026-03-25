@@ -67,6 +67,16 @@ export class HomeService extends InterfaceService {
     );
   }
 
+  getShopByConcernList() {
+    return this.http.get(
+      this.getApiUrl('/shop-by-concerns/'),
+      this.getHttpOptions()
+    ).pipe(
+      map(res => res),
+      catchError(this.handleError)
+    );
+  }
+
   getProductsByConcern(concern: string, limit = 12) {
     return this.http.get(
       this.getApiUrl(`/concern-products/?concern=${encodeURIComponent(concern)}&limit=${limit}`),

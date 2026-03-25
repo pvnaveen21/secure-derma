@@ -106,6 +106,14 @@ export class SkinConcernComponent {
         sortKey: 'skin_concern'
       },
       {
+        title: 'Show Banner',
+        property: 'show_banner',
+      },
+      {
+        title: 'Show in Shop by Concern',
+        property: 'show_home',
+      },
+      {
         title: '',
         property: 'actions',
         cellTemplate: this.actionTemplate
@@ -135,7 +143,8 @@ export class SkinConcernComponent {
   initForm(data?: any) {
     this.executiveForm = this.fb.group({
       skin_concern: [data?.skin_concern || '', [Validators.required, Validators.maxLength(45)]],
-      show_banner: [data ? data?.show_banner : false]
+      show_banner: [data ? data?.show_banner : false],
+      show_home: [data ? data?.show_home : false]
     });
   }
 

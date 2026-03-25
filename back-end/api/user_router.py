@@ -1,6 +1,6 @@
 from django.urls import path
 
-from secure_derma.views import BrandListAPIView, CollectionBannerAPIView, ConcernProductsAPIView, CurrentLocationPincodeAPIView, HairBannerAPIView, HomeProductTypeAPIView, ImagesAPIView, LandingPageImagesAPIView, NewsletterSubscriptionAPIView, PincodeServiceabilityAPIView, ProductDetailAPIView, ProductListWithFiltersAPIView, ProductSideMenuAPIView, RazorpayCreateOrderAPIView, RazorpayVerifyPaymentAPIView, RoutineBuilderAPIView, SecureDermaCartAPIView, SecureDermaCartItemAPIView, SecureDermaCartSyncAPIView, SkinBannerAPIView, SupplementBannerAPIView, TopBrandsAPIView, TrendingProductsFastAPIView, UserOrderDetailAPIView, UserOrderListAPIView
+from secure_derma.views import BrandListAPIView, CollectionBannerAPIView, ConcernProductsAPIView, CurrentLocationPincodeAPIView, HairBannerAPIView, HomeProductTypeAPIView, ImagesAPIView, LandingPageImagesAPIView, NewsletterSubscriptionAPIView, PincodeServiceabilityAPIView, ProductDetailAPIView, ProductListWithFiltersAPIView, ProductSideMenuAPIView, RazorpayCreateOrderAPIView, RazorpayVerifyPaymentAPIView, RoutineBuilderAPIView, SecureDermaCartAPIView, SecureDermaCartItemAPIView, SecureDermaCartSyncAPIView, ShopByConcernAPIView, SkinBannerAPIView, SupplementBannerAPIView, TopBrandsAPIView, TrendingProductsFastAPIView, UserOrderDetailAPIView, UserOrderListAPIView
 from send_otp.views import SendOTPView, VerifyOTPView
 from user.views import UserDetailApiView, UserTokenRefreshView, google_login
 
@@ -13,6 +13,7 @@ urlpatterns = [
     path('brands/', BrandListAPIView.as_view()),
     path('top-brands/', TopBrandsAPIView.as_view()),
     path('product-types/home/', HomeProductTypeAPIView.as_view(), name='home-product-types'),
+    path('shop-by-concerns/', ShopByConcernAPIView.as_view(), name='shop-by-concerns'),
     path('images/landing-page/', LandingPageImagesAPIView.as_view(), name='landing-page-images'),
     path('images/', ImagesAPIView.as_view(), name='images'),
     path('products/trending/', TrendingProductsFastAPIView.as_view(), name='trending-products'),

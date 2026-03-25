@@ -18,6 +18,7 @@ def unique_slugify(instance, value, slug_field_name='slug'):
 class HairConcerns(models.Model):
     hair_concern = models.CharField(max_length=255)
     show_banner = models.BooleanField(default=False)
+    show_home = models.BooleanField(default=False)
     is_deleted = models.BooleanField(default=False)
     slug = models.SlugField(unique=True, null=True, blank=True)
 
