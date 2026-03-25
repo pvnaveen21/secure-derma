@@ -1,0 +1,55 @@
+<section class="public-page secure-home-container">
+  <div class="public-page__hero">
+    <p class="public-page__eyebrow m-0">{{ page.eyebrow }}</p>
+    <h1 class="public-page__title m-0">{{ page.title }}</h1>
+    <p class="public-page__summary m-0">{{ page.summary }}</p>
+
+    @if (page.actions?.length) {
+    <div class="public-page__actions">
+      @for (action of page.actions; track action.label) {
+        @if (action.route) {
+        <a class="public-page__action" [routerLink]="action.route">{{ action.label }}</a>
+        } @else if (action.href) {
+        <a class="public-page__action" [href]="action.href">{{ action.label }}</a>
+        }
+      }
+    </div>
+    }
+  </div>
+
+  <div class="public-page__grid">
+    @for (section of page.sections; track section.title) {
+    <article class="public-page__card">
+      <h2 class="public-page__card-title m-0">{{ section.title }}</h2>
+      @if (section.body) {
+      <p class="public-page__card-body m-0">{{ section.body }}</p>
+      }
+      @if (section.bullets?.length) {
+      <ul class="public-page__list m-0">
+        @for (bullet of section.bullets; track bullet) {
+        <li>{{ bullet }}</li>
+        }
+      </ul>
+      }
+    </article>
+    }
+  </div>
+
+  @if (page.faqs?.length) {
+  <section class="public-page__faq">
+    <div class="public-page__faq-head">
+      <p class="public-page__eyebrow m-0">Common Questions</p>
+      <h2 class="public-page__faq-title m-0">Frequently Asked Questions</h2>
+    </div>
+
+    <div class="public-page__faq-list">
+      @for (faq of page.faqs; track faq.question) {
+      <article class="public-page__faq-item">
+        <h3 class="public-page__faq-question m-0">{{ faq.question }}</h3>
+        <p class="public-page__faq-answer m-0">{{ faq.answer }}</p>
+      </article>
+      }
+    </div>
+  </section>
+  }
+</section>

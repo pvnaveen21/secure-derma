@@ -3,7 +3,7 @@
 
     <div class="main-image-container">
         @if(main_image_url) {
-        <img [src]="main_image_url" alt="" loading="eager" class="main-image" />
+        <img [src]="main_image_url" alt="Secure Derma dermatologist-recommended skincare and haircare" loading="eager" fetchpriority="high" decoding="async" class="main-image" />
         }
     </div>
 
@@ -104,7 +104,7 @@
             <nz-carousel [nzAutoPlay]="isBrowser" class="banner-carousel">
                 @for (data of bannerImages; track data) {
                 <div nz-carousel-content class="banner-slide">
-                    <img [src]="data.image" alt="" loading="lazy" class="banner-image" />
+                    <img [src]="data.image" alt="Secure Derma promotional banner" loading="lazy" decoding="async" class="banner-image" />
                 </div>
                 }
             </nz-carousel>
@@ -212,7 +212,7 @@
                 <div class="product-image" (click)="producetView(product)">
                     <div class="image-container">
                         <img [src]="product.thumbnail_image" [attr.data-hover]="product.hover_image"
-                            [alt]="product.product_name" />
+                            [alt]="product.product_name" loading="lazy" decoding="async" />
                     </div>
                 </div>
 
@@ -271,7 +271,7 @@
                 <div class="product-image" (click)="producetView(product)">
                     <div class="image-container">
                         <img [src]="product.thumbnail_image" [attr.data-hover]="product.hover_image"
-                            [alt]="product.product_name" />
+                            [alt]="product.product_name" loading="lazy" decoding="async" />
                     </div>
                 </div>
 
@@ -377,7 +377,7 @@
 <section class="brand-spotlight">
     <div class="brand-spotlight__container">
         <figure class="brand-spotlight__image-wrapper m-0">
-            <img [src]="why_secure_derma" alt="Secure Derma brand validation process" class="brand-spotlight__image" />
+            <img [src]="why_secure_derma" alt="Secure Derma brand validation process" class="brand-spotlight__image" loading="lazy" decoding="async" />
         </figure>
 
         <article class="brand-spotlight__content">

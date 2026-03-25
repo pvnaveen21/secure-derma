@@ -158,12 +158,12 @@
                             <div class="product-save-chip">Save {{ product.details[0].discount_price }}%</div>
                             }
                             <!-- Main Image -->
-                            <img [alt]="product.product_name" [src]="product.thumbnail_image"
+                            <img [alt]="product.product_name" [src]="product.thumbnail_image" loading="lazy" decoding="async"
                                 class="product-image product-image-main" />
 
                             <!-- Hover Image -->
                             @if(product.hover_image) {
-                            <img [alt]="product.product_name" [src]="product.hover_image"
+                            <img [alt]="product.product_name" [src]="product.hover_image" loading="lazy" decoding="async"
                                 class="product-image product-image-hover" />
                             }
                         </div>

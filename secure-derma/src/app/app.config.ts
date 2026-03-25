@@ -5,7 +5,7 @@ import {
   provideAppInitializer,
   provideZoneChangeDetection
 } from '@angular/core';
-import { provideRouter, withInMemoryScrolling } from '@angular/router';
+import { provideRouter, withInMemoryScrolling, withViewTransitions } from '@angular/router';
 
 import { routes } from './app.routes';
 import { en_US, provideNzI18n } from 'ng-zorro-antd/i18n';
@@ -14,10 +14,11 @@ import en from '@angular/common/locales/en';
 import { FormsModule } from '@angular/forms';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
-import { SettingsService } from "@app/services/settings/settings.service";
-import { settingsServiceFactory } from "@app/core";
+import { SettingsService } from '@app/services/settings/settings.service';
+import { settingsServiceFactory } from '@app/core';
 import { NzConfig, provideNzConfig } from 'ng-zorro-antd/core/config';
 import { authInterceptor } from './auth/interceptor';
+import { SeoRouteService } from './services/seo-route.service';
 
 const ngZorroConfig: NzConfig = {
   message: { nzDuration: 5000 },
@@ -29,13 +30,15 @@ export const appConfig: ApplicationConfig = {
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideRouter(
       routes,
-      withInMemoryScrolling({ scrollPositionRestoration: 'top', anchorScrolling: 'enabled' })
+      withInMemoryScrolling({ scrollPositionRestoration: 'top', anchorScrolling: 'enabled' }),
+      withViewTransitions()
     ),
     provideNzI18n(en_US),
     importProvidersFrom(FormsModule),
     provideAnimationsAsync(),
     provideHttpClient(withInterceptors([authInterceptor])),
     provideAppInitializer(() => settingsServiceFactory(inject(SettingsService))),
+    provideAppInitializer(() => inject(SeoRouteService).init()),
     provideNzConfig(ngZorroConfig)
   ]
 };

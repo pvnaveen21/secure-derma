@@ -116,7 +116,9 @@ export class HeaderComponent {
   panels: Panel[] = [];
   mobileQuickLinks = [
     { name: 'Pediatric', value: 'pediatric' },
-    { name: 'Shop All', value: 'all' }
+    { name: 'Shop All', value: 'all' },
+    { name: 'About', route: '/about' },
+    { name: 'Support', route: '/contact' }
   ];
 
   mobileBottomNavItems: MobileBottomNavItem[] = [
@@ -533,7 +535,9 @@ export class HeaderComponent {
   private buildCategorySuggestions(query: string): SearchSuggestionItem[] {
     const categoryItems = [
       ...this.panels.flatMap((panel) => panel.categoryItems.map((item) => ({ ...item, subtitle: panel.name }))),
-      ...this.mobileQuickLinks.map((item) => ({ label: item.name, value: item.value, type: 'all' as const, subtitle: 'Quick link' }))
+      ...this.mobileQuickLinks
+        .filter((item): item is { name: string; value: string } => typeof item.value === 'string' && item.value.length > 0)
+        .map((item) => ({ label: item.name, value: item.value, type: 'all' as const, subtitle: 'Quick link' }))
     ];
 
     return categoryItems
@@ -790,6 +794,40 @@ export class HeaderComponent {
     }).then(() => {
       this.scrollViewportToTop();
     });
+  }
+
+  navigateToPage(route: string) {
+    this.closeBrandDropdown();
+    this.closeSkinDropdown();
+    this.closeHairDropdown();
+    this.closeSupplementDropdown();
+
+    const navigate = () => {
+      void this.router.navigate([route], {
+        state: { scrollToTop: true }
+      }).then(() => {
+        this.scrollViewportToTop();
+      });
+    };
+
+    if (this.visible && !this.isDesktopView()) {
+      this.closeSideMenu();
+      setTimeout(() => navigate(), 260);
+      return;
+    }
+
+    navigate();
+  }
+
+  handleMobileQuickLink(link: { value?: string; route?: string }) {
+    if (link.route) {
+      this.navigateToPage(link.route);
+      return;
+    }
+
+    if (link.value) {
+      this.producetNavigation(link.value);
+    }
   }
 
   slugify(value: string): string {
