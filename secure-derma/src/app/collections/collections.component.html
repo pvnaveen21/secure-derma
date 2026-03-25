@@ -181,7 +181,7 @@
                         </div>
                         @if(product?.product_description){
                         <p class="product-description">{{ product.product_description.length > 100
-                            ? (product.product_description | slice:0:100) + '...'
+                            ? (product.product_description | slice:0:80) + '...'
                             : product.product_description }}</p>
                         }
                         @if (product.details) {
