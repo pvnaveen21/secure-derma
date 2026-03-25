@@ -133,7 +133,6 @@ export class CollectionsComponent implements OnInit {
     { key: 'hair_concerns', title: 'Hair Concerns', apiParam: 'hair_concern' },
     { key: 'skin_concerns', title: 'Skin Concerns', apiParam: 'skin_concern' },
     { key: 'ingredients', title: 'Ingredients', apiParam: 'ingredient' },
-    { key: 'brands', title: 'Brand', apiParam: 'brand' },
   ];
 
   ngOnInit() {
@@ -704,7 +703,7 @@ export class CollectionsComponent implements OnInit {
       title: `${collectionName} Collection`,
       description: filterSummary
         ? `Browse ${collectionName} products on Secure Derma. Active filters: ${filterSummary}.`
-        : `Browse ${collectionName} products on Secure Derma by type, concern, ingredients, and brand.`,
+        : `Browse ${collectionName} products on Secure Derma by type, concern, and ingredients.`,
       canonicalPath: `/collections/${slug}`,
       type: 'website',
       keywords: `${collectionName.toLowerCase()}, secure derma collection, dermatology products`,
@@ -725,7 +724,7 @@ export class CollectionsComponent implements OnInit {
           url: `https://securederma.in/collections/${slug}`,
           description: filterSummary
             ? `Browse ${collectionName} products on Secure Derma. Active filters: ${filterSummary}.`
-            : `Browse ${collectionName} products on Secure Derma by type, concern, ingredients, and brand.`
+            : `Browse ${collectionName} products on Secure Derma by type, concern, and ingredients.`
         }
       ]
     });
