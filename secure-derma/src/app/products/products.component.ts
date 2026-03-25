@@ -946,13 +946,51 @@ export class ProductsComponent {
     );
     const description = (descriptionSource || `Buy ${productName} from ${brandName} on Secure Derma.`).slice(0, 155);
 
+    const currentOffer = this.currentPriceData || this.productDetailsMain?.[0] || {};
+
     this.seoService.updateSeo({
       title: `${productName} by ${brandName}`,
       description,
       canonicalPath: `/products/${this.selectedProduectValue}`,
       image: this.productData?.thumbnail_image || this.mainViewImage || undefined,
       type: 'product',
-      keywords: `${productName.toLowerCase()}, ${brandName.toLowerCase()}, ${categoryName.toLowerCase()}, secure derma`
+      keywords: `${productName.toLowerCase()}, ${brandName.toLowerCase()}, ${categoryName.toLowerCase()}, secure derma`,
+      structuredData: [
+        {
+          '@context': 'https://schema.org',
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://securederma.in/' },
+            { '@type': 'ListItem', position: 2, name: 'Collections', item: 'https://securederma.in/collections' },
+            ...(this.breadcrumbCollectionSlug ? [{ '@type': 'ListItem', position: 3, name: this.breadcrumbCollectionLabel || categoryName, item: `https://securederma.in/collections/${this.breadcrumbCollectionSlug}` }] : []),
+            { '@type': 'ListItem', position: this.breadcrumbCollectionSlug ? 4 : 3, name: productName, item: `https://securederma.in/products/${this.selectedProduectValue}` }
+          ]
+        },
+        {
+          '@context': 'https://schema.org',
+          '@type': 'Product',
+          name: productName,
+          image: this.productData?.thumbnail_image || this.mainViewImage || undefined,
+          description,
+          brand: {
+            '@type': 'Brand',
+            name: brandName
+          },
+          category: categoryName,
+          offers: currentOffer?.selling_price ? {
+            '@type': 'Offer',
+            priceCurrency: 'INR',
+            price: String(currentOffer.selling_price),
+            availability: 'https://schema.org/InStock',
+            url: `https://securederma.in/products/${this.selectedProduectValue}`
+          } : undefined,
+          aggregateRating: this.productData?.avg_rating ? {
+            '@type': 'AggregateRating',
+            ratingValue: String(this.productData.avg_rating),
+            reviewCount: String(this.totalReviewCount || 0)
+          } : undefined
+        }
+      ]
     });
   }
 

@@ -3,7 +3,7 @@
         <section class="footer__row footer__row--primary">
             <div class="footer__brand">
                 <button type="button" class="secure-btn footer__logo-button" (click)="navigateToHome()" aria-label="Secure Derma home">
-                    <img class="footer__logo-image" [src]="footerLogoSrc" alt="Secure Derma" />
+                    <img class="footer__logo-image" [src]="footerLogoSrc" alt="Secure Derma" decoding="async" />
                 </button>
                 <p class="footer__tagline">A professional skincare destination designed around clarity, trust, and better daily outcomes.</p>
                 <div class="footer__contact-list">
@@ -14,20 +14,20 @@
 
             <div class="footer__links">
                 <h4>Shop</h4>
-                <button type="button" class="secure-btn footer__link-button" (click)="navigateToCollection('skin-care')">Skin Care</button>
-                <button type="button" class="secure-btn footer__link-button" (click)="navigateToCollection('hair-care')">Hair Care</button>
-                <button type="button" class="secure-btn footer__link-button" (click)="navigateToCollection('supplements')">Supplements</button>
-                <button type="button" class="secure-btn footer__link-button" (click)="navigateToCollection('pediatric')">Pediatric Care</button>
-                <button type="button" class="secure-btn footer__link-button" (click)="navigateToCollection('all')">Top Brands</button>
+                <a routerLink="/collections/skin-care">Skin Care</a>
+                <a routerLink="/collections/hair-care">Hair Care</a>
+                <a routerLink="/collections/supplements">Supplements</a>
+                <a routerLink="/collections/pediatric">Pediatric Care</a>
+                <a routerLink="/collections">All Brands</a>
             </div>
 
             <div class="footer__links">
                 <h4>Resources</h4>
-                <button type="button" class="secure-btn footer__link-button" (click)="navigateToCollection('all')">Ingredient Guide</button>
-                <button type="button" class="secure-btn footer__link-button" (click)="navigateToHome()">Routine Builder</button>
-                <button type="button" class="secure-btn footer__link-button" (click)="navigateToCollection('skin-care')">Skin Concern Hub</button>
-                <button type="button" class="secure-btn footer__link-button" (click)="navigateToAccountSection('contact-us')">Order Support</button>
-                <button type="button" class="secure-btn footer__link-button" (click)="navigateToAccountSection('contact-us')">FAQs</button>
+                <a routerLink="/about">About Secure Derma</a>
+                <a routerLink="/faqs">FAQs</a>
+                <a routerLink="/contact">Contact Support</a>
+                <a routerLink="/shipping-returns">Shipping &amp; Returns</a>
+                <a routerLink="/collections">Shop Collections</a>
             </div>
 
         </section>
@@ -50,10 +50,10 @@
         <section class="footer__row footer__row--bottom footer__bottom">
             <span>© 2026 Secure Derma. All rights reserved.</span>
             <div class="footer__bottom-links">
-                <a>Privacy Policy</a>
-                <a>Terms of Use</a>
-                <a>Shipping & Returns</a>
-                <a>Accessibility</a>
+                <a routerLink="/about">About</a>
+                <a routerLink="/contact">Contact</a>
+                <a routerLink="/shipping-returns">Shipping &amp; Returns</a>
+                <a routerLink="/faqs">FAQs</a>
             </div>
         </section>
     </footer>

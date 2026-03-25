@@ -707,7 +707,27 @@ export class CollectionsComponent implements OnInit {
         : `Browse ${collectionName} products on Secure Derma by type, concern, ingredients, and brand.`,
       canonicalPath: `/collections/${slug}`,
       type: 'website',
-      keywords: `${collectionName.toLowerCase()}, secure derma collection, dermatology products`
+      keywords: `${collectionName.toLowerCase()}, secure derma collection, dermatology products`,
+      structuredData: [
+        {
+          '@context': 'https://schema.org',
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://securederma.in/' },
+            { '@type': 'ListItem', position: 2, name: 'Collections', item: 'https://securederma.in/collections' },
+            { '@type': 'ListItem', position: 3, name: collectionName, item: `https://securederma.in/collections/${slug}` }
+          ]
+        },
+        {
+          '@context': 'https://schema.org',
+          '@type': 'CollectionPage',
+          name: `${collectionName} Collection`,
+          url: `https://securederma.in/collections/${slug}`,
+          description: filterSummary
+            ? `Browse ${collectionName} products on Secure Derma. Active filters: ${filterSummary}.`
+            : `Browse ${collectionName} products on Secure Derma by type, concern, ingredients, and brand.`
+        }
+      ]
     });
   }
 

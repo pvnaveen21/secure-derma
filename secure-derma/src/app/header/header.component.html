@@ -258,6 +258,8 @@
 
                 <p class="menu-title m-0" (click)="producetNavigation('pediatric')">Pediatric</p>
                 <p class="menu-title m-0" (click)="producetNavigation('all')">Shop All</p>
+                <!-- <p class="menu-title m-0" (click)="navigateToPage('/about')">About</p>
+                <p class="menu-title m-0" (click)="navigateToPage('/contact')">Support</p> -->
             </div>
 
             <div class="search-signin only-web-view" [class.search-signin--expanded]="isHeaderSearchFocused">
@@ -603,9 +605,9 @@
                     <nz-divider class="m-0"></nz-divider>
 
                     }
-                    @for(link of mobileQuickLinks; track link.value) {
+                    @for(link of mobileQuickLinks; track link.name) {
                     <div class="collapse-panel">
-                        <div class="collapse-header" (click)="producetNavigation(link.value); closeSideMenu()">
+                        <div class="collapse-header" (click)="handleMobileQuickLink(link); closeSideMenu()">
                             <span class="header-text">{{ link.name }}</span>
                         </div>
                     </div>

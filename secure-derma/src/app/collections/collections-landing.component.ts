@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { CollectionsService } from '../services/collections.service';
+import { SeoService } from '../services/seo.service';
 
 interface CollectionBrand {
   id?: number;
@@ -23,9 +24,34 @@ export class CollectionsLandingComponent implements OnInit {
   constructor(
     private collectionsService: CollectionsService,
     private router: Router,
+    private seoService: SeoService,
   ) {}
 
   ngOnInit() {
+    this.seoService.updateSeo({
+      title: 'Shop Collections',
+      description: 'Browse Secure Derma collections across skin care, hair care, wellness, and dermatologist-recommended routines.',
+      canonicalPath: '/collections',
+      type: 'website',
+      keywords: 'secure derma collections, skincare collections, haircare collections, wellness products',
+      structuredData: [
+        {
+          '@context': 'https://schema.org',
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://securederma.in/' },
+            { '@type': 'ListItem', position: 2, name: 'Collections', item: 'https://securederma.in/collections' }
+          ]
+        },
+        {
+          '@context': 'https://schema.org',
+          '@type': 'CollectionPage',
+          name: 'Secure Derma Collections',
+          url: 'https://securederma.in/collections'
+        }
+      ]
+    });
+
     this.collectionsService.getBrandsList().subscribe({
       next: (response: any) => {
         this.brands = this.flattenBrands(response);

@@ -1,11 +1,11 @@
 import { Component, inject } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { ThemeType } from '../interfaces/theme';
 import { SettingsService } from '../services/settings/settings.service';
 
 @Component({
   selector: 'app-footer',
-  imports: [],
+  imports: [RouterLink],
   templateUrl: './footer.component.html',
   styleUrl: './footer.component.scss'
 })
@@ -42,8 +42,8 @@ export class FooterComponent {
     });
   }
 
-  navigateToAccountSection(section: string): void {
-    void this.router.navigate(['/account', section], {
+  navigateToRoute(route: string): void {
+    void this.router.navigate([route], {
       state: {
         scrollToTop: true
       }
