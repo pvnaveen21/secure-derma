@@ -321,29 +321,20 @@
 
 .login-brand {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 0.95rem;
+    text-align: center;
+    gap: 0.6rem;
 }
 
-.logo-icon {
-    width: 3.35rem;
-    height: 3.35rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 1rem;
-    background: linear-gradient(135deg, #059669, #0f766e);
-    box-shadow: 0 0.8rem 2rem rgba(5, 150, 105, 0.24);
-}
-
-.login-brand__title {
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: #0f172a;
+.login-brand__logo {
+    width: 12rem;
+    max-width: 100%;
+    height: auto;
+    display: block;
 }
 
 .login-brand__subtitle {
-    margin-top: 0.2rem !important;
     color: #64748b;
     font-size: 0.88rem;
 }
