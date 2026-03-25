@@ -13,6 +13,7 @@ import { Assets } from '../../shared/assets';
 import { Icons } from '../../shared/icons';
 import { LucideAngularModule } from 'lucide-angular';
 import { SeoService } from '../../services/seo.service';
+import { HomeService } from '../../services/home.service';
 
 declare const google: any;
 
@@ -37,6 +38,7 @@ export class LoginComponent implements AfterViewInit {
   protected readonly isGoogleLoginEnabled = !!this.googleClientId;
   timer = 3;
   googleReady = false;
+  loginBannerImage = '';
   googleLoading = false;
   authMode: 'email' | 'phone' = 'phone';
   email = '';
@@ -53,7 +55,8 @@ export class LoginComponent implements AfterViewInit {
   constructor(
     private authService: AuthService,
     private message: NzMessageService,
-    private seoService: SeoService
+    private seoService: SeoService,
+    private homeService: HomeService
   ) {}
 
   resendCode() {
@@ -72,6 +75,7 @@ export class LoginComponent implements AfterViewInit {
       robots: 'noindex,nofollow',
       type: 'website'
     });
+    this.loadLoginBanner();
   }
   ngAfterViewInit() {
     this.initializeGoogleLogin();
@@ -224,6 +228,21 @@ export class LoginComponent implements AfterViewInit {
 
   validateCurrentInput() {
     return this.authMode === 'email' ? this.validateEmail() : this.validatePhone();
+  }
+
+  private loadLoginBanner() {
+    this.homeService.getImageByType('login').subscribe({
+      next: (response: any) => {
+        this.loginBannerImage = response?.images?.[0]?.image || '';
+      },
+      error: (error) => {
+        console.error('Error fetching login banner:', error);
+      }
+    });
+  }
+
+  get loginShowcaseImage(): string {
+    return this.loginBannerImage || this.assets.secura.skin;
   }
 
   private validateEmail() {

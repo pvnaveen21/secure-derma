@@ -69,7 +69,8 @@ CORS_ALLOWED_ORIGINS = list(dict.fromkeys(CORS_ALLOWED_ORIGINS))
 CSRF_TRUSTED_ORIGINS = env_list('CSRF_TRUSTED_ORIGINS')
 
 MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+default_media_root = BASE_DIR / 'media'
+MEDIA_ROOT = Path(env_str('MEDIA_ROOT', default=str(default_media_root))).resolve()
 
 INSTALLED_APPS = [
     'corsheaders',
