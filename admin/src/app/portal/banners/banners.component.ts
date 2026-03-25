@@ -52,6 +52,7 @@ export class BannersComponent {
       title: 'General Banners',
       items: [
         { key: 'why_secure_derma', label: 'Why Secure Derma', type: 'single', uploadLabel: ['Upload Image Size 1270x240', 'File Type: PNG, JPEG'] },
+        { key: 'login', label: 'Login', type: 'single', uploadLabel: ['Upload login showcase image', 'File Type: PNG, JPEG'] },
       ]
     },
     {

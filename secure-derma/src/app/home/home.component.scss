@@ -1631,6 +1631,8 @@
 }
 
 .concern-strip__state {
+    width: 100%;
+    display: block;
     margin: 1rem 0 0;
     color: var(--text-secondary);
 }
