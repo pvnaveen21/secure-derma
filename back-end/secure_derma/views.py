@@ -2397,16 +2397,7 @@ class ProductListWithFiltersAPIView(APIView):
                     "product_type": current_product_type,
                     "brand": current_brand,
                 }
-            ),
-            "brands": get_applicable_filter_options(
-                Brand, "brand", current_brand, {
-                    "hair_concern": current_hair,
-                    "skin_concern": current_skin,
-                    "ingredient": current_ingredient,
-                    "product_type": current_product_type,
-                    "brand": current_brand,
-                }
-            ),
+            )
         }
 
         # =====================================================
