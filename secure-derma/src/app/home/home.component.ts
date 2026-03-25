@@ -268,6 +268,15 @@ export class HomeComponent {
     this.producetNavigation(this.selectedConcern);
   }
 
+  truncateProductTitle(title: string, maxLength = 32) {
+    const normalizedTitle = `${title || ''}`.trim();
+    if (!normalizedTitle || normalizedTitle.length <= maxLength) {
+      return normalizedTitle;
+    }
+
+    return `${normalizedTitle.slice(0, maxLength).trimEnd()}...`;
+  }
+
   routineForm = {
     skinType: 'Oily',
     concern: 'Acne',

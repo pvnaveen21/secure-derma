@@ -1354,7 +1354,8 @@
     max-width: 100%;
     background: var(--card-bg);
     border-radius: 1rem;
-    padding: 0.5rem;
+    // padding: 0.5rem;
+    padding: 1.2rem 0.9rem;
     border: 0.0625rem solid rgba(148, 163, 184, 0.2);
     box-shadow: 0 0.45rem 1rem rgba(15, 23, 42, 0.08);
     transition: transform 0.3s ease, box-shadow 0.3s ease;
@@ -1431,10 +1432,12 @@
     width: 100%;
     display: -webkit-box;
     -webkit-line-clamp: 2;
+    line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
     text-overflow: ellipsis;
-    overflow-wrap: anywhere;
+    word-break: normal;
+    overflow-wrap: break-word;
 
 }
 
@@ -1643,6 +1646,54 @@
     border: 0.1rem solid color-mix(in srgb, var(--brand-primary) 22%, var(--border-color));
     box-shadow: 0 0.35rem 0.9rem color-mix(in srgb, var(--brand-primary) 10%, transparent);
     background: linear-gradient(180deg, color-mix(in srgb, var(--card-bg) 86%, var(--brand-primary) 14%) 0%, var(--card-bg) 100%);
+}
+
+.concern-strip .concern-product-card .product-image {
+    height: 12rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: color-mix(in srgb, var(--card-bg) 92%, #ffffff 8%);
+}
+
+.concern-strip .concern-product-card .image-container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.75rem;
+}
+
+.concern-strip .concern-product-card .product-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    object-position: center;
+}
+
+.top-brands-section .product-card .product-image {
+    height: 12rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: color-mix(in srgb, var(--card-bg) 92%, #ffffff 8%);
+}
+
+.top-brands-section .product-card .image-container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.75rem;
+}
+
+.top-brands-section .product-card .product-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    object-position: center;
 }
 
 .concern-strip .concern-product-card .brand_name {

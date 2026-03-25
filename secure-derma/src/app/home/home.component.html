@@ -222,7 +222,7 @@
 
                 <div class="product-content">
                     <p class="text-start brand_name m-0">{{ product.brand_name }}</p>
-                    <h3 class="product-title text-start">{{ product.product_name }}</h3>
+                    <h3 class="product-title text-start">{{ truncateProductTitle(product.product_name) }}</h3>
 
                     <div class="rating-row">
                         @if(product.review_count){
@@ -281,7 +281,7 @@
 
                 <div class="product-content">
                     <p class="text-start brand_name m-0">{{ product?.brand_name}} </p>
-                    <h3 class="product-title text-start">{{ product.product_name }}</h3>
+                    <h3 class="product-title text-start">{{ truncateProductTitle(product.product_name) }}</h3>
 
                     <div class="rating-row">
                         @if(product.review_count){
