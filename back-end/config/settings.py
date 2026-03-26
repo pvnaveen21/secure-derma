@@ -68,9 +68,48 @@ CORS_ALLOWED_ORIGINS = [*local_cors_origins, *env_list('CORS_ALLOWED_ORIGINS')]
 CORS_ALLOWED_ORIGINS = list(dict.fromkeys(CORS_ALLOWED_ORIGINS))
 CSRF_TRUSTED_ORIGINS = env_list('CSRF_TRUSTED_ORIGINS')
 
-MEDIA_URL = '/media/'
-default_media_root = BASE_DIR / 'media'
-MEDIA_ROOT = Path(env_str('MEDIA_ROOT', default=str(default_media_root))).resolve()
+USE_S3 = env_bool('AWS_S3_ENABLED', default=False)
+AWS_S3_REGION_NAME = env_str('AWS_REGION', default='')
+AWS_STORAGE_BUCKET_NAME = env_str('AWS_S3_BUCKET', default='')
+AWS_S3_CUSTOM_DOMAIN = env_str('AWS_S3_CUSTOM_DOMAIN', default='')
+AWS_QUERYSTRING_AUTH = env_bool('AWS_QUERYSTRING_AUTH', default=True)
+AWS_QUERYSTRING_EXPIRE = env_int('AWS_QUERYSTRING_EXPIRE', 3600)
+AWS_S3_FILE_OVERWRITE = env_bool('AWS_S3_FILE_OVERWRITE', default=False)
+AWS_DEFAULT_ACL = None
+AWS_S3_OBJECT_PARAMETERS = {
+    'CacheControl': env_str('AWS_S3_CACHE_CONTROL', default='max-age=86400'),
+}
+
+if USE_S3:
+    if not AWS_S3_REGION_NAME:
+        raise ImproperlyConfigured('AWS_REGION must be set when AWS_S3_ENABLED is true.')
+    if not AWS_STORAGE_BUCKET_NAME:
+        raise ImproperlyConfigured('AWS_S3_BUCKET must be set when AWS_S3_ENABLED is true.')
+
+    aws_access_key_id = env_str('AWS_ACCESS_KEY_ID', default='')
+    aws_secret_access_key = env_str('AWS_SECRET_ACCESS_KEY', default='')
+    if aws_access_key_id:
+        AWS_ACCESS_KEY_ID = aws_access_key_id
+    if aws_secret_access_key:
+        AWS_SECRET_ACCESS_KEY = aws_secret_access_key
+
+    if AWS_S3_CUSTOM_DOMAIN:
+        MEDIA_URL = f"https://{AWS_S3_CUSTOM_DOMAIN.rstrip('/')}/"
+    else:
+        MEDIA_URL = f"https://{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazonaws.com/"
+
+    STORAGES = {
+        'default': {
+            'BACKEND': 'storages.backends.s3.S3Storage',
+        },
+        'staticfiles': {
+            'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage',
+        },
+    }
+else:
+    MEDIA_URL = '/media/'
+    default_media_root = BASE_DIR / 'media'
+    MEDIA_ROOT = Path(env_str('MEDIA_ROOT', default=str(default_media_root))).resolve()
 
 INSTALLED_APPS = [
     'corsheaders',
@@ -81,6 +120,9 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 ] + APPS
+
+if USE_S3:
+    INSTALLED_APPS.append('storages')
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
