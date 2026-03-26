@@ -96,6 +96,16 @@
             </div>
             }
 
+            @if (selectedBrandDescription) {
+            <section class="brand-description-card">
+                <p class="brand-description-card__eyebrow m-0">Brand Story</p>
+                @if (selectedBrandName) {
+                <h2 class="brand-description-card__title m-0">{{ selectedBrandName }}</h2>
+                }
+                <p class="brand-description-card__copy m-0">{{ selectedBrandDescription }}</p>
+            </section>
+            }
+
             <!-- Product Count and Sort -->
             <div class="products-header">
                 @if(productsData?.products?.count !== undefined){
@@ -174,9 +184,8 @@
                         <h5 class="m-0">{{product.product_name}}</h5>
                         <div class="rate-height">
                             @if (product.avg_rating) {
-                            <nz-rate [ngModel]="product.avg_rating" nzDisabled [nzCount]="5"></nz-rate>
-                            <span class="ms-2 rating_count">({{ product.rating_count }} {{ product.rating_count === 1 ?
-                                '' : '' }})</span>
+                            <nz-rate [ngModel]="product.avg_rating" nzDisabled nzAllowHalf [nzCount]="5"></nz-rate>
+                            <span class="mt-1 rating_count">{{ product.avg_rating }}</span>
                             }
                         </div>
                         @if(product?.product_description){
