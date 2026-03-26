@@ -1617,30 +1617,29 @@ class HairBannerAPIView(ListAPIView):
                 'category_name': product_type.categorie.categorie,
                 'show_home': product_type.show_home
             })
-        
-            hair_category = Categories.objects.filter(
-                categorie__iexact='Hair',
-                is_deleted=False
-            ).first()
-            
-            if not hair_category:
-                return Response({
-                    'error': 'Hair category not found',
-                    'category_info': None
-                })
-            
-            # Build category image URL
-            category_image_url = None
-            if hair_category.image:
-                category_image_url = _build_media_url(request, hair_category.image) or None
-            
-            category_info = {
-                'id': hair_category.id,
-                'name': hair_category.categorie,
-                'image': category_image_url
-            }
-            
-        
+
+        hair_category = Categories.objects.filter(
+            categorie__iexact='Hair',
+            is_deleted=False
+        ).first()
+
+        if not hair_category:
+            return Response({
+                'error': 'Hair category not found',
+                'category_info': None
+            })
+
+        # Build category image URL
+        category_image_url = None
+        if hair_category.image:
+            category_image_url = _build_media_url(request, hair_category.image) or None
+
+        category_info = {
+            'id': hair_category.id,
+            'name': hair_category.categorie,
+            'image': category_image_url
+        }
+
         return Response({
             'hair_concerns': {
                 'data': hair_concerns_list,
@@ -1650,7 +1649,7 @@ class HairBannerAPIView(ListAPIView):
                 'data': product_types_list,
                 'count': len(product_types_list)
             },
-             'hair_info': category_info
+            'hair_info': category_info
 
         })
         
