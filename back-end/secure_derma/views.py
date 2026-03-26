@@ -377,7 +377,7 @@ class BrandListAPIView(ListAPIView):
             queryset = queryset.filter(brand_name__icontains=search_text)
 
         queryset = queryset.order_by("brand_name").values(
-            "id", "brand_name", "brand_image"
+            "id", "brand_name", "brand_image", "brand_description"
         )
 
         grouped_data = {}
@@ -395,7 +395,8 @@ class BrandListAPIView(ListAPIView):
             grouped_data.setdefault(first_char, []).append({
                 "id": brand["id"],
                 "brand_name": name,
-                "brand_image": image_url
+                "brand_image": image_url,
+                "brand_description": (brand.get("brand_description") or "").strip(),
             })
 
         return Response(grouped_data)

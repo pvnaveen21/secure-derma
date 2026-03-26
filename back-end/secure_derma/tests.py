@@ -9,6 +9,7 @@ from rest_framework.test import APIClient
 
 from brand.models import Brand
 from categorie.models import Categories
+from hair_concern.models import HairConcerns
 from product.models import Product, ProductDetails
 from product_type.models import ProductType
 from skin_concern.models import SkinConcerns
@@ -56,6 +57,29 @@ class ProductListWithFiltersAPIViewTests(TestCase):
         self.assertEqual(
             response.data["products"]["results"][0]["product_name"],
             "Skin Product",
+        )
+
+
+class ShopByConcernAPIViewTests(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.skin_visible = SkinConcerns.objects.create(skin_concern="Acne", show_home=True)
+        SkinConcerns.objects.create(skin_concern="Pigmentation", show_home=False)
+        self.hair_visible = HairConcerns.objects.create(hair_concern="Hair Fall", show_home=True)
+        HairConcerns.objects.create(hair_concern="Dandruff", show_home=False)
+
+    def test_returns_only_concerns_enabled_for_home(self):
+        response = self.client.get('/api/shop-by-concerns/')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['count'], 2)
+        self.assertEqual(
+            [item['name'] for item in response.data['concerns']],
+            ['Acne', 'Hair Fall']
+        )
+        self.assertEqual(
+            {item['type'] for item in response.data['concerns']},
+            {'skin', 'hair'}
         )
 
 

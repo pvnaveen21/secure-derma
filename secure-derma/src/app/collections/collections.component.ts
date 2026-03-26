@@ -58,6 +58,13 @@ interface SelectedFilterTag {
   displayName: string;
 }
 
+interface CollectionBrandMeta {
+  id?: number;
+  brand_name: string;
+  brand_image?: string;
+  brand_description?: string;
+}
+
 @Component({
   selector: 'app-collections',
   imports: [
@@ -124,8 +131,11 @@ export class CollectionsComponent implements OnInit {
   private productRevealTimeout?: ReturnType<typeof setTimeout>;
   private cartSubscription?: Subscription;
   private readonly defaultVisibleFilterItems = 6;
+  private brandCatalog: CollectionBrandMeta[] = [];
   private previousCollectionSlug: string | null = null;
   expandedFilterPanels = new Set<string>();
+  selectedBrandName = '';
+  selectedBrandDescription = '';
   private revealedProductIds = new Set<number>();
   private revealDelayByProductId = new Map<number, string>();
   private readonly filterPanelConfig: Array<{ key: string; title: string; apiParam: string }> = [
@@ -175,6 +185,7 @@ export class CollectionsComponent implements OnInit {
       this.draftSelectedFilters = this.cloneFiltersMap(this.selectedFilters);
       this.isFilterDrawerVisible = false;
       this.isSortDrawerVisible = false;
+      this.syncSelectedBrandDetails(slug);
       this.updatePaginationSeoTags();
       this.getBanner();
       this.loadProductsForCurrentRoute();
@@ -809,6 +820,43 @@ export class CollectionsComponent implements OnInit {
     }
 
     this.expandedFilterPanels.add(panelKey);
+  }
+
+  private syncSelectedBrandDetails(slug: string): void {
+    if (!slug || ['all', 'skin-care', 'hair-care', 'skin', 'hair', 'supplements', 'pediatric'].includes(slug)) {
+      this.selectedBrandName = '';
+      this.selectedBrandDescription = '';
+      return;
+    }
+
+    if (this.brandCatalog.length > 0) {
+      this.applySelectedBrandDetails(slug);
+      return;
+    }
+
+    this.collectionsService.getBrandsList().subscribe({
+      next: (response: any) => {
+        this.brandCatalog = this.flattenBrands(response);
+        this.applySelectedBrandDetails(slug);
+      },
+      error: () => {
+        this.selectedBrandName = '';
+        this.selectedBrandDescription = '';
+      }
+    });
+  }
+
+  private applySelectedBrandDetails(slug: string): void {
+    const matchedBrand = this.brandCatalog.find((brand) => this.slugify(brand.brand_name || '') === slug);
+    this.selectedBrandName = matchedBrand?.brand_name || '';
+    this.selectedBrandDescription = (matchedBrand?.brand_description || '').trim();
+  }
+
+  private flattenBrands(groupedBrands: any): CollectionBrandMeta[] {
+    return Object.keys(groupedBrands || {})
+      .sort()
+      .flatMap((key) => Array.isArray(groupedBrands[key]) ? groupedBrands[key] : [])
+      .filter((brand: any) => !!brand?.brand_name);
   }
 
   private cloneFiltersMap(source: Map<string, Set<string>>): Map<string, Set<string>> {
