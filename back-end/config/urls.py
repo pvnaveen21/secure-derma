@@ -32,4 +32,7 @@ urlpatterns = [
     path('dbadmin/', admin.site.urls),
     path('api/admin/', include(admin_router)),
     path('api/', include(user_router)),
-] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+]
+
+if not settings.USE_S3:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

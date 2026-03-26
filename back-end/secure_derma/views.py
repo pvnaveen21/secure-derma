@@ -8,6 +8,7 @@ import requests
 from config.env import env_str
 from django.conf import settings
 from django.core.exceptions import ValidationError
+from django.core.files.storage import default_storage
 from django.core.validators import validate_email
 from django.db import transaction
 from banner_images.models import ImageFile
@@ -38,13 +39,22 @@ from .order_email import get_order_recipient, send_order_confirmation_email
 from .serializers import NewsletterSubscriberSerializer
 
 
-def _build_media_url(request, image_field):
-    if not image_field:
+def _build_media_url(request, stored_file):
+    if not stored_file:
         return ""
+
     try:
-        return request.build_absolute_uri(image_field.url)
-    except ValueError:
+        if hasattr(stored_file, 'url'):
+            file_url = stored_file.url
+        else:
+            file_url = default_storage.url(str(stored_file).lstrip('/'))
+    except Exception:
         return ""
+
+    if file_url.startswith(('http://', 'https://')):
+        return file_url
+
+    return request.build_absolute_uri(file_url)
 
 
 def _build_quality_label(detail):
@@ -380,7 +390,7 @@ class BrandListAPIView(ListAPIView):
                 first_char = "A"
 
             image = brand["brand_image"]
-            image_url = request.build_absolute_uri(image) if image else ""
+            image_url = _build_media_url(request, image)
 
             grouped_data.setdefault(first_char, []).append({
                 "id": brand["id"],
@@ -409,15 +419,7 @@ class TopBrandsAPIView(ListAPIView):
         # Build correct absolute URLs for images
         for brand in brands_list:
             if brand['brand_image']:
-                # Correct way: Prepend MEDIA_URL and then build absolute URI
-                relative_path = brand['brand_image']
-                # Remove any leading slash if present
-                if relative_path.startswith('/'):
-                    relative_path = relative_path[1:]
-                
-                # Construct the full media URL
-                media_url = request.build_absolute_uri(settings.MEDIA_URL)
-                brand['brand_image'] = f"{media_url}{relative_path}"
+                brand['brand_image'] = _build_media_url(request, brand['brand_image']) or None
             else:
                 brand['brand_image'] = None
         
@@ -450,13 +452,7 @@ class HomeProductTypeAPIView(ListAPIView):
         # Build full image URLs
         for product_type in product_types_list:
             if product_type['image']:
-                # Remove leading slash if present
-                relative_path = product_type['image']
-                if relative_path.startswith('/'):
-                    relative_path = relative_path[1:]
-                
-                # Build absolute URL
-                product_type['image'] = request.build_absolute_uri(f'/media/{relative_path}')
+                product_type['image'] = _build_media_url(request, product_type['image']) or None
             else:
                 product_type['image'] = None
         
@@ -489,13 +485,7 @@ class LandingPageImagesAPIView(ListAPIView):
         # Build full image URLs
         for img in images_list:
             if img['image']:
-                # Remove leading slash if present
-                relative_path = img['image']
-                if relative_path.startswith('/'):
-                    relative_path = relative_path[1:]
-                
-                # Build absolute URL
-                img['image'] = request.build_absolute_uri(f'/media/{relative_path}')
+                img['image'] = _build_media_url(request, img['image']) or None
             else:
                 img['image'] = None
         
@@ -526,13 +516,7 @@ class ImagesAPIView(ListAPIView):
         # build absolute image URL
         for img in images_list:
             if img['image']:
-                relative_path = img['image']
-                if relative_path.startswith('/'):
-                    relative_path = relative_path[1:]
-
-                img['image'] = request.build_absolute_uri(
-                    f'/media/{relative_path}'
-                )
+                img['image'] = _build_media_url(request, img['image']) or None
             else:
                 img['image'] = None
 
@@ -1462,18 +1446,12 @@ class TrendingProductsFastAPIView(ListAPIView):
             # Build thumbnail URL
             thumbnail_url = None
             if product.thumbnail_image:
-                relative_path = str(product.thumbnail_image)
-                if relative_path.startswith('/'):
-                    relative_path = relative_path[1:]
-                thumbnail_url = request.build_absolute_uri(f'/media/{relative_path}')
+                thumbnail_url = _build_media_url(request, product.thumbnail_image) or None
             
             # Build hover image URL
             hover_url = None
             if product.hover_image:
-                relative_path = str(product.hover_image)
-                if relative_path.startswith('/'):
-                    relative_path = relative_path[1:]
-                hover_url = request.build_absolute_uri(f'/media/{relative_path}')
+                hover_url = _build_media_url(request, product.hover_image) or None
             
             # Get product details (without available_stock_count)
             product_details_list = []
@@ -1628,10 +1606,7 @@ class HairBannerAPIView(ListAPIView):
             # Build image URL
             image_url = None
             if product_type.image:
-                relative_path = str(product_type.image)
-                if relative_path.startswith('/'):
-                    relative_path = relative_path[1:]
-                image_url = request.build_absolute_uri(f'/media/{relative_path}')
+                image_url = _build_media_url(request, product_type.image) or None
             
             product_types_list.append({
                 'id': product_type.id,
@@ -1656,10 +1631,7 @@ class HairBannerAPIView(ListAPIView):
             # Build category image URL
             category_image_url = None
             if hair_category.image:
-                relative_path = str(hair_category.image)
-                if relative_path.startswith('/'):
-                    relative_path = relative_path[1:]
-                category_image_url = request.build_absolute_uri(f'/media/{relative_path}')
+                category_image_url = _build_media_url(request, hair_category.image) or None
             
             category_info = {
                 'id': hair_category.id,
@@ -1710,10 +1682,7 @@ class SkinBannerAPIView(ListAPIView):
             # Build image URL
             image_url = None
             if product_type.image:
-                relative_path = str(product_type.image)
-                if relative_path.startswith('/'):
-                    relative_path = relative_path[1:]
-                image_url = request.build_absolute_uri(f'/media/{relative_path}')
+                image_url = _build_media_url(request, product_type.image) or None
             
             product_types_list.append({
                 'id': product_type.id,
@@ -1739,10 +1708,7 @@ class SkinBannerAPIView(ListAPIView):
         # Build category image URL
         category_image_url = None
         if skin_category.image:
-            relative_path = str(skin_category.image)
-            if relative_path.startswith('/'):
-                relative_path = relative_path[1:]
-            category_image_url = request.build_absolute_uri(f'/media/{relative_path}')
+            category_image_url = _build_media_url(request, skin_category.image) or None
         
         category_info = {
             'id': skin_category.id,
@@ -1781,10 +1747,7 @@ class SupplementBannerAPIView(ListAPIView):
             # Build image URL
             image_url = None
             if product_type.image:
-                relative_path = str(product_type.image)
-                if relative_path.startswith('/'):
-                    relative_path = relative_path[1:]
-                image_url = request.build_absolute_uri(f'/media/{relative_path}')
+                image_url = _build_media_url(request, product_type.image) or None
             
             product_types_list.append({
                 'id': product_type.id,
@@ -1810,10 +1773,7 @@ class SupplementBannerAPIView(ListAPIView):
         # Build category image URL
         category_image_url = None
         if supplement_category.image:
-            relative_path = str(supplement_category.image)
-            if relative_path.startswith('/'):
-                relative_path = relative_path[1:]
-            category_image_url = request.build_absolute_uri(f'/media/{relative_path}')
+            category_image_url = _build_media_url(request, supplement_category.image) or None
         
         category_info = {
             'id': supplement_category.id,
@@ -1904,11 +1864,7 @@ class CollectionBannerAPIView(ListAPIView):
             # Build image URL
             image_url = None
             if banner.image:
-                relative_path = str(banner.image)
-                if relative_path.startswith('/'):
-                    relative_path = relative_path[1:]
-                
-                image_url = request.build_absolute_uri(f'/media/{relative_path}')
+                image_url = _build_media_url(request, banner.image) or None
             
             banner_list.append({
                 'id': banner.id,
@@ -1932,15 +1888,11 @@ class ConcernProductsAPIView(APIView):
     def _product_payload(self, request, product):
         thumbnail_url = None
         if product.thumbnail_image:
-            thumbnail_url = request.build_absolute_uri(
-                f"/media/{str(product.thumbnail_image).lstrip('/')}"
-            )
+            thumbnail_url = _build_media_url(request, product.thumbnail_image) or None
 
         hover_url = None
         if product.hover_image:
-            hover_url = request.build_absolute_uri(
-                f"/media/{str(product.hover_image).lstrip('/')}"
-            )
+            hover_url = _build_media_url(request, product.hover_image) or None
 
         detail = product.product_details.filter(is_deleted=False).order_by("selling_price").first()
 
@@ -2116,7 +2068,7 @@ class RoutineBuilderAPIView(APIView):
                     "brand_name": p.brand.brand_name,
                     "product_type": p.product_type.product_type,
                     "price": detail.selling_price,
-                    "thumbnail_image": request.build_absolute_uri(f"/media/{str(p.thumbnail_image).lstrip('/')}") if p.thumbnail_image else None,
+                    "thumbnail_image": _build_media_url(request, p.thumbnail_image) or None,
                 }
             )
 
@@ -2135,7 +2087,7 @@ class RoutineBuilderAPIView(APIView):
                         "brand_name": p.brand.brand_name,
                         "product_type": p.product_type.product_type,
                         "price": detail.selling_price,
-                        "thumbnail_image": request.build_absolute_uri(f"/media/{str(p.thumbnail_image).lstrip('/')}") if p.thumbnail_image else None,
+                        "thumbnail_image": _build_media_url(request, p.thumbnail_image) or None,
                     }
                 )
                 if len(shortlisted) >= 5:
@@ -2660,7 +2612,7 @@ class ProductDetailAPIView(APIView):
             relative_path = str(image_field)
             if relative_path.startswith('/'):
                 relative_path = relative_path[1:]
-            return request.build_absolute_uri(f'/media/{relative_path}')
+            return _build_media_url(request, relative_path) or None
 
         # Main images
         thumbnail_url = get_image_url(product.thumbnail_image)
