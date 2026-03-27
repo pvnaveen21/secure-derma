@@ -128,6 +128,8 @@
 .visitors-chart-card__date-input {
   width: 100%;
   min-width: 148px;
+  min-height: var(--visitors-control-height, 42px);
+  height: var(--visitors-control-height, 42px);
   padding: 10px 12px;
   border: 1px solid #d8e1ea;
   border-radius: 12px;
@@ -211,6 +213,59 @@
 .visitors-chart-card__anchor-group {
   justify-content: flex-end;
   align-self: end;
+}
+
+.visitors-chart-card {
+  --visitors-control-height: 42px;
+}
+
+.visitors-toolbar {
+  --visitors-control-height: 42px;
+}
+
+.visitors-search .ant-input,
+.visitors-toolbar__controls .ant-btn,
+.visitors-toolbar__date {
+  min-height: var(--visitors-control-height);
+  height: var(--visitors-control-height);
+}
+
+.visitors-search .ant-input {
+  border-radius: 12px;
+}
+
+.visitors-toolbar__controls .ant-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding-inline: 16px;
+  border-radius: 12px;
+}
+
+.visitors-chart-card__periods ::ng-deep .ant-select-selector,
+.visitors-chart-card__anchor-group .ant-btn,
+.visitors-chart-card__month-input,
+.visitors-chart-card__date-input {
+  min-height: var(--visitors-control-height);
+  height: var(--visitors-control-height);
+}
+
+.visitors-chart-card__periods ::ng-deep .ant-select-selector {
+  border-radius: 12px !important;
+  align-items: center;
+}
+
+.visitors-chart-card__periods ::ng-deep .ant-select-selection-item,
+.visitors-chart-card__periods ::ng-deep .ant-select-selection-placeholder {
+  line-height: calc(var(--visitors-control-height) - 2px) !important;
+}
+
+.visitors-chart-card__anchor-group .ant-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding-inline: 16px;
+  border-radius: 12px;
 }
 
 
