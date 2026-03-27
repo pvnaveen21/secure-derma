@@ -16,7 +16,7 @@ from brand.models import Brand
 from categorie.models import Categories
 from hair_concern.models import HairConcerns
 from ingredient.models import Ingredients
-from product.models import Product, ProductDetails, ProductImage, ProductReview
+from product.models import Product, ProductDetails, ProductImage, ProductReview, ProductReviewImage
 from product.serializers import ProductListSerializer
 from product_type.models import ProductType
 from django.db.models import Prefetch, Avg, Count, Min, Q, F, Sum
@@ -2570,31 +2570,44 @@ from django.db.models import Avg, Count, Min, Max, Q
 
 class ProductDetailAPIView(APIView):
     """
-    Ultra-fast Product Detail API by slug
-    Returns complete product information with minimal database queries
+    Product detail API by slug.
+    Uses filtered prefetches plus small aggregate queries to avoid expensive
+    review x variant join explosions on the live database.
     """
     permission_classes = [AllowAny]
 
     def get(self, request, slug):
         try:
-            # Main optimized query
             product = Product.objects.select_related(
                 'brand',
                 'product_type',
                 'categorie'
             ).prefetch_related(
-                'skin_concern',
-                'hair_concern',
-                'ingredient',
-                'product_details',
-                'images',
-                'reviews__images',
-                'reviews__user'
-            ).annotate(
-                avg_rating=Avg('reviews__rating', filter=Q(reviews__is_deleted=False)),
-                review_count=Count('reviews__id', filter=Q(reviews__is_deleted=False), distinct=True),
-                min_price=Min('product_details__selling_price', filter=Q(product_details__is_deleted=False)),
-                max_price=Max('product_details__selling_price', filter=Q(product_details__is_deleted=False)),
+                Prefetch(
+                    'product_details',
+                    queryset=ProductDetails.objects.filter(is_deleted=False).order_by('id'),
+                    to_attr='active_product_details'
+                ),
+                Prefetch(
+                    'images',
+                    queryset=ProductImage.objects.filter(is_deleted=False).order_by('id'),
+                    to_attr='active_images'
+                ),
+                Prefetch(
+                    'skin_concern',
+                    queryset=SkinConcerns.objects.filter(is_deleted=False).only('id', 'skin_concern', 'slug').order_by('id'),
+                    to_attr='active_skin_concerns'
+                ),
+                Prefetch(
+                    'hair_concern',
+                    queryset=HairConcerns.objects.filter(is_deleted=False).only('id', 'hair_concern', 'slug').order_by('id'),
+                    to_attr='active_hair_concerns'
+                ),
+                Prefetch(
+                    'ingredient',
+                    queryset=Ingredients.objects.filter(is_deleted=False).only('id', 'ingredient', 'slug').order_by('id'),
+                    to_attr='active_ingredients'
+                ),
             ).get(
                 slug=slug,
                 is_deleted=False
@@ -2605,29 +2618,33 @@ class ProductDetailAPIView(APIView):
                 status=status.HTTP_404_NOT_FOUND
             )
 
-        # Helper to build absolute media URLs
+        review_stats = ProductReview.objects.filter(
+            product_id=product.id,
+            is_deleted=False,
+        ).aggregate(
+            avg_rating=Avg('rating'),
+            review_count=Count('id'),
+        )
+
+        latest_reviews = list(
+            ProductReview.objects.filter(product_id=product.id, is_deleted=False)
+            .select_related('user')
+            .prefetch_related(
+                Prefetch(
+                    'images',
+                    queryset=ProductReviewImage.objects.order_by('id'),
+                    to_attr='prefetched_images'
+                )
+            )
+            .order_by('-review_date', '-created_at')[:10]
+        )
+
         def get_image_url(image_field):
-            if not image_field:
-                return None
-            relative_path = str(image_field)
-            if relative_path.startswith('/'):
-                relative_path = relative_path[1:]
-            return _build_media_url(request, relative_path) or None
+            return _build_media_url(request, image_field) or None
 
-        # Main images
-        thumbnail_url = get_image_url(product.thumbnail_image)
-        hover_url = get_image_url(product.hover_image)
-
-        # Gallery images
-        gallery_images = [
-            get_image_url(img.image)
-            for img in product.images.filter(is_deleted=False).order_by('id')
-        ]
-
-        # Product variants/details
-        product_details_list = []
-        for detail in product.product_details.filter(is_deleted=False):
-            product_details_list.append({
+        active_details = getattr(product, 'active_product_details', [])
+        product_details_list = [
+            {
                 'id': detail.id,
                 'product_weight': detail.product_weight,
                 'weight_type': detail.weight_type,
@@ -2636,61 +2653,58 @@ class ProductDetailAPIView(APIView):
                 'selling_price': detail.selling_price,
                 'discount_price': detail.discount_price,
                 'available_stock_count': detail.available_stock_count,
-            })
+            }
+            for detail in active_details
+        ]
 
-        # Concerns & Ingredients
-        skin_concerns = list(
-            product.skin_concern.filter(is_deleted=False)
-            .values('id', 'skin_concern', 'slug')
-        )
+        selling_prices = [detail.selling_price for detail in active_details if detail.selling_price is not None]
+        min_price = min(selling_prices) if selling_prices else 0
+        max_price = max(selling_prices) if selling_prices else 0
+        avg_rating = review_stats.get('avg_rating') or 0.0
+        review_count = review_stats.get('review_count') or 0
 
-        hair_concerns = list(
-            product.hair_concern.filter(is_deleted=False)
-            .values('id', 'hair_concern', 'slug')
-        )
+        gallery_images = [
+            get_image_url(image.image)
+            for image in getattr(product, 'active_images', [])
+        ]
 
-        ingredients = list(
-            product.ingredient.filter(is_deleted=False)
-            .values('id', 'ingredient', 'slug')  # Fixed: 'ingredient' is the correct field name
-        )
+        skin_concerns = [
+            {'id': concern.id, 'skin_concern': concern.skin_concern, 'slug': concern.slug}
+            for concern in getattr(product, 'active_skin_concerns', [])
+        ]
+        hair_concerns = [
+            {'id': concern.id, 'hair_concern': concern.hair_concern, 'slug': concern.slug}
+            for concern in getattr(product, 'active_hair_concerns', [])
+        ]
+        ingredients = [
+            {'id': ingredient.id, 'ingredient': ingredient.ingredient, 'slug': ingredient.slug}
+            for ingredient in getattr(product, 'active_ingredients', [])
+        ]
 
-        # Latest 10 reviews (for performance)
-        latest_reviews = product.reviews.filter(is_deleted=False).order_by('-review_date', '-created_at')[:10]
         reviews_list = []
-
         for review in latest_reviews:
-            review_images = [
-                get_image_url(img.image) for img in review.images.all()
-            ]
-            reviewer_name = (
-                review.reviewer_name or
-                (review.user.get_full_name() if review.user else "Anonymous")
-            )
-
+            reviewer_name = review.reviewer_name or (review.user.get_full_name() if review.user else 'Anonymous')
             reviews_list.append({
                 'id': review.id,
                 'reviewer_name': reviewer_name,
                 'rating': review.rating,
-                'review_text': review.review_text or "",
+                'review_text': review.review_text or '',
                 'review_date': review.review_date.isoformat() if review.review_date else None,
                 'created_at': review.created_at.isoformat(),
-                'images': review_images
+                'images': [get_image_url(image.image) for image in getattr(review, 'prefetched_images', [])],
             })
 
-        # Build final product data
         product_data = {
             'id': product.id,
             'product_name': product.product_name,
             'slug': product.slug,
-            'product_description': product.product_description or "",
+            'product_description': product.product_description or '',
             'key_benefits': product.key_benefits or [],
             'key_ingredients': product.key_ingredients or [],
             'how_to_use': product.how_to_use or [],
             'trending_product': product.trending_product,
             'best_seller': product.best_seller,
             'created_at': product.created_at.isoformat(),
-
-            # Relations
             'brand': {
                 'id': product.brand.id,
                 'brand_name': product.brand.brand_name,
@@ -2706,31 +2720,21 @@ class ProductDetailAPIView(APIView):
                 'name': product.product_type.product_type,
                 'slug': getattr(product.product_type, 'slug', None)
             },
-
-            # Images
-            'thumbnail_image': thumbnail_url,
-            'hover_image': hover_url,
+            'thumbnail_image': get_image_url(product.thumbnail_image),
+            'hover_image': get_image_url(product.hover_image),
             'gallery_images': gallery_images,
-
-            # Pricing & Stats
-            'min_price': product.min_price or 0,
-            'max_price': product.max_price or 0,
-            'avg_rating': round(product.avg_rating, 1) if product.avg_rating else 0.0,
-            'review_count': product.review_count or 0,
-
-            # Variants
+            'min_price': min_price,
+            'max_price': max_price,
+            'avg_rating': round(avg_rating, 1) if avg_rating else 0.0,
+            'review_count': review_count,
             'product_details': product_details_list,
-
-            # Tags
             'skin_concerns': skin_concerns,
             'hair_concerns': hair_concerns,
             'ingredients': ingredients,
-
-            # Reviews
             'reviews': {
                 'data': reviews_list,
-                'total_count': product.review_count or 0,
-                'avg_rating': round(product.avg_rating, 1) if product.avg_rating else 0.0
+                'total_count': review_count,
+                'avg_rating': round(avg_rating, 1) if avg_rating else 0.0,
             }
         }
 
