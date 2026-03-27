@@ -7,6 +7,7 @@ from ingredient.views import IngredientDetailAPIView, IngredientListCreateAPIVie
 from product.views import ProductDetailAPIView, ProductDetailDeleteAPIView, ProductImageDeleteAPIView, ProductListCreateAPIView, ProductReviewImageDeleteAPIView, ProductReviewListCreateAPIView, ProductReviewRUDAPIView
 from product_type.views import ProductTypeDetailAPIView, ProductTypeListCreateAPIView
 from secure_derma.views import AdminOrderAnalyticsAPIView, AdminOrderDetailAPIView, AdminOrderListAPIView, AdminOrderSummaryAPIView
+from secure_derma.visitor_views import AdminVisitAnalyticsAPIView, AdminVisitListAPIView, AdminVisitPagesAPIView, AdminVisitSummaryAPIView
 from skin_concern.views import SkinConcernsDetailAPIView, SkinConcernsListCreateAPIView
 from user.views import (
     AdminDetailApiView,
@@ -26,6 +27,10 @@ urlpatterns = [
     path('users/summary/', AdminUserSummaryAPIView.as_view(), name='admin-user-summary'),
     path('users/analytics/', AdminUserAnalyticsAPIView.as_view(), name='admin-user-analytics'),
     path('users/', AdminUserListAPIView.as_view(), name='admin-user-list'),
+    path('visits/summary/', AdminVisitSummaryAPIView.as_view(), name='admin-visit-summary'),
+    path('visits/analytics/', AdminVisitAnalyticsAPIView.as_view(), name='admin-visit-analytics'),
+    path('visits/pages/', AdminVisitPagesAPIView.as_view(), name='admin-visit-pages'),
+    path('visits/', AdminVisitListAPIView.as_view(), name='admin-visit-list'),
 
     path('brands/', BrandListCreateAPIView.as_view()),
     path('brands/<int:pk>/', BrandDetailAPIView.as_view()),

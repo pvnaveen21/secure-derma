@@ -162,3 +162,38 @@ class SecureDermaNewsletterSubscriber(models.Model):
 
     def __str__(self):
         return self.email
+
+
+class VisitDeviceType(models.TextChoices):
+    MOBILE = "mobile", "Mobile"
+    TABLET = "tablet", "Tablet"
+    DESKTOP = "desktop", "Desktop"
+    OTHER = "other", "Other"
+
+
+class SecureDermaVisit(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="secure_derma_visits",
+    )
+    visitor_key = models.CharField(max_length=64, db_index=True)
+    path = models.CharField(max_length=255, db_index=True)
+    referrer = models.CharField(max_length=500, blank=True)
+    device_type = models.CharField(max_length=20, choices=VisitDeviceType.choices, default=VisitDeviceType.OTHER, db_index=True)
+    user_agent = models.CharField(max_length=500, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "secure_derma_visits"
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["path", "created_at"]),
+            models.Index(fields=["visitor_key", "created_at"]),
+            models.Index(fields=["device_type", "created_at"]),
+        ]
+
+    def __str__(self):
+        return f"{self.path} [{self.visitor_key}]"

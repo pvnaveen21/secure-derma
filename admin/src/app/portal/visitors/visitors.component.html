@@ -1,0 +1,229 @@
+<div class="visitors-workspace">
+  <section class="visitors-hero">
+    <div class="visitors-hero__copy">
+      <p class="visitors-hero__eyebrow m-0">Visitor Analytics</p>
+      <h2 class="visitors-hero__title m-0">Visitors</h2>
+      <p class="visitors-hero__text m-0">
+        Track total visits, unique visitors, logged-in traffic, guest traffic, and which device people use to visit the site.
+      </p>
+    </div>
+    <div class="visitors-hero__actions">
+      <button nz-button nzType="default" (click)="loadWorkspace()">Refresh</button>
+    </div>
+  </section>
+
+  @if (loadError) {
+  <nz-card class="visitors-error-card">
+    <p class="m-0">{{ loadError }}</p>
+  </nz-card>
+  }
+
+  <nz-spin [nzSpinning]="loading">
+    <section class="visitors-metrics">
+      <nz-card class="visitors-metric visitors-metric--highlight">
+        <p class="visitors-metric__label m-0">Total Visits</p>
+        <h3 class="visitors-metric__value m-0">{{ summary.total_visits }}</h3>
+        <p class="visitors-metric__meta m-0">All tracked storefront page views</p>
+      </nz-card>
+      <nz-card class="visitors-metric">
+        <p class="visitors-metric__label m-0">Today Visits</p>
+        <h3 class="visitors-metric__value m-0">{{ summary.today_visits }}</h3>
+        <p class="visitors-metric__meta m-0">Visits recorded today</p>
+      </nz-card>
+      <nz-card class="visitors-metric">
+        <p class="visitors-metric__label m-0">Unique Visitors</p>
+        <h3 class="visitors-metric__value m-0">{{ summary.unique_visitors }}</h3>
+        <p class="visitors-metric__meta m-0">Distinct tracked visitor IDs</p>
+      </nz-card>
+      <nz-card class="visitors-metric">
+        <p class="visitors-metric__label m-0">Logged-In Visits</p>
+        <h3 class="visitors-metric__value m-0">{{ summary.logged_in_visits }}</h3>
+        <p class="visitors-metric__meta m-0">Today {{ summary.today_logged_in_visits }}</p>
+      </nz-card>
+      <nz-card class="visitors-metric">
+        <p class="visitors-metric__label m-0">Guest Visitors</p>
+        <h3 class="visitors-metric__value m-0">{{ summary.guest_visits }}</h3>
+        <p class="visitors-metric__meta m-0">Today {{ summary.today_guest_visits }}</p>
+      </nz-card>
+      <nz-card class="visitors-metric">
+        <p class="visitors-metric__label m-0">Mobile Visitors</p>
+        <h3 class="visitors-metric__value m-0">{{ summary.mobile_visitors }}</h3>
+        <p class="visitors-metric__meta m-0">Phone browsers and mobile app webviews</p>
+      </nz-card>
+      <nz-card class="visitors-metric">
+        <p class="visitors-metric__label m-0">Desktop Visitors</p>
+        <h3 class="visitors-metric__value m-0">{{ summary.desktop_visitors }}</h3>
+        <p class="visitors-metric__meta m-0">Laptop and desktop browsers</p>
+      </nz-card>
+      <nz-card class="visitors-metric">
+        <p class="visitors-metric__label m-0">Tablet Visitors</p>
+        <h3 class="visitors-metric__value m-0">{{ summary.tablet_visitors }}</h3>
+        <p class="visitors-metric__meta m-0">iPad and tablet browsers</p>
+      </nz-card>
+      <nz-card class="visitors-metric">
+        <p class="visitors-metric__label m-0">Other Device Visitors</p>
+        <h3 class="visitors-metric__value m-0">{{ summary.other_device_visitors }}</h3>
+        <p class="visitors-metric__meta m-0">
+          @if (summary.latest_visit_at) {
+          Latest visit {{ summary.latest_visit_at | date:'dd MMM yyyy, hh:mm a' }}
+          } @else {
+          No visits yet
+          }
+        </p>
+      </nz-card>
+    </section>
+
+    <nz-card class="visitors-chart-card mt-5">
+      <div class="visitors-chart-card__header">
+        <div class="visitors-chart-card__intro">
+          <p class="visitors-chart-card__eyebrow m-0">Traffic Trend</p>
+          <h3 class="visitors-chart-card__title m-0">{{ chartTotalLabel }}</h3>
+          <p class="visitors-chart-card__meta m-0">{{ chartRangeLabel }}</p>
+        </div>
+
+        <div class="visitors-chart-card__actions">
+          <div class="visitors-chart-card__toggle" role="tablist" aria-label="Visitor chart grouping">
+            @for (option of groupingOptions; track option.value) {
+            <button nz-button [nzType]="selectedGrouping === option.value ? 'primary' : 'default'"
+              (click)="setGrouping(option.value)">
+              {{ option.label }}
+            </button>
+            }
+          </div>
+
+          <div class="visitors-chart-card__periods">
+            <label class="visitors-toolbar__label" for="visitor-periods">Range</label>
+            <nz-select id="visitor-periods" [ngModel]="selectedPeriods" (ngModelChange)="onPeriodsChange($event)">
+              @for (period of periodOptions; track period) {
+              <nz-option [nzValue]="period"
+                [nzLabel]="period + (selectedGrouping === 'day' ? ' days' : ' months')"></nz-option>
+              }
+            </nz-select>
+          </div>
+
+          <div class="visitors-chart-card__anchor-group">
+            <button nz-button nzType="default" (click)="moveAnchor(-1)">Previous</button>
+            @if (selectedGrouping === 'day') {
+            <input class="visitors-chart-card__date-input" type="date" [max]="datePickerMax" [ngModel]="selectedAnchorDate"
+              (ngModelChange)="onAnchorDateChange($event)" />
+            } @else {
+            <input class="visitors-chart-card__month-input" type="month" [max]="monthPickerMax"
+              [ngModel]="selectedAnchorMonth" (ngModelChange)="onAnchorMonthChange($event)" />
+            }
+            <button nz-button nzType="default" (click)="moveAnchor(1)"
+              [disabled]="selectedGrouping === 'day' ? selectedAnchorDate >= datePickerMax : selectedAnchorMonth >= monthPickerMax">Next</button>
+          </div>
+        </div>
+      </div>
+
+      @if (chartPoints.length && analytics.total_visits > 0) {
+      <div class="visitors-chart" role="img" [attr.aria-label]="chartTotalLabel">
+        @for (point of chartPoints; track point.key) {
+        <div class="visitors-chart__item" [attr.aria-label]="formatBarAriaLabel(point)">
+          <span class="visitors-chart__count">{{ point.visits }}</span>
+          <div class="visitors-chart__bar-wrap">
+            <div class="visitors-chart__bar" [style.height]="getBarHeight(point.visits)"
+              [attr.title]="point.label + ': ' + point.visits + ' visits'"></div>
+          </div>
+          <span class="visitors-chart__label">{{ point.short_label }}</span>
+        </div>
+        }
+      </div>
+      } @else {
+      <nz-empty nzNotFoundImage="simple" nzNotFoundContent="No visits in the selected range"></nz-empty>
+      }
+    </nz-card>
+
+    <section class="visitors-toolbar mt-5">
+      <div class="visitors-search">
+        <label class="visitors-toolbar__label" for="admin-visit-search">Search Visits</label>
+        <input id="admin-visit-search" nz-input placeholder="Path, referrer, visitor ID, or user email" [(ngModel)]="searchText"
+          (keyup.enter)="applyFilters()" />
+      </div>
+
+      <div class="visitors-toolbar__controls">
+        <div class="visitors-date-wrap">
+          <label class="visitors-toolbar__label" for="admin-visit-date">Visited On</label>
+          <input id="admin-visit-date" class="visitors-toolbar__date" type="date" [(ngModel)]="selectedDate"
+            [max]="datePickerMax" />
+        </div>
+        <button nz-button nzType="primary" (click)="applyFilters()">Apply</button>
+        <button nz-button nzType="default" (click)="resetFilters()">Reset</button>
+      </div>
+    </section>
+
+    <div class="visitors-metrics mt-5">
+      <nz-card class="visitors-list-card">
+        <div class="visitors-list-card__head">
+          <div>
+            <p class="visitors-list-card__eyebrow m-0">Top Pages</p>
+            <h3 class="visitors-list-card__title m-0">Most visited pages</h3>
+          </div>
+          <p class="visitors-list-card__meta m-0">Top {{ topPages.length }} paths</p>
+        </div>
+
+        @if (topPages.length) {
+        <div class="visitors-list">
+          @for (page of topPages; track page.path) {
+          <div class="visitors-row">
+            <div>
+              <p class="visitors-row__name m-0">{{ formatPath(page.path) }}</p>
+              <p class="visitors-row__meta m-0">{{ page.path }}</p>
+            </div>
+            <div class="visitors-row__details">
+              <nz-tag nzColor="processing">{{ page.visits }} visits</nz-tag>
+              <span>{{ page.unique_visitors }} visitors</span>
+              <span>{{ page.latest_visit_at | date:'dd MMM yyyy, hh:mm a' }}</span>
+            </div>
+          </div>
+          }
+        </div>
+        } @else {
+        <nz-empty nzNotFoundImage="simple" nzNotFoundContent="No pages found"></nz-empty>
+        }
+      </nz-card>
+    </div>
+
+    <nz-card class="visitors-list-card mt-5">
+      <div class="visitors-list-card__head">
+        <div>
+          <p class="visitors-list-card__eyebrow m-0">Recent Visits</p>
+          <h3 class="visitors-list-card__title m-0">{{ total }} result<span *ngIf="total !== 1">s</span></h3>
+        </div>
+        <p class="visitors-list-card__meta m-0">Showing {{ rangeStart }}-{{ rangeEnd }}</p>
+      </div>
+
+      @if (visits.length) {
+      <div class="visitors-list">
+        @for (visit of visits; track visit.id) {
+        <div class="visitors-row">
+          <div>
+            <p class="visitors-row__name m-0">{{ formatPath(visit.path) }}</p>
+            <p class="visitors-row__meta m-0">
+              {{ visit.path }}
+              @if (visit.referrer) {
+              <span>• Referrer: {{ visit.referrer }}</span>
+              }
+            </p>
+          </div>
+          <div class="visitors-row__details">
+            <nz-tag [nzColor]="visit.device_type === 'desktop' ? 'purple' : visit.device_type === 'tablet' ? 'gold' : visit.device_type === 'mobile' ? 'blue' : 'default'">{{ visit.device_label }}</nz-tag>
+            <nz-tag [nzColor]="visit.visitor_type === 'logged_in' ? 'success' : 'default'">{{ formatVisitorType(visit) }}</nz-tag>
+            <nz-tag [nzColor]="visit.user_email ? 'processing' : 'default'">{{ visit.user_email || formatVisitorKey(visit.visitor_key) }}</nz-tag>
+            <span>{{ visit.created_at | date:'dd MMM yyyy, hh:mm a' }}</span>
+          </div>
+        </div>
+        }
+      </div>
+
+      <nz-pagination class="visitors-pager" [nzTotal]="total" [nzPageIndex]="pageIndex" [nzPageSize]="pageSize"
+        [nzPageSizeOptions]="[12, 24, 48]" [nzShowSizeChanger]="true" [nzShowQuickJumper]="true"
+        [nzHideOnSinglePage]="true" (nzPageIndexChange)="onPageIndexChange($event)"
+        (nzPageSizeChange)="onPageSizeChange($event)">
+      </nz-pagination>
+      } @else {
+      <nz-empty nzNotFoundImage="simple" nzNotFoundContent="No visits found"></nz-empty>
+      }
+    </nz-card>
+  </nz-spin>
+</div>
