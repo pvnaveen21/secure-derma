@@ -19,9 +19,11 @@ from ingredient.models import Ingredients
 from product.models import Product, ProductDetails, ProductImage, ProductReview, ProductReviewImage
 from product.serializers import ProductListSerializer
 from product_type.models import ProductType
-from django.db.models import Prefetch, Avg, Count, Min, Q, F, Sum
+from django.db.models import Prefetch, Avg, Count, Min, Q, F, Sum, OuterRef, Subquery, IntegerField
 from django.db.models.functions import TruncDate, TruncMonth
 from django.utils import timezone
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
 
 from skin_concern.models import SkinConcerns
 from rest_framework import status
@@ -401,6 +403,7 @@ class BrandListAPIView(ListAPIView):
 
         return Response(grouped_data)
     
+@method_decorator(cache_page(60 * 15), name='dispatch')
 class TopBrandsAPIView(ListAPIView):
     """Fast API to get top brands only"""
     permission_classes = [AllowAny]
@@ -1418,46 +1421,42 @@ class UserOrderDetailAPIView(APIView):
             }
         )
         
+@method_decorator(cache_page(60 * 10), name='dispatch')
 class TrendingProductsFastAPIView(ListAPIView):
-    """Ultra-fast API for trending products with product details"""
+    """Cached API for trending products with compact related data."""
     permission_classes = [AllowAny]
     pagination_class = None
     
     def get(self, request, *args, **kwargs):
-        # Get products with annotations
+        review_count_subquery = ProductReview.objects.filter(
+            product_id=OuterRef('pk'),
+            is_deleted=False,
+        ).values('product_id').annotate(total=Count('id')).values('total')[:1]
+
         queryset = Product.objects.filter(
             is_deleted=False,
             trending_product=True
         ).select_related(
             'brand',
-            'product_type', 
+            'product_type',
             'categorie'
         ).prefetch_related(
-            'product_details'  # Prefetch product details
+            Prefetch(
+                'product_details',
+                queryset=ProductDetails.objects.filter(is_deleted=False).order_by('id'),
+                to_attr='active_product_details'
+            )
         ).annotate(
             avg_rating=Avg('reviews__rating', filter=Q(reviews__is_deleted=False)),
-            review_count=Count('reviews__id', filter=Q(reviews__is_deleted=False), distinct=True),
-            min_price=Min('product_details__selling_price', filter=Q(product_details__is_deleted=False))
+            review_count=Subquery(review_count_subquery, output_field=IntegerField())
         ).order_by('-created_at')[:50]
-        
-        # Build response list
+
         products_list = []
-        
+
         for product in queryset:
-            # Build thumbnail URL
-            thumbnail_url = None
-            if product.thumbnail_image:
-                thumbnail_url = _build_media_url(request, product.thumbnail_image) or None
-            
-            # Build hover image URL
-            hover_url = None
-            if product.hover_image:
-                hover_url = _build_media_url(request, product.hover_image) or None
-            
-            # Get product details (without available_stock_count)
-            product_details_list = []
-            for detail in product.product_details.filter(is_deleted=False):
-                product_details_list.append({
+            active_details = getattr(product, 'active_product_details', [])
+            product_details_list = [
+                {
                     'id': detail.id,
                     'product_weight': detail.product_weight,
                     'weight_type': detail.weight_type,
@@ -1465,8 +1464,11 @@ class TrendingProductsFastAPIView(ListAPIView):
                     'original_price': detail.original_price,
                     'selling_price': detail.selling_price,
                     'discount_price': detail.discount_price
-                })
-            
+                }
+                for detail in active_details
+            ]
+            min_price = min((detail.selling_price for detail in active_details), default=0)
+
             products_list.append({
                 'id': product.id,
                 'slug': product.slug,
@@ -1474,20 +1476,21 @@ class TrendingProductsFastAPIView(ListAPIView):
                 'brand_name': product.brand.brand_name,
                 'product_type': product.product_type.product_type,
                 'category_id': product.categorie.id,
-                'thumbnail_image': thumbnail_url,
-                'hover_image': hover_url,
-                'min_price': product.min_price or 0,
+                'thumbnail_image': _build_media_url(request, product.thumbnail_image) or None,
+                'hover_image': _build_media_url(request, product.hover_image) or None,
+                'min_price': min_price,
                 'avg_rating': round(product.avg_rating, 1) if product.avg_rating else 0,
                 'review_count': product.review_count or 0,
-                'product_details': product_details_list  # ✅ Added product details
+                'product_details': product_details_list
             })
-        
+
         return Response({
             'trending_products': products_list,
             'count': len(products_list)
         })
 
 
+@method_decorator(cache_page(60 * 30), name='dispatch')
 class ShopByConcernAPIView(ListAPIView):
     """API to get concerns enabled for the home Shop by Concern section"""
     permission_classes = [AllowAny]
@@ -2255,14 +2258,6 @@ class ProductListWithFiltersAPIView(APIView):
             )
         )
 
-        reviews_prefetch = Prefetch(
-            "reviews",
-            queryset=ProductReview.objects.filter(
-                is_deleted=False
-            ).select_related("user"),
-            to_attr="all_reviews"
-        )
-
         products = products.select_related(
             "brand", "categorie", "product_type"
         ).prefetch_related(
@@ -2275,9 +2270,9 @@ class ProductListWithFiltersAPIView(APIView):
             ),
             Prefetch(
                 "images",
-                queryset=ProductImage.objects.filter(is_deleted=False)
-            ),
-            reviews_prefetch
+                queryset=ProductImage.objects.filter(is_deleted=False),
+                to_attr="active_images"
+            )
         ).distinct()
 
         # =====================================================
@@ -2752,14 +2747,30 @@ from .serializers import (
 )
 class ProductSideMenuAPIView(APIView):
     def get(self, request):
-        hair_concerns = HairConcerns.objects.filter(is_deleted=False)
-        skin_concerns = SkinConcerns.objects.filter(is_deleted=False)
-        ingredients = Ingredients.objects.filter(is_deleted=False)
-        product_types = ProductType.objects.filter(is_deleted=False)
+        hair_concerns = list(
+            HairConcerns.objects.filter(is_deleted=False)
+            .values('id', name=F('hair_concern'), slug=F('slug'))
+            .order_by('id')
+        )
+        skin_concerns = list(
+            SkinConcerns.objects.filter(is_deleted=False)
+            .values('id', name=F('skin_concern'), slug=F('slug'))
+            .order_by('id')
+        )
+        ingredients = list(
+            Ingredients.objects.filter(is_deleted=False)
+            .values('id', name=F('ingredient'), slug=F('slug'))
+            .order_by('id')
+        )
+        product_types = list(
+            ProductType.objects.filter(is_deleted=False)
+            .values('id', name=F('product_type'), slug=F('slug'))
+            .order_by('id')
+        )
 
         return Response({
-            "hair_concerns": HairConcernSerializer(hair_concerns, many=True).data,
-            "skin_concerns": SkinConcernSerializer(skin_concerns, many=True).data,
-            "ingredients": IngredientSerializer(ingredients, many=True).data,
-            "product_types": ProductTypeSerializer(product_types, many=True).data,
+            "hair_concerns": hair_concerns,
+            "skin_concerns": skin_concerns,
+            "ingredients": ingredients,
+            "product_types": product_types,
         })
