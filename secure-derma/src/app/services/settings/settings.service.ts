@@ -60,26 +60,6 @@ export class SettingsService {
     document.documentElement.classList.add(theme);
   }
 
-  private ensureBaseStylesheet(): Promise<Event> {
-    return new Promise((resolve, reject) => {
-      const linkId = 'theme-base';
-      const existingLink = document.getElementById(linkId) as HTMLLinkElement | null;
-
-      if (existingLink) {
-        resolve(new Event('load'));
-        return;
-      }
-
-      const style = document.createElement('link');
-      style.rel = 'stylesheet';
-      style.href = 'ng-zorro-base.css';
-      style.id = linkId;
-      style.onload = (event) => resolve(event);
-      style.onerror = (event) => reject(event);
-      document.head.append(style);
-    });
-  }
-
   private ensureThemeStylesheet(theme: ThemeType, active: boolean): Promise<Event> {
     return new Promise((resolve, reject) => {
       const linkId = this.getThemeLinkId(theme);
@@ -115,7 +95,7 @@ export class SettingsService {
   public loadTheme(_firstLoad = true): Promise<Event> {
     const theme = this.currentTheme;
 
-    return this.ensureBaseStylesheet().then(() => this.ensureThemeStylesheet(theme, true)).then((event) => {
+    return this.ensureThemeStylesheet(theme, true).then((event) => {
       this.setThemeClass(theme);
       this.removeThemeAfterChanges(theme);
       this.preloadAlternateThemes(theme);
