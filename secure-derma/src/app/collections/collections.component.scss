@@ -2,10 +2,6 @@
 
 .banner-wrapper {
     margin-top: 0.5rem; // 0.8rem
-
-    @media only screen and (max-width:76.8rem) {
-        padding-inline: 1rem;
-    }
 }
 
 .banner-carousel {
@@ -78,10 +74,6 @@
 .banner-wrapper {
     margin-top: 0.5rem;
     margin-bottom: 1.5rem;
-
-    @media only screen and (max-width: 48rem) {
-        padding-inline: 1rem;
-    }
 }
 
 .banner-carousel {
@@ -1007,7 +999,7 @@
 
 .product-footer {
     display: grid;
-    grid-template-rows: minmax(2.5rem, auto) 1.3rem minmax(4.8rem, auto) auto minmax(2.75rem, auto);
+    grid-template-rows: minmax(3.75rem, auto) 1.3rem minmax(4.8rem, auto) auto minmax(2.75rem, auto);
     align-content: start;
     flex: 1;
     row-gap: 0.6rem;
@@ -1036,15 +1028,18 @@
         line-height: 1.25;
         margin: 0;
         font-size: 1rem;
-        // min-height: 4rem;
+        width: 100%;
+        max-width: 100%;
+        min-height: 3.75rem;
         display: -webkit-box;
-        -webkit-line-clamp: 2;
-        line-clamp: 2;
+        -webkit-line-clamp: 3;
+        line-clamp: 3;
         -webkit-box-orient: vertical;
         overflow: hidden;
         text-overflow: ellipsis;
         word-break: normal;
-        overflow-wrap: break-word;
+        overflow-wrap: normal;
+        hyphens: none;
     }
 
     ::ng-deep .ant-rate {
@@ -1280,7 +1275,7 @@
     }
 
     .product-footer {
-        grid-template-rows: minmax(3.45rem, auto) minmax(1.75rem, auto) minmax(4.8rem, auto) auto minmax(2.35rem, auto);
+        grid-template-rows: minmax(3.3rem, auto) minmax(1.75rem, auto) minmax(4.8rem, auto) auto minmax(2.35rem, auto);
     }
 
     .product-footer .rate-height {
@@ -1295,12 +1290,18 @@
     .product-footer h5 {
         font-size: 0.9rem;
         line-height: 1.2;
-        // min-height: 3.45rem;
+        width: 100%;
+        max-width: 100%;
+        min-height: 3.3rem;
         display: -webkit-box;
-        -webkit-line-clamp: 2;
-        line-clamp: 2;
+        -webkit-line-clamp: 3;
+        line-clamp: 3;
         -webkit-box-orient: vertical;
         overflow: hidden;
+        text-overflow: ellipsis;
+        word-break: normal;
+        overflow-wrap: normal;
+        hyphens: none;
     }
 
     .product-description {
