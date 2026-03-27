@@ -23,6 +23,12 @@ export const routes: Routes = [
                         .then(c => c.UsersComponent),
             },
             {
+                path: 'visitors',
+                loadComponent: () =>
+                    import('@app/portal/visitors/visitors.component')
+                        .then(c => c.VisitorsComponent),
+            },
+            {
                 path: 'banners',
                 loadComponent: () =>
                     import('@app/portal/banners/banners.component')

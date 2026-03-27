@@ -19,6 +19,7 @@ import { settingsServiceFactory } from '@app/core';
 import { NzConfig, provideNzConfig } from 'ng-zorro-antd/core/config';
 import { authInterceptor } from './auth/interceptor';
 import { SeoRouteService } from './services/seo-route.service';
+import { VisitRouteService } from './services/visit-route.service';
 
 const ngZorroConfig: NzConfig = {
   message: { nzDuration: 5000 },
@@ -39,6 +40,7 @@ export const appConfig: ApplicationConfig = {
     provideHttpClient(withInterceptors([authInterceptor])),
     provideAppInitializer(() => settingsServiceFactory(inject(SettingsService))),
     provideAppInitializer(() => inject(SeoRouteService).init()),
+    provideAppInitializer(() => inject(VisitRouteService).init()),
     provideNzConfig(ngZorroConfig)
   ]
 };

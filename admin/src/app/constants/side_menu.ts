@@ -21,6 +21,13 @@ export const SideMenu: { [key: string]: any[] } = {
       permissions: [1]
     },
     {
+      title: 'Visitors',
+      icon: icons.sideMenu.userCheck,
+      routerLink: '/visitors',
+      currentUrl: ['visitors'],
+      permissions: [1]
+    },
+    {
       title: 'Banners',
       icon: icons.sideMenu.presentation,
       routerLink: '/banners',
