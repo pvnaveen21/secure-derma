@@ -211,23 +211,6 @@ export class LoginComponent implements AfterViewInit {
     });
   }
 
-  continueWithGoogle() {
-    if (!this.isGoogleLoginEnabled) {
-      this.message.warning('Google sign-in is not configured for this environment.');
-      return;
-    }
-
-    const googleButton = document.querySelector('#googleBtn [role="button"]') as HTMLElement | null;
-    console.log(googleButton);
-    
-    if (!googleButton) {
-      this.message.warning('Google sign-in is not ready yet. Please try again.');
-      return;
-    }
-
-    googleButton.click();
-  }
-
   validateCurrentInput() {
     return this.authMode === 'email' ? this.validateEmail() : this.validatePhone();
   }
