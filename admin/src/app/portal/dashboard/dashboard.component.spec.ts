@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { OrderService } from '@app/services/secura/order.service';
+import { UserService } from '@app/services/secura/user.service';
 
 import { DashboardComponent } from './dashboard.component';
 
@@ -8,9 +9,12 @@ describe('DashboardComponent', () => {
   let component: DashboardComponent;
   let fixture: ComponentFixture<DashboardComponent>;
   let orderService: jasmine.SpyObj<OrderService>;
+  let userService: jasmine.SpyObj<UserService>;
 
   beforeEach(async () => {
     orderService = jasmine.createSpyObj<OrderService>('OrderService', ['getOrderSummary', 'getOrderAnalytics', 'getOrders']);
+    userService = jasmine.createSpyObj<UserService>('UserService', ['getUserSummary', 'getUsers']);
+
     orderService.getOrderSummary.and.returnValue(of({
       summary: {
         total_orders: 12,
@@ -64,10 +68,34 @@ describe('DashboardComponent', () => {
       })
     );
 
+    userService.getUserSummary.and.returnValue(of({
+      summary: {
+        total_users: 120,
+        today_new_users: 4,
+        google_users: 30,
+        manual_users: 90,
+        latest_user_at: '2026-03-24T08:30:00Z'
+      }
+    }));
+    userService.getUsers.and.returnValue(of({
+      count: 1,
+      results: [
+        {
+          id: 11,
+          username: 'New User',
+          email: 'new@example.com',
+          phone: '9123456789',
+          is_google_login: true,
+          created_at: '2026-03-24T08:30:00Z'
+        }
+      ]
+    }));
+
     await TestBed.configureTestingModule({
       imports: [DashboardComponent],
       providers: [
-        { provide: OrderService, useValue: orderService }
+        { provide: OrderService, useValue: orderService },
+        { provide: UserService, useValue: userService }
       ]
     })
     .compileComponents();
@@ -81,6 +109,13 @@ describe('DashboardComponent', () => {
     expect(component).toBeTruthy();
   });
 
+  it('loads user summary and todays new users on init', () => {
+    expect(component.userSummary.total_users).toBe(120);
+    expect(component.todayUsersCount).toBe(1);
+    expect(userService.getUserSummary).toHaveBeenCalled();
+    expect(userService.getUsers).toHaveBeenCalledWith(8, 0, '', 'today', jasmine.any(String));
+  });
+
   it('passes anchor month when loading monthly analytics', () => {
     orderService.getOrderAnalytics.calls.reset();
 
@@ -90,12 +125,15 @@ describe('DashboardComponent', () => {
     expect(orderService.getOrderAnalytics).toHaveBeenCalledWith('month', undefined, '2025-12');
     expect(orderService.getOrders).not.toHaveBeenCalled();
     expect(orderService.getOrderSummary).not.toHaveBeenCalled();
+    expect(userService.getUserSummary).not.toHaveBeenCalled();
   });
 
   it('reloads latest paid orders with a new page size only', () => {
     orderService.getOrders.calls.reset();
     orderService.getOrderSummary.calls.reset();
     orderService.getOrderAnalytics.calls.reset();
+    userService.getUserSummary.calls.reset();
+    userService.getUsers.calls.reset();
     orderService.getOrders.and.returnValue(of({ count: 20, results: [] }));
 
     component.onRecentOrdersPageSizeChange(25);
@@ -104,18 +142,24 @@ describe('DashboardComponent', () => {
     expect(orderService.getOrders).toHaveBeenCalledOnceWith(25, 0, 'paid');
     expect(orderService.getOrderSummary).not.toHaveBeenCalled();
     expect(orderService.getOrderAnalytics).not.toHaveBeenCalled();
+    expect(userService.getUserSummary).not.toHaveBeenCalled();
+    expect(userService.getUsers).not.toHaveBeenCalled();
   });
 
   it('loads only recent orders when dashboard pagination changes', () => {
     orderService.getOrders.calls.reset();
     orderService.getOrderSummary.calls.reset();
     orderService.getOrderAnalytics.calls.reset();
+    userService.getUserSummary.calls.reset();
+    userService.getUsers.calls.reset();
     orderService.getOrders.and.returnValue(of({ count: 20, results: [] }));
 
     component.onRecentOrdersPageIndexChange(2);
 
-    expect(orderService.getOrders).toHaveBeenCalledOnceWith(8, 8, 'paid');
+    expect(orderService.getOrders).toHaveBeenCalledOnceWith(10, 10, 'paid');
     expect(orderService.getOrderSummary).not.toHaveBeenCalled();
     expect(orderService.getOrderAnalytics).not.toHaveBeenCalled();
+    expect(userService.getUserSummary).not.toHaveBeenCalled();
+    expect(userService.getUsers).not.toHaveBeenCalled();
   });
 });

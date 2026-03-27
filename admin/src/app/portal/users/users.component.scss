@@ -1,0 +1,365 @@
+.users-workspace {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 20px;
+  background: linear-gradient(180deg, #f6f8fb 0%, #eef3f8 100%);
+  min-height: 100%;
+}
+
+.users-hero {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 22px 24px;
+  border-radius: 22px;
+  background: linear-gradient(135deg, #10291f 0%, #1b4636 100%);
+  color: #f8fffb;
+}
+
+.users-hero__copy {
+  display: grid;
+  gap: 10px;
+  max-width: 52rem;
+}
+
+.users-hero__eyebrow,
+.users-list-card__eyebrow,
+.users-chart-card__eyebrow,
+.users-metric__label,
+.users-toolbar__label {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.users-hero__eyebrow {
+  color: #9fd7c3;
+}
+
+.users-hero__title {
+  font-size: 30px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.users-hero__text {
+  max-width: 46rem;
+  color: #cbe6dc;
+  line-height: 1.6;
+}
+
+.users-hero__actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.users-error-card {
+  border-radius: 18px;
+  border: 1px solid #f5c8cf;
+  background: #fff4f6;
+  color: #a0283d;
+}
+
+.users-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+}
+
+.users-metric,
+.users-chart-card,
+.users-list-card {
+  border-radius: 20px;
+  border: 1px solid #dde6ee;
+  box-shadow: 0 10px 30px rgba(12, 35, 24, 0.05);
+}
+
+.users-metric__label,
+.users-list-card__eyebrow,
+.users-chart-card__eyebrow,
+.users-toolbar__label {
+  color: #5f6f80;
+}
+
+.users-metric--highlight {
+  background: linear-gradient(135deg, #eef8f2, #dff1e6);
+}
+
+.users-metric__value {
+  margin-top: 12px;
+  font-size: 28px;
+  font-weight: 700;
+  color: #112136;
+}
+
+.users-metric__meta {
+  margin-top: 8px;
+  color: #6d7b8d;
+  line-height: 1.5;
+}
+
+.users-toolbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(18rem, 1fr);
+  gap: 14px;
+  align-items: end;
+}
+
+.users-search,
+.users-date-wrap,
+.users-chart-card__periods {
+  display: grid;
+  gap: 8px;
+}
+
+.users-toolbar__controls {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 12px;
+  align-items: end;
+}
+
+.users-toolbar__date,
+.users-chart-card__month-input,
+.users-chart-card__date-input {
+  width: 100%;
+  min-width: 148px;
+  padding: 10px 12px;
+  border: 1px solid #d8e1ea;
+  border-radius: 12px;
+  background: #ffffff;
+  color: #112136;
+  font: inherit;
+}
+
+.users-segments {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.users-segment {
+  border: 1px solid #d6e2da;
+  border-radius: 999px;
+  padding: 8px 14px;
+  background: #ffffff;
+  color: #1d4737;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.users-segment--active {
+  border-color: #1a5944;
+  background: #eaf3ef;
+  color: #0f3d2d;
+}
+
+.users-chart-card {
+  background: radial-gradient(circle at top right, rgba(26, 89, 68, 0.12), transparent 32%), linear-gradient(180deg, #fcfffd, #f5faf7);
+}
+
+.users-chart-card__header,
+.users-chart-card__actions,
+.users-list-card__head,
+.users-month-group__head,
+.users-row,
+.users-row__details,
+.users-chart-card__anchor-group {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.users-chart-card__header {
+  align-items: flex-start;
+}
+
+.users-chart-card__intro {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.users-chart-card__actions {
+  display: grid;
+  grid-template-columns: auto auto;
+  justify-content: end;
+  align-items: end;
+  justify-items: end;
+  gap: 12px;
+}
+
+.users-chart-card__toggle {
+  grid-column: 1 / -1;
+  justify-self: end;
+  display: inline-flex;
+  gap: 8px;
+  padding: 4px;
+  border-radius: 999px;
+  background: #eff5f1;
+}
+
+.users-chart-card__periods {
+  min-width: 132px;
+}
+
+.users-chart-card__anchor-group {
+  justify-content: flex-end;
+  align-self: end;
+}
+
+
+.users-chart-card__title,
+.users-list-card__title {
+  margin-top: 4px;
+  font-size: 24px;
+  color: #122136;
+}
+
+.users-chart-card__meta,
+.users-list-card__meta,
+.users-month-group__head span,
+.users-row__meta,
+.users-row__details span {
+  color: #6d7b8d;
+}
+
+
+.users-chart {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(36px, 1fr));
+  gap: 10px;
+  min-height: 280px;
+  margin-top: 24px;
+  padding-top: 12px;
+}
+
+.users-chart__item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.users-chart__count {
+  font-size: 12px;
+  font-weight: 700;
+  color: #1a5944;
+}
+
+.users-chart__bar-wrap {
+  display: flex;
+  align-items: flex-end;
+  width: 100%;
+  min-height: 190px;
+  padding: 0 3px;
+}
+
+.users-chart__bar {
+  width: 100%;
+  min-height: 6px;
+  border-radius: 14px 14px 6px 6px;
+  background: linear-gradient(180deg, #2e8562, #1a5944);
+  box-shadow: 0 12px 24px rgba(26, 89, 68, 0.18);
+}
+
+.users-chart__label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #667871;
+  text-align: center;
+}
+
+.users-month-groups {
+  display: grid;
+  gap: 18px;
+  margin-top: 18px;
+}
+
+.users-month-group {
+  padding: 16px;
+  border: 1px solid #e4ebf1;
+  border-radius: 18px;
+  background: linear-gradient(180deg, #ffffff 0%, #f9fbfd 100%);
+}
+
+.users-list {
+  display: grid;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.users-row {
+  padding-top: 12px;
+  border-top: 1px solid #edf2ef;
+  align-items: flex-start;
+}
+
+.users-row:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.users-row__name {
+  font-weight: 700;
+  color: #122136;
+}
+
+.users-row__meta {
+  margin-top: 6px;
+  font-size: 13px;
+}
+
+.users-row__details {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.users-pager {
+  margin-top: 18px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+@media only screen and (max-width: 1100px) {
+  .users-toolbar {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media only screen and (max-width: 768px) {
+  .users-workspace {
+    padding: 16px;
+  }
+
+  .users-hero,
+  .users-chart-card__header,
+  .users-list-card__head,
+  .users-month-group__head,
+  .users-row,
+  .users-chart-card__actions,
+  .users-chart-card__anchor-group {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .users-toolbar__controls {
+    grid-template-columns: 1fr;
+  }
+
+  .users-row__details,
+  .users-pager {
+    justify-content: flex-start;
+  }
+
+  .users-chart {
+    overflow-x: auto;
+    grid-template-columns: repeat(14, minmax(28px, 1fr));
+    padding-bottom: 8px;
+  }
+}

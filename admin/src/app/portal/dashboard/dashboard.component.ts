@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { OrderAnalyticsGrouping, OrderService } from '@app/services/secura/order.service';
+import { UserService } from '@app/services/secura/user.service';
 import { forkJoin } from 'rxjs';
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzCardModule } from 'ng-zorro-antd/card';
@@ -16,6 +17,14 @@ interface DashboardSummary {
   latest_paid_at: string | null;
 }
 
+interface UserSummary {
+  total_users: number;
+  today_new_users: number;
+  google_users: number;
+  manual_users: number;
+  latest_user_at: string | null;
+}
+
 interface DashboardOrder {
   id: number;
   order_number: string;
@@ -27,9 +36,18 @@ interface DashboardOrder {
   updated_at: string;
 }
 
-interface DashboardOrderListResponse {
+interface DashboardUser {
+  id: number;
+  username: string;
+  email: string;
+  phone: string | null;
+  is_google_login: boolean;
+  created_at: string;
+}
+
+interface DashboardListResponse<T> {
   count: number;
-  results: DashboardOrder[];
+  results: T[];
 }
 
 interface OrderAnalyticsPoint {
@@ -79,6 +97,13 @@ export class DashboardComponent {
     pending_orders: 0,
     latest_paid_at: null
   };
+  userSummary: UserSummary = {
+    total_users: 0,
+    today_new_users: 0,
+    google_users: 0,
+    manual_users: 0,
+    latest_user_at: null
+  };
   analytics: OrderAnalyticsResponse = {
     grouping: 'day',
     periods: 14,
@@ -90,9 +115,14 @@ export class DashboardComponent {
   };
   todayOrders: DashboardOrder[] = [];
   todayOrdersCount = 0;
+  todayUsers: DashboardUser[] = [];
+  todayUsersCount = 0;
   recentOrders: DashboardOrder[] = [];
 
-  constructor(private readonly orderService: OrderService) {}
+  constructor(
+    private readonly orderService: OrderService,
+    private readonly userService: UserService
+  ) {}
 
   ngOnInit() {
     this.loadDashboard();
@@ -150,26 +180,26 @@ export class DashboardComponent {
 
     forkJoin({
       summary: this.orderService.getOrderSummary(),
+      userSummary: this.userService.getUserSummary(),
       analytics: this.orderService.getOrderAnalytics(
         this.selectedGrouping,
         undefined,
         this.selectedGrouping === 'month' ? this.selectedAnchorMonth : undefined
       ),
       todayOrders: this.orderService.getOrders(25, 0, 'paid', '', this.getTodayValue()),
+      todayUsers: this.userService.getUsers(8, 0, '', 'today', this.getTodayValue()),
       recentOrders: this.orderService.getOrders(this.recentOrdersPageSize, recentOffset, 'paid')
     }).subscribe({
       next: (response: any) => {
-        const summary = response?.summary as { summary?: DashboardSummary } | undefined;
-        const analytics = response?.analytics as OrderAnalyticsResponse | undefined;
-        const todayOrders = response?.todayOrders as DashboardOrderListResponse | undefined;
-        const recentOrders = response?.recentOrders as DashboardOrderListResponse | undefined;
-
-        this.summary = summary?.summary || this.summary;
-        this.analytics = analytics || this.analytics;
-        this.todayOrders = todayOrders?.results || [];
-        this.todayOrdersCount = todayOrders?.count || 0;
-        this.recentOrders = recentOrders?.results || [];
-        this.recentOrdersTotal = recentOrders?.count || 0;
+        this.summary = response?.summary?.summary || this.summary;
+        this.userSummary = response?.userSummary?.summary || this.userSummary;
+        this.analytics = response?.analytics || this.analytics;
+        this.todayOrders = response?.todayOrders?.results || [];
+        this.todayOrdersCount = response?.todayOrders?.count || 0;
+        this.todayUsers = response?.todayUsers?.results || [];
+        this.todayUsersCount = response?.todayUsers?.count || 0;
+        this.recentOrders = response?.recentOrders?.results || [];
+        this.recentOrdersTotal = response?.recentOrders?.count || 0;
         this.loading = false;
         this.analyticsLoading = false;
         this.recentOrdersLoading = false;
@@ -304,6 +334,10 @@ export class DashboardComponent {
     }).format(value || 0);
   }
 
+  formatUserSource(user: DashboardUser): string {
+    return user.is_google_login ? 'Google' : 'Email or phone';
+  }
+
   private getTodayValue(): string {
     const today = new Date();
     const year = today.getFullYear();
@@ -343,6 +377,6 @@ export class DashboardComponent {
       return error;
     }
 
-    return 'Unable to load order dashboard data.';
+    return 'Unable to load admin dashboard data.';
   }
 }

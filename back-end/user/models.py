@@ -18,7 +18,7 @@ class UserManager(BaseUserManager):
     def create_superuser(self, email, password=None, **extra_fields):
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
-        extra_fields.setdefault('role', 'admin')  # or whatever your admin role is
+        extra_fields.setdefault('role', 'admin')
 
         if extra_fields.get('is_staff') is not True:
             raise ValueError('Superuser must have is_staff=True.')
@@ -29,19 +29,31 @@ class UserManager(BaseUserManager):
 
 
 class UserRole(models.TextChoices):
-    ADMIN  = 'admin',  'Admin'
-    USER   = 'user',   'User'
+    ADMIN = 'admin', 'Admin'
+    USER = 'user', 'User'
     DOCTOR = 'doctor', 'Doctor'
 
 
-class User(AbstractBaseUser, PermissionsMixin):  # ← important: add PermissionsMixin if you use groups/permissions
+class UserAuthSource(models.TextChoices):
+    GOOGLE = 'google', 'Google'
+    PHONE = 'phone', 'Phone'
+    EMAIL = 'email', 'Email'
+
+
+class User(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(unique=True)
-    username = models.CharField(max_length=150, blank=True)  # optional
+    username = models.CharField(max_length=150, blank=True)
     phone = models.CharField(max_length=15, unique=True, blank=True, null=True)
     profile_image = models.ImageField(upload_to='profiles/', blank=True, null=True)
 
     is_google_login = models.BooleanField(default=False)
     google_uid = models.CharField(max_length=255, blank=True, null=True)
+    auth_source = models.CharField(
+        max_length=20,
+        choices=UserAuthSource.choices,
+        default=UserAuthSource.EMAIL,
+        db_index=True,
+    )
 
     role = models.CharField(
         max_length=20,
@@ -49,12 +61,10 @@ class User(AbstractBaseUser, PermissionsMixin):  # ← important: add Permission
         default=UserRole.USER
     )
 
-    # Required for admin & auth system
     is_active = models.BooleanField(default=True)
-    is_staff = models.BooleanField(default=False)      # can access admin?
-    is_superuser = models.BooleanField(default=False)  # full permissions?
+    is_staff = models.BooleanField(default=False)
+    is_superuser = models.BooleanField(default=False)
 
-    # Audit fields from your abstract
     created_at = models.DateTimeField(auto_now_add=True, null=True)
     modified_at = models.DateTimeField(auto_now=True, null=True)
     is_deleted = models.BooleanField(default=False)
@@ -65,16 +75,11 @@ class User(AbstractBaseUser, PermissionsMixin):  # ← important: add Permission
         null=True, blank=True,
         related_name="%(class)s_created_by"
     )
-    # ... updated_by, deleted_by ...
 
     objects = UserManager()
 
     USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = []  # add e.g. ['phone'] if you want them required for createsuperuser
+    REQUIRED_FIELDS = []
 
     def __str__(self):
         return self.email
-
-    # These two are now provided by AbstractBaseUser:
-    # is_authenticated = True (property)
-    # is_anonymous = False (property)

@@ -14,6 +14,13 @@ export const SideMenu: { [key: string]: any[] } = {
   ],
   Manage: [
     {
+      title: 'Users',
+      icon: icons.sideMenu.userCog,
+      routerLink: '/users-insights',
+      currentUrl: ['users-insights'],
+      permissions: [1]
+    },
+    {
       title: 'Banners',
       icon: icons.sideMenu.presentation,
       routerLink: '/banners',
