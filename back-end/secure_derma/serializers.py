@@ -84,17 +84,35 @@ class ProductListSerializer(serializers.ModelSerializer):
         return None
     
     def get_images(self, obj):
-        images = obj.images.filter(is_deleted=False)
+        images = getattr(obj, 'active_images', None)
+        if images is None:
+            images = obj.images.filter(is_deleted=False)
         serializer = ProductImageSerializer(images, many=True, context=self.context)
         return serializer.data
 
     def get_avg_rating(self, obj):
+        annotated_rating = getattr(obj, 'avg_rating_value', None)
+        if annotated_rating is not None:
+            return round(annotated_rating, 1) if annotated_rating else 0
+
+        prefetched_reviews = getattr(obj, 'all_reviews', None)
+        if prefetched_reviews is not None:
+            return round(sum(review.rating for review in prefetched_reviews) / len(prefetched_reviews), 1) if prefetched_reviews else 0
+
         reviews = obj.reviews.filter(is_deleted=False)
         if reviews.exists():
             return round(sum(r.rating for r in reviews) / reviews.count(), 1)
         return 0
 
     def get_review_count(self, obj):
+        annotated_count = getattr(obj, 'total_reviews', None)
+        if annotated_count is not None:
+            return annotated_count
+
+        prefetched_reviews = getattr(obj, 'all_reviews', None)
+        if prefetched_reviews is not None:
+            return len(prefetched_reviews)
+
         return obj.reviews.filter(is_deleted=False).count()
     
     
