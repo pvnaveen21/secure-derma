@@ -10,7 +10,7 @@ interface HttpOptionsConfig {
 }
 
 const HttpOptionDefaultValue: HttpOptionsConfig = {
-  auth: true,
+  auth: false,
   allowCredentials: false
 }
 @Injectable({
