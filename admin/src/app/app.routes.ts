@@ -17,6 +17,12 @@ export const routes: Routes = [
                         .then(c => c.DashboardComponent),
             },
             {
+                path: 'users-insights',
+                loadComponent: () =>
+                    import('@app/portal/users/users.component')
+                        .then(c => c.UsersComponent),
+            },
+            {
                 path: 'banners',
                 loadComponent: () =>
                     import('@app/portal/banners/banners.component')
