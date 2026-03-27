@@ -59,7 +59,7 @@ export class CartService {
         map((res) => res)
       )
     );
-    this.cartItems.next(response.items || []);
+    this.cartItems.next(this.normalizeCartItems(response.items || []));
   }
 
   async syncGuestCartToServer(): Promise<void> {
@@ -89,7 +89,7 @@ export class CartService {
       )
     );
 
-    this.cartItems.next(response.items || []);
+    this.cartItems.next(this.normalizeCartItems(response.items || []));
     if (this.canUseStorage()) {
       localStorage.removeItem(this.CART_KEY);
     }
@@ -117,8 +117,9 @@ export class CartService {
         )
       );
 
-      this.cartItems.next(response.items || []);
-      const updatedItem = (response.items || []).find((item) => item.detailId === selectedDetail.id);
+      const nextItems = this.normalizeCartItems(response.items || []);
+      this.cartItems.next(nextItems);
+      const updatedItem = nextItems.find((item) => item.detailId === selectedDetail.id);
       return {
         status: updatedItem?.quantity && updatedItem.quantity > quantity ? 'updated' : 'added',
         quantity: updatedItem?.quantity || quantity
@@ -153,8 +154,9 @@ export class CartService {
         )
       );
 
-      this.cartItems.next(response.items || []);
-      const updatedItem = (response.items || []).find((item) => item.detailId === detailId);
+      const nextItems = this.normalizeCartItems(response.items || []);
+      this.cartItems.next(nextItems);
+      const updatedItem = nextItems.find((item) => item.detailId === detailId);
       return {
         status: updatedItem?.quantity && updatedItem.quantity > quantity ? 'updated' : 'added',
         quantity: updatedItem?.quantity || quantity
@@ -187,7 +189,7 @@ export class CartService {
       )
     );
 
-    this.cartItems.next(response.items || []);
+    this.cartItems.next(this.normalizeCartItems(response.items || []));
     return { status: 'updated', quantity: cappedQuantity };
   }
 
@@ -209,7 +211,7 @@ export class CartService {
         this.getHttpOptions()
       )
     );
-    this.cartItems.next(response.items || []);
+    this.cartItems.next(this.normalizeCartItems(response.items || []));
   }
 
   async updateQuantity(itemKey: number, change: number): Promise<void> {
@@ -235,7 +237,7 @@ export class CartService {
         this.getHttpOptions()
       )
     );
-    this.cartItems.next(response.items || []);
+    this.cartItems.next(this.normalizeCartItems(response.items || []));
   }
 
   async clearCart(): Promise<void> {
@@ -269,7 +271,7 @@ export class CartService {
       currentCart.push({
         productId: product.id,
         productName: product.product_name,
-        thumbnail: product.thumbnail_image,
+        thumbnail: this.resolveCartImageUrl(product.thumbnail_image),
         productWeight: selectedDetail.product_weight,
         weightType: selectedDetail.weight_type,
         qualityLabel: [selectedDetail.product_weight, selectedDetail.weight_type].filter(Boolean).join(' '),
@@ -325,10 +327,45 @@ export class CartService {
     }
 
     try {
-      return JSON.parse(data) as CartItem[];
+      return this.normalizeCartItems(JSON.parse(data) as CartItem[]);
     } catch {
       return [];
     }
+  }
+
+  private normalizeCartItems(items: CartItem[]): CartItem[] {
+    return items.map((item) => ({
+      ...item,
+      thumbnail: this.resolveCartImageUrl(item.thumbnail)
+    }));
+  }
+
+  private resolveCartImageUrl(rawUrl: string | undefined | null): string {
+    const value = String(rawUrl || '').trim();
+    if (!value) {
+      return '';
+    }
+
+    try {
+      return new URL(value).toString();
+    } catch {}
+
+    const apiUrl = new URL(GetApiUrl('/'));
+    const apiOrigin = apiUrl.origin;
+
+    if (value.startsWith('/media/') || value.startsWith('media/')) {
+      const normalizedPath = value.startsWith('/') ? value : `/${value}`;
+      return new URL(normalizedPath, apiOrigin).toString();
+    }
+
+    if (value.startsWith('/assets/') || value.startsWith('assets/')) {
+      if (typeof window !== 'undefined' && window.location?.origin) {
+        return new URL(value.startsWith('/') ? value : `/${value}`, window.location.origin).toString();
+      }
+      return value.startsWith('/') ? value : `/${value}`;
+    }
+
+    return new URL(value.startsWith('/') ? value : `/${value}`, apiOrigin).toString();
   }
 
   private saveGuestCart(): void {
