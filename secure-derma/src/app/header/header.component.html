@@ -26,7 +26,7 @@
                 <!-- Brands Dropdown -->
                 <div class="menu-title-main" (mouseleave)="closeBrandDropdown()">
                     <div nz-dropdown [nzDropdownMenu]="brandMenu" nzPlacement="bottomCenter" nzTrigger="hover"
-                        class="menu-item h-100" [(nzVisible)]="isBrandDropdownVisible">
+                        class="menu-item h-100" [(nzVisible)]="isBrandDropdownVisible" nzOverlayClassName="full-width-dropdown brand-dropdown-overlay">
                         <div class="menu-title" (click)="producetNavigation('all','all')">
                             <span>Brands</span>
                         </div>

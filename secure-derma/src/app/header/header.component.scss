@@ -750,6 +750,17 @@
     position: fixed !important;
 }
 
+::ng-deep .full-width-dropdown.brand-dropdown-overlay {
+    position: static !important;
+    top: auto !important;
+    left: auto !important;
+    width: auto !important;
+    max-width: none !important;
+    height: auto !important;
+    border-radius: 0 !important;
+    padding-top: 0.35rem;
+}
+
 // Center the dropdown globally
 ::ng-deep .centered-dropdown {
     .ant-dropdown {
@@ -762,7 +773,7 @@
 
 ::ng-deep .full-width-dropdown {
     position: fixed !important;
-    top: 4.9rem !important;
+    top: 5.2rem !important;
     left: 1rem !important;
     width: 99vw !important;
     max-width: 99vw !important;
