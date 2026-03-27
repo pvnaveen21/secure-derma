@@ -212,6 +212,15 @@ export class CollectionsComponent implements OnInit {
     }
   }
 
+  getDisplayProductName(name: string | null | undefined, maxLength: number = 50): string {
+    const normalizedName = String(name || '').trim();
+    if (normalizedName.length <= maxLength) {
+      return normalizedName;
+    }
+
+    return `${normalizedName.slice(0, maxLength).trimEnd()}...`;
+  }
+
   getProductSideMenu() {
     this.collectionsService.getProducetSideMenu().subscribe({
       next: (response: any) => {

@@ -183,7 +183,7 @@
                     <!-- <nz-card-meta [nzTitle]="product.product_name" [nzDescription]="product.product_description">
                     </nz-card-meta> -->
                     <div class="product-footer">
-                        <h5 class="m-0">{{product.product_name}}</h5>
+                        <h5 class="m-0">{{ getDisplayProductName(product.product_name) }}</h5>
                         <div class="rate-height">
                             @if (product.avg_rating) {
                             <nz-rate [ngModel]="product.avg_rating" nzDisabled nzAllowHalf [nzCount]="5"></nz-rate>
