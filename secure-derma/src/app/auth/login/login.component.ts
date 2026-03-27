@@ -218,6 +218,8 @@ export class LoginComponent implements AfterViewInit {
     }
 
     const googleButton = document.querySelector('#googleBtn [role="button"]') as HTMLElement | null;
+    console.log(googleButton);
+    
     if (!googleButton) {
       this.message.warning('Google sign-in is not ready yet. Please try again.');
       return;
