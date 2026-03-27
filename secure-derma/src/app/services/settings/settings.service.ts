@@ -18,6 +18,7 @@ export class SettingsService {
 
   // default theme is light
   currentTheme: ThemeType = ThemeType.light;
+  private readonly preloadableThemes: ThemeType[] = [ThemeType.light, ThemeType.dark];
 
   getStoredTheme = () => localStorage.getItem('theme')
   setStoredTheme = (theme: any) => localStorage.setItem('theme', theme)
@@ -27,8 +28,12 @@ export class SettingsService {
   ) {
     const storedTheme: any = this.getStoredTheme();
     if (storedTheme && storedTheme !== 'auto') {
-      // @ts-ignore
-      this.currentTheme = this.theme[storedTheme];
+      if (storedTheme === 'coloured') {
+        this.currentTheme = ThemeType.dark;
+      } else {
+        // @ts-ignore
+        this.currentTheme = this.theme[storedTheme];
+      }
     }
     window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
       const storedTheme = this.getStoredTheme();
@@ -39,55 +44,96 @@ export class SettingsService {
     });
   }
 
-  private removeUnusedTheme(theme: ThemeType): void {
-    document.documentElement.classList.remove(theme);
-    const removedThemeStyle = document.getElementById(theme);
-    if (removedThemeStyle) {
-      document.head.removeChild(removedThemeStyle);
-    }
+  private resolveThemeAsset(theme: ThemeType): ThemeType {
+    return theme === ThemeType.coloured ? ThemeType.dark : theme;
   }
 
-  private loadCss(href: string, id: string): Promise<Event> {
+  private getThemeLinkId(theme: ThemeType): string {
+    const assetTheme = this.resolveThemeAsset(theme);
+    return `theme-${assetTheme}`;
+  }
+
+  private setThemeClass(theme: ThemeType): void {
+    Object.values(ThemeType).forEach((value) => {
+      document.documentElement.classList.remove(value);
+    });
+    document.documentElement.classList.add(theme);
+  }
+
+  private ensureBaseStylesheet(): Promise<Event> {
     return new Promise((resolve, reject) => {
+      const linkId = 'theme-base';
+      const existingLink = document.getElementById(linkId) as HTMLLinkElement | null;
+
+      if (existingLink) {
+        resolve(new Event('load'));
+        return;
+      }
+
       const style = document.createElement('link');
       style.rel = 'stylesheet';
-      style.href = href;
-      style.id = id;
-      style.onload = resolve;
-      style.onerror = reject;
+      style.href = 'ng-zorro-base.css';
+      style.id = linkId;
+      style.onload = (event) => resolve(event);
+      style.onerror = (event) => reject(event);
       document.head.append(style);
     });
   }
 
-  public loadTheme(firstLoad = true): Promise<Event> {
-    const theme = this.currentTheme;
-    if (firstLoad) {
-      document.documentElement.classList.add(theme);
-    }
-    return new Promise<Event>((resolve, reject) => {
-      this.loadCss(`${theme}.css`, theme).then(
-        (e) => {
-          if (!firstLoad) {
-            document.documentElement.classList.add(theme);
-          }
-          this.removeThemeAfterChanges(theme);
+  private ensureThemeStylesheet(theme: ThemeType, active: boolean): Promise<Event> {
+    return new Promise((resolve, reject) => {
+      const linkId = this.getThemeLinkId(theme);
+      const existingLink = document.getElementById(linkId) as HTMLLinkElement | null;
 
-          resolve(e);
-        },
-        (e) => reject(e)
-      );
+      if (existingLink) {
+        existingLink.media = active ? 'all' : 'not all';
+        resolve(new Event('load'));
+        return;
+      }
+
+      const style = document.createElement('link');
+      style.rel = 'stylesheet';
+      const assetTheme = this.resolveThemeAsset(theme);
+      style.href = `${assetTheme}.css`;
+      style.id = linkId;
+      style.media = active ? 'all' : 'not all';
+      style.onload = (event) => resolve(event);
+      style.onerror = (event) => reject(event);
+      document.head.append(style);
+    });
+  }
+
+  private preloadAlternateThemes(activeTheme: ThemeType): void {
+    const alternateThemes = this.preloadableThemes
+      .filter((theme) => theme !== this.resolveThemeAsset(activeTheme));
+
+    alternateThemes.forEach((theme) => {
+      this.ensureThemeStylesheet(theme, false).catch(() => undefined);
+    });
+  }
+
+  public loadTheme(_firstLoad = true): Promise<Event> {
+    const theme = this.currentTheme;
+
+    return this.ensureBaseStylesheet().then(() => this.ensureThemeStylesheet(theme, true)).then((event) => {
+      this.setThemeClass(theme);
+      this.removeThemeAfterChanges(theme);
+      this.preloadAlternateThemes(theme);
+      return event;
     });
   }
 
   removeThemeAfterChanges(theme: ThemeType): void {
-    Object.keys(this.theme).forEach((key: any) => {
-      // @ts-ignore
-      if (this.theme[key] !== theme) {
-        // @ts-ignore
-        this.removeUnusedTheme(this.theme[key]);
+    this.preloadableThemes.forEach((value) => {
+      const link = document.getElementById(this.getThemeLinkId(value)) as HTMLLinkElement | null;
+      if (link) {
+        link.media = value === theme ? 'all' : 'not all';
+      }
+
+      if (value !== theme) {
+        document.documentElement.classList.remove(value);
       }
     });
-
   }
 
   public changeTheme(theme: ThemeType): void {
