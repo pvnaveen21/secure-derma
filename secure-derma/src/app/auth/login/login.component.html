@@ -85,7 +85,8 @@
                 <div class="form-container">
                     <div class="google-login-block">
                         @if(isGoogleLoginEnabled){
-                        <button type="button" class="secure-btn google-custom-btn" (click)="continueWithGoogle()" [disabled]="googleLoading">
+                        <div class="google-login-shell" [class.google-login-shell--loading]="googleLoading">
+                            <button type="button" class="secure-btn google-custom-btn" [disabled]="googleLoading" tabindex="-1">
                             <span class="google-custom-btn__mark" aria-hidden="true">
                                 <svg viewBox="0 0 48 48" class="google-custom-btn__logo">
                                     <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"></path>
@@ -98,7 +99,8 @@
                                 {{ googleLoading ? 'Signing you in with Google...' : 'Continue with Google' }}
                             </span>
                         </button>
-                        <div id="googleBtn" class="google-login-button" aria-hidden="true"></div>
+                            <div id="googleBtn" class="google-login-button" [attr.aria-hidden]="googleLoading ? 'true' : null"></div>
+                        </div>
                         @if(googleLoading){
                         <p class="google-login-status m-0">Signing you in with Google...</p>
                         }

@@ -423,7 +423,16 @@
     margin-bottom: 1.3rem;
 }
 
+.google-login-shell {
+    position: relative;
+}
+
+.google-login-shell--loading {
+    pointer-events: none;
+}
+
 .google-custom-btn {
+    pointer-events: none;
     width: 100%;
     min-height: 3.5rem;
     display: inline-flex;
@@ -474,11 +483,18 @@
 
 .google-login-button {
     position: absolute;
-    width: 0;
-    height: 0;
+    inset: 0;
+    width: 100%;
+    min-height: 3.5rem;
+    opacity: 0.01;
     overflow: hidden;
-    opacity: 0;
-    pointer-events: none;
+    z-index: 2;
+}
+
+.google-login-button > div,
+.google-login-button iframe {
+    width: 100% !important;
+    min-width: 100% !important;
 }
 
 .google-login-status {
