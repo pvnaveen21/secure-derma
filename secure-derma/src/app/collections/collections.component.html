@@ -2,6 +2,7 @@
     <!-- Banner Section -->
     <div class="banner-wrapper">
         <div class="banner-container">
+            @if (bannerImages.length > 0) {
             <nz-carousel nzAutoPlay class="banner-carousel">
                 @for (data of bannerImages; track data) {
                 <div nz-carousel-content class="banner-slide">
@@ -11,6 +12,7 @@
                 </div>
                 }
             </nz-carousel>
+            }
         </div>
     </div>
 

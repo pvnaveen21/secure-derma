@@ -2747,26 +2747,46 @@ from .serializers import (
 )
 class ProductSideMenuAPIView(APIView):
     def get(self, request):
-        hair_concerns = list(
-            HairConcerns.objects.filter(is_deleted=False)
-            .values('id', name=F('hair_concern'), slug=F('slug'))
+        hair_concerns = [
+            {
+                'id': item['id'],
+                'name': item['hair_concern'],
+                'slug': item['slug'],
+            }
+            for item in HairConcerns.objects.filter(is_deleted=False)
+            .values('id', 'hair_concern', 'slug')
             .order_by('id')
-        )
-        skin_concerns = list(
-            SkinConcerns.objects.filter(is_deleted=False)
-            .values('id', name=F('skin_concern'), slug=F('slug'))
+        ]
+        skin_concerns = [
+            {
+                'id': item['id'],
+                'name': item['skin_concern'],
+                'slug': item['slug'],
+            }
+            for item in SkinConcerns.objects.filter(is_deleted=False)
+            .values('id', 'skin_concern', 'slug')
             .order_by('id')
-        )
-        ingredients = list(
-            Ingredients.objects.filter(is_deleted=False)
-            .values('id', name=F('ingredient'), slug=F('slug'))
+        ]
+        ingredients = [
+            {
+                'id': item['id'],
+                'name': item['ingredient'],
+                'slug': item['slug'],
+            }
+            for item in Ingredients.objects.filter(is_deleted=False)
+            .values('id', 'ingredient', 'slug')
             .order_by('id')
-        )
-        product_types = list(
-            ProductType.objects.filter(is_deleted=False)
-            .values('id', name=F('product_type'), slug=F('slug'))
+        ]
+        product_types = [
+            {
+                'id': item['id'],
+                'name': item['product_type'],
+                'slug': item['slug'],
+            }
+            for item in ProductType.objects.filter(is_deleted=False)
+            .values('id', 'product_type', 'slug')
             .order_by('id')
-        )
+        ]
 
         return Response({
             "hair_concerns": hair_concerns,
