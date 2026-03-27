@@ -42,7 +42,7 @@ export class AuthService extends InterfaceService {
       this.http.post(
         this.getApiUrl('/auth/google/'),
         payload,
-        this.getHttpOptions("json")
+        this.getHttpOptions("json", { auth: false })
       ).subscribe({
 
         next: (response: any) => {
@@ -107,7 +107,7 @@ export class AuthService extends InterfaceService {
 
   login(data: any): Promise<any> {
     return new Promise((resolve, reject) => {
-      this.http.post(this.getApiUrl('/auth/login/'), data, this.getHttpOptions("json")).subscribe({
+      this.http.post(this.getApiUrl('/auth/login/'), data, this.getHttpOptions("json", { auth: false })).subscribe({
         next: (response: any) => {
           setToken(response.access, ACCESS_TOKEN);
           setToken(response.refresh, REFRESH_TOKEN);
@@ -181,7 +181,7 @@ export class AuthService extends InterfaceService {
 
   getUserDetails(dontRefresh = false, navigateAfterLoad = true): Promise<any> {
     return new Promise((resolve, reject) => {
-      this.http.get(this.getApiUrl(`/users/user/me/`), this.getHttpOptions()).subscribe({
+      this.http.get(this.getApiUrl(`/users/user/me/`), this.getHttpOptions('json', { auth: true })).subscribe({
         next: (user: any) => {
           this.setUser(user);
           if (!dontRefresh) {
@@ -230,7 +230,7 @@ export class AuthService extends InterfaceService {
     return this.http.patch(
       this.getApiUrl('/users/user/me/'),
       data,
-      this.getHttpOptions('json')
+      this.getHttpOptions('json', { auth: true })
     ).pipe(
       tap((user: any) => this.setUser(user)),
       map((response) => response),
@@ -277,7 +277,7 @@ export class AuthService extends InterfaceService {
 
   logout() {
     return this.http
-      .post(this.getApiUrl('/auth/logout/'), { 'refresh': getToken(REFRESH_TOKEN) }, this.getHttpOptions('json')).subscribe({
+      .post(this.getApiUrl('/auth/logout/'), { 'refresh': getToken(REFRESH_TOKEN) }, this.getHttpOptions('json', { auth: true })).subscribe({
         next: () => {
           unsetToken();
           void this.cartService.hydrateCart();
@@ -335,14 +335,14 @@ export class AuthService extends InterfaceService {
   }
 
   public requestEnable2FA(): Observable<any> {
-    return this.http.get(this.getApiUrl('/auth/enable2fa/'), this.getHttpOptions()).pipe(
+    return this.http.get(this.getApiUrl('/auth/enable2fa/'), this.getHttpOptions('json', { auth: true })).pipe(
       map(res => res),
       catchError(this.handleError)
     );
   }
 
   public enable2FA(data: any): Observable<any> {
-    return this.http.post(this.getApiUrl('/auth/enable2fa/'), data, this.getHttpOptions()).pipe(
+    return this.http.post(this.getApiUrl('/auth/enable2fa/'), data, this.getHttpOptions('json', { auth: true })).pipe(
       map(res => res),
       catchError(this.handleError)
     );
@@ -372,7 +372,7 @@ export class AuthService extends InterfaceService {
   }
 
   updateCurrentPassword(data: any): Observable<any> {
-    return this.http.post(this.getApiUrl('/auth/change-password/'), data, this.getHttpOptions()).pipe(
+    return this.http.post(this.getApiUrl('/auth/change-password/'), data, this.getHttpOptions('json', { auth: true })).pipe(
       map(res => res),
       catchError(this.handleError)
     );

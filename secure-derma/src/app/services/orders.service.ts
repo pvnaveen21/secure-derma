@@ -70,7 +70,7 @@ export class OrdersService extends InterfaceService {
   getOrders(): Observable<{ count: number; results: AccountOrder[] }> {
     return this.http.get<{ count: number; results: AccountOrder[] }>(
       this.getApiUrl('/orders/'),
-      this.getHttpOptions()
+      this.getHttpOptions('json', { auth: true })
     ).pipe(
       map((res) => res),
       catchError(this.handleError)
@@ -80,7 +80,7 @@ export class OrdersService extends InterfaceService {
   getOrderDetail(orderId: number): Observable<AccountOrder> {
     return this.http.get<AccountOrder>(
       this.getApiUrl(`/orders/${orderId}/`),
-      this.getHttpOptions()
+      this.getHttpOptions('json', { auth: true })
     ).pipe(
       map((res) => res),
       catchError(this.handleError)

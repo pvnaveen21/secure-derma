@@ -15,7 +15,7 @@ const refreshTokenSubject = new BehaviorSubject<string | null>(null);
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const authService = inject(AuthService);
 
-  if (shouldSkipAuth(req)) {
+  if (shouldSkipAuth(req) || !requiresAuth(req)) {
     return next(req);
   }
 
@@ -50,6 +50,26 @@ function shouldSkipAuth(req: HttpRequest<unknown>): boolean {
     || req.url.includes('/auth/otp-verify/')
     || req.url.includes('/auth/token/refresh/')
     || req.url.includes('/auth/logout/');
+}
+
+function requiresAuth(req: HttpRequest<unknown>): boolean {
+  try {
+    const requestUrl = new URL(
+      req.url,
+      typeof window !== 'undefined' ? window.location.origin : 'http://localhost'
+    );
+    const path = requestUrl.pathname;
+
+    return path.startsWith('/api/users/')
+      || path.startsWith('/api/orders/')
+      || path.startsWith('/api/payments/')
+      || path.startsWith('/api/cart/')
+      || path.startsWith('/api/auth/logout/')
+      || path.startsWith('/api/auth/enable2fa/')
+      || path.startsWith('/api/auth/change-password/');
+  } catch {
+    return false;
+  }
 }
 
 function addToken(req: HttpRequest<unknown>, token: string): HttpRequest<unknown> {

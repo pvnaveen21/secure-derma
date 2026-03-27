@@ -90,7 +90,7 @@ export class PaymentService extends InterfaceService {
     return this.http.post<RazorpayOrderResponse>(
       this.getApiUrl('/payments/create-order/'),
       { items, customer },
-      this.getHttpOptions()
+      this.getHttpOptions('json', { auth: true })
     ).pipe(
       map((res) => res),
       catchError(this.handleError)
@@ -101,7 +101,7 @@ export class PaymentService extends InterfaceService {
     return this.http.post<{ verified: boolean }>(
       this.getApiUrl('/payments/verify/'),
       payload,
-      this.getHttpOptions()
+      this.getHttpOptions('json', { auth: true })
     ).pipe(
       map((res) => res),
       catchError(this.handleError)
