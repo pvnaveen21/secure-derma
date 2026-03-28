@@ -120,9 +120,13 @@ class AdminVisitSummaryAPIView(APIView):
                     'today_logged_in_visits': today_visits.filter(user__isnull=False).count(),
                     'today_guest_visits': today_visits.filter(user__isnull=True).values('visitor_key').distinct().count(),
                     'mobile_visitors': visits.filter(device_type=VisitDeviceType.MOBILE).values('visitor_key').distinct().count(),
+                    'today_mobile_visitors': today_visits.filter(device_type=VisitDeviceType.MOBILE).values('visitor_key').distinct().count(),
                     'tablet_visitors': visits.filter(device_type=VisitDeviceType.TABLET).values('visitor_key').distinct().count(),
+                    'today_tablet_visitors': today_visits.filter(device_type=VisitDeviceType.TABLET).values('visitor_key').distinct().count(),
                     'desktop_visitors': visits.filter(device_type=VisitDeviceType.DESKTOP).values('visitor_key').distinct().count(),
+                    'today_desktop_visitors': today_visits.filter(device_type=VisitDeviceType.DESKTOP).values('visitor_key').distinct().count(),
                     'other_device_visitors': visits.filter(device_type=VisitDeviceType.OTHER).values('visitor_key').distinct().count(),
+                    'today_other_device_visitors': today_visits.filter(device_type=VisitDeviceType.OTHER).values('visitor_key').distinct().count(),
                     'latest_visit_at': latest_visit.created_at if latest_visit else None,
                 }
             }
