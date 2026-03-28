@@ -46,6 +46,65 @@ def _detect_device_type(user_agent: str) -> str:
     return VisitDeviceType.OTHER
 
 
+def _build_visit_series(range_queryset, bucket_keys, label_builder, short_label_builder, period_expression):
+    bucket_map = {
+        bucket_key: {
+            'visits': 0,
+            'visitor_keys': set(),
+            'logged_in_user_ids': set(),
+            'logged_in_visitor_keys': set(),
+            'guest_visitor_keys': set(),
+        }
+        for bucket_key in bucket_keys
+    }
+
+    visit_rows = (
+        range_queryset
+        .annotate(period=period_expression)
+        .values('period', 'visitor_key', 'user_id')
+        .order_by('period')
+    )
+
+    for row in visit_rows:
+        raw_period = row.get('period')
+        if not raw_period:
+            continue
+
+        period_value = raw_period.date() if hasattr(raw_period, 'date') else raw_period
+        bucket_key = period_value.isoformat()
+        bucket = bucket_map.get(bucket_key)
+        if not bucket:
+            continue
+
+        visitor_key = row.get('visitor_key')
+        user_id = row.get('user_id')
+        bucket['visits'] += 1
+
+        if visitor_key:
+            bucket['visitor_keys'].add(visitor_key)
+            if user_id:
+                bucket['logged_in_visitor_keys'].add(visitor_key)
+            else:
+                bucket['guest_visitor_keys'].add(visitor_key)
+
+        if user_id:
+            bucket['logged_in_user_ids'].add(user_id)
+
+    return [
+        {
+            'key': bucket_key,
+            'label': label_builder(bucket_key),
+            'short_label': short_label_builder(bucket_key),
+            'visits': bucket['visits'],
+            'today_visits': bucket['visits'],
+            'unique_visitors': len(bucket['visitor_keys']),
+            'logged_in_visits': len(bucket['logged_in_user_ids']),
+            'guest_visitors': len(bucket['guest_visitor_keys'] - bucket['logged_in_visitor_keys']),
+        }
+        for bucket_key, bucket in bucket_map.items()
+    ]
+
+
 def _serialize_visit(visit: SecureDermaVisit):
     is_logged_in = bool(visit.user_id)
     return {
@@ -178,32 +237,15 @@ class AdminVisitAnalyticsAPIView(APIView):
 
             start_date = end_date - timedelta(days=periods - 1)
             range_queryset = visits.filter(created_at__date__gte=start_date, created_at__date__lte=end_date)
-            grouped_rows = (
-                range_queryset
-                .annotate(period=TruncDate('created_at'))
-                .values('period')
-                .annotate(visits=Count('id'), unique_visitors=Count('visitor_key', distinct=True))
-                .order_by('period')
-            )
-
-            count_map = {
-                row['period'].isoformat(): {
-                    'visits': row['visits'],
-                    'unique_visitors': row['unique_visitors'],
-                }
-                for row in grouped_rows if row['period']
-            }
             bucket_dates = [start_date + timedelta(days=index) for index in range(periods)]
-            series = [
-                {
-                    'key': bucket_date.isoformat(),
-                    'label': bucket_date.strftime('%d %b %Y'),
-                    'short_label': bucket_date.strftime('%d %b'),
-                    'visits': count_map.get(bucket_date.isoformat(), {}).get('visits', 0),
-                    'unique_visitors': count_map.get(bucket_date.isoformat(), {}).get('unique_visitors', 0),
-                }
-                for bucket_date in bucket_dates
-            ]
+            bucket_keys = [bucket_date.isoformat() for bucket_date in bucket_dates]
+            series = _build_visit_series(
+                range_queryset,
+                bucket_keys,
+                lambda bucket_key: date.fromisoformat(bucket_key).strftime('%d %b %Y'),
+                lambda bucket_key: date.fromisoformat(bucket_key).strftime('%d %b'),
+                TruncDate('created_at')
+            )
             range_start = start_date
             range_end = end_date
             anchor_date = end_date.isoformat()
@@ -224,36 +266,15 @@ class AdminVisitAnalyticsAPIView(APIView):
             start_month = _add_months(end_month, -(periods - 1))
             next_month = _add_months(end_month, 1)
             range_queryset = visits.filter(created_at__date__gte=start_month, created_at__date__lt=next_month)
-            grouped_rows = (
-                range_queryset
-                .annotate(period=TruncMonth('created_at'))
-                .values('period')
-                .annotate(visits=Count('id'), unique_visitors=Count('visitor_key', distinct=True))
-                .order_by('period')
-            )
-
-            count_map = {}
-            for row in grouped_rows:
-                raw_period = row.get('period')
-                if not raw_period:
-                    continue
-                period_date = raw_period.date() if hasattr(raw_period, 'date') else raw_period
-                count_map[period_date.isoformat()] = {
-                    'visits': row['visits'],
-                    'unique_visitors': row['unique_visitors'],
-                }
-
             bucket_months = [_add_months(start_month, index) for index in range(periods)]
-            series = [
-                {
-                    'key': bucket_month.isoformat(),
-                    'label': bucket_month.strftime('%b %Y'),
-                    'short_label': bucket_month.strftime('%b'),
-                    'visits': count_map.get(bucket_month.isoformat(), {}).get('visits', 0),
-                    'unique_visitors': count_map.get(bucket_month.isoformat(), {}).get('unique_visitors', 0),
-                }
-                for bucket_month in bucket_months
-            ]
+            bucket_keys = [bucket_month.isoformat() for bucket_month in bucket_months]
+            series = _build_visit_series(
+                range_queryset,
+                bucket_keys,
+                lambda bucket_key: date.fromisoformat(bucket_key).strftime('%b %Y'),
+                lambda bucket_key: date.fromisoformat(bucket_key).strftime('%b'),
+                TruncMonth('created_at')
+            )
             range_start = start_month
             range_end = end_month
             anchor_date = end_month.isoformat()

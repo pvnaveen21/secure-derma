@@ -39,7 +39,10 @@ interface VisitAnalyticsPoint {
   label: string;
   short_label: string;
   visits: number;
+  today_visits: number;
   unique_visitors: number;
+  logged_in_visits: number;
+  guest_visitors: number;
 }
 
 interface VisitAnalyticsResponse {
@@ -362,11 +365,11 @@ export class VisitorsComponent {
   }
 
   formatBarAriaLabel(point: VisitAnalyticsPoint): string {
-    return `${point.label}: ${point.visits} visits, ${point.unique_visitors} unique visitors`;
+    return `${point.label}: ${point.today_visits} today visits, ${point.unique_visitors} unique visitors, ${point.logged_in_visits} logged-in visits, ${point.guest_visitors} guest visitors`;
   }
 
   formatBarTooltip(point: VisitAnalyticsPoint): string {
-    return `${point.label}\nVisits: ${point.visits}\nUnique Visitors: ${point.unique_visitors}`;
+    return `${point.label}\nToday Visits: ${point.today_visits}\nUnique Visitors: ${point.unique_visitors}\nLogged-In Visits: ${point.logged_in_visits}\nGuest Visitors: ${point.guest_visitors}`;
   }
 
   formatPath(path: string): string {
