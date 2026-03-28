@@ -804,6 +804,43 @@ class AdminVisitApiTests(TestCase):
         self.assertEqual(response.data["summary"]["logged_in_visits"], 1)
         self.assertEqual(response.data["summary"]["today_unique_visitors"], 2)
 
+    def test_admin_visit_analytics_returns_guest_and_logged_in_breakdown_per_day(self):
+        today = timezone.localdate()
+
+        guest_then_logged_in = SecureDermaVisit.objects.create(
+            visitor_key="analytics-shared-key",
+            path="/login",
+            device_type=VisitDeviceType.MOBILE,
+            user_agent="mobile",
+        )
+        logged_in_visit = SecureDermaVisit.objects.create(
+            user=self.logged_in_user,
+            visitor_key="analytics-shared-key",
+            path="/account",
+            device_type=VisitDeviceType.MOBILE,
+            user_agent="mobile",
+        )
+        guest_only_visit = SecureDermaVisit.objects.create(
+            visitor_key="analytics-guest-only",
+            path="/products",
+            device_type=VisitDeviceType.DESKTOP,
+            user_agent="desktop",
+        )
+
+        for hour, visit in enumerate([guest_then_logged_in, logged_in_visit, guest_only_visit], start=9):
+            SecureDermaVisit.objects.filter(pk=visit.pk).update(
+                created_at=timezone.make_aware(datetime.combine(today, time(hour=hour))),
+            )
+
+        response = self.client.get("/api/admin/visits/analytics/", {"grouping": "day", "periods": 1, "anchor_date": today.isoformat()})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.data["series"]), 1)
+        self.assertEqual(response.data["series"][0]["today_visits"], 3)
+        self.assertEqual(response.data["series"][0]["unique_visitors"], 2)
+        self.assertEqual(response.data["series"][0]["logged_in_visits"], 1)
+        self.assertEqual(response.data["series"][0]["guest_visitors"], 1)
+
 
 class UserOrderApiTests(TestCase):
     def setUp(self):
