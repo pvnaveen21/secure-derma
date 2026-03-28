@@ -999,7 +999,7 @@
 
 .product-footer {
     display: grid;
-    grid-template-rows: minmax(3.75rem, auto) 1.3rem minmax(4.8rem, auto) auto minmax(2.75rem, auto);
+    grid-template-rows: minmax(2.75rem, auto) 1.3rem minmax(4.8rem, auto) auto minmax(2.75rem, auto);
     align-content: start;
     flex: 1;
     row-gap: 0.6rem;
@@ -1007,7 +1007,7 @@
     .rate-height {
         min-height: 1.6rem;
         display: flex;
-        align-items: center;
+        // align-items: center;
         align-content: flex-start;
         flex-wrap: wrap;
         // gap: 0.35rem 0.5rem;
@@ -1015,6 +1015,8 @@
     }
 
     .rating_count {
+        margin-top: 0.2rem;
+        margin-left: 0.2rem;
         font-size: 0.9rem;
         line-height: 1.2;
         font-weight: 500;
@@ -1030,7 +1032,7 @@
         font-size: 1rem;
         width: 100%;
         max-width: 100%;
-        min-height: 3.75rem;
+        // min-height: 3.75rem;
         display: -webkit-box;
         -webkit-line-clamp: 3;
         line-clamp: 3;
