@@ -19,7 +19,7 @@ from ingredient.models import Ingredients
 from product.models import Product, ProductDetails, ProductImage, ProductReview, ProductReviewImage
 from product.serializers import CollectionProductListSerializer, ProductListSerializer
 from product_type.models import ProductType
-from django.db.models import Prefetch, Avg, Count, Min, Q, F, Sum, OuterRef, Subquery, IntegerField
+from django.db.models import Prefetch, Avg, Count, Min, Q, F, Sum, OuterRef, Subquery, IntegerField, Value, CharField
 from django.db.models.functions import TruncDate, TruncMonth
 from django.utils import timezone
 from django.utils.decorators import method_decorator
@@ -71,6 +71,31 @@ def _build_quality_label(detail):
     if combo > 1 and unit_label:
         return f"{combo} x {unit_label}"
     return unit_label
+
+
+def _resolve_filter_slug_type(slug: str):
+    slug_queries = [
+        Brand.objects.filter(slug=slug, is_deleted=False).annotate(
+            match_type=Value("brand", output_field=CharField())
+        ).values_list("match_type", flat=True),
+        Categories.objects.filter(slug=slug, is_deleted=False).annotate(
+            match_type=Value("category", output_field=CharField())
+        ).values_list("match_type", flat=True),
+        ProductType.objects.filter(slug=slug, is_deleted=False).annotate(
+            match_type=Value("product_type", output_field=CharField())
+        ).values_list("match_type", flat=True),
+        SkinConcerns.objects.filter(slug=slug, is_deleted=False).annotate(
+            match_type=Value("skin_concern", output_field=CharField())
+        ).values_list("match_type", flat=True),
+        HairConcerns.objects.filter(slug=slug, is_deleted=False).annotate(
+            match_type=Value("hair_concern", output_field=CharField())
+        ).values_list("match_type", flat=True),
+        Ingredients.objects.filter(slug=slug, is_deleted=False).annotate(
+            match_type=Value("ingredient", output_field=CharField())
+        ).values_list("match_type", flat=True),
+    ]
+    matches = list(slug_queries[0].union(*slug_queries[1:], all=True)[:1])
+    return matches[0] if matches else None
 
 
 def _serialize_cart_items(request, cart_items):
@@ -2159,29 +2184,22 @@ class ProductListWithFiltersAPIView(APIView):
             elif slug == "skin":
                 products = products.filter(skin_concern__isnull=False)
 
-            elif Brand.objects.filter(slug=slug, is_deleted=False).exists():
-                products = products.filter(brand__slug=slug)
-
-            elif Categories.objects.filter(slug=slug, is_deleted=False).exists():
-                products = products.filter(categorie__slug=slug)
-
-            elif ProductType.objects.filter(slug=slug, is_deleted=False).exists():
-                products = products.filter(product_type__slug=slug)
-
-            elif SkinConcerns.objects.filter(slug=slug, is_deleted=False).exists():
-                products = products.filter(skin_concern__slug=slug)
-
-            elif HairConcerns.objects.filter(slug=slug, is_deleted=False).exists():
-                products = products.filter(hair_concern__slug=slug)
-
-            elif Ingredients.objects.filter(slug=slug, is_deleted=False).exists():
-                products = products.filter(ingredient__slug=slug)
-
             else:
-                return Response(
-                    {"error": "Invalid filter slug"},
-                    status=404
-                )
+                slug_filter_map = {
+                    "brand": Q(brand__slug=slug),
+                    "category": Q(categorie__slug=slug),
+                    "product_type": Q(product_type__slug=slug),
+                    "skin_concern": Q(skin_concern__slug=slug),
+                    "hair_concern": Q(hair_concern__slug=slug),
+                    "ingredient": Q(ingredient__slug=slug),
+                }
+                slug_type = _resolve_filter_slug_type(slug)
+                if not slug_type:
+                    return Response(
+                        {"error": "Invalid filter slug"},
+                        status=404
+                    )
+                products = products.filter(slug_filter_map[slug_type])
 
         filter_scope_products = products
 
@@ -2451,36 +2469,22 @@ class FilterProductsAPIView(APIView):
         if slug.lower() == 'all':
             filter_type = "all"
         
-        # Check which model the slug belongs to
-        elif Brand.objects.filter(slug=slug, is_deleted=False).exists():
-            filter_query = Q(brand__slug=slug)
-            filter_type = "brand"
-        
-        elif Categories.objects.filter(slug=slug, is_deleted=False).exists():
-            filter_query = Q(categorie__slug=slug)
-            filter_type = "category"
-        
-        elif ProductType.objects.filter(slug=slug, is_deleted=False).exists():
-            filter_query = Q(product_type__slug=slug)
-            filter_type = "product_type"
-        
-        elif SkinConcerns.objects.filter(slug=slug, is_deleted=False).exists():
-            filter_query = Q(skin_concern__slug=slug)
-            filter_type = "skin_concern"
-        
-        elif HairConcerns.objects.filter(slug=slug, is_deleted=False).exists():
-            filter_query = Q(hair_concern__slug=slug)
-            filter_type = "hair_concern"
-        
-        elif Ingredients.objects.filter(slug=slug, is_deleted=False).exists():
-            filter_query = Q(ingredient__slug=slug)
-            filter_type = "ingredient"
-        
         else:
-            return Response(
-                {"error": "No matching brand, category, product type, or concern found for this slug"},
-                status=status.HTTP_404_NOT_FOUND
-            )
+            filter_map = {
+                "brand": Q(brand__slug=slug),
+                "category": Q(categorie__slug=slug),
+                "product_type": Q(product_type__slug=slug),
+                "skin_concern": Q(skin_concern__slug=slug),
+                "hair_concern": Q(hair_concern__slug=slug),
+                "ingredient": Q(ingredient__slug=slug),
+            }
+            filter_type = _resolve_filter_slug_type(slug)
+            if not filter_type:
+                return Response(
+                    {"error": "No matching brand, category, product type, or concern found for this slug"},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+            filter_query = filter_map[filter_type]
         
         # Apply filter only if it's not 'all'
         if filter_type != "all":
