@@ -71,6 +71,98 @@ class ProductListSerializer(serializers.ModelSerializer):
         return getattr(obj, 'total_reviews', 0) or 0
 
 
+class CollectionProductDetailsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProductDetails
+        fields = [
+            'id',
+            'product_weight',
+            'weight_type',
+            'combo',
+            'original_price',
+            'selling_price',
+            'available_stock_count',
+            'discount_price',
+        ]
+
+
+class CollectionProductListSerializer(serializers.ModelSerializer):
+    thumbnail_image = serializers.SerializerMethodField()
+    hover_image = serializers.SerializerMethodField()
+    details = serializers.SerializerMethodField()
+    product_types = serializers.SerializerMethodField()
+    hair_concerns = serializers.StringRelatedField(many=True, source='hair_concern')
+    skin_concerns = serializers.StringRelatedField(many=True, source='skin_concern')
+    ingredients = serializers.StringRelatedField(many=True, source='ingredient')
+    avg_rating = serializers.SerializerMethodField()
+    rating_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Product
+        fields = [
+            'id',
+            'slug',
+            'product_name',
+            'thumbnail_image',
+            'hover_image',
+            'product_description',
+            'product_types',
+            'hair_concerns',
+            'skin_concerns',
+            'ingredients',
+            'details',
+            'trending_product',
+            'best_seller',
+            'avg_rating',
+            'rating_count',
+        ]
+
+    def _build_media_url(self, media_field):
+        if not media_field:
+            return None
+
+        try:
+            file_url = media_field.url
+        except Exception:
+            return None
+
+        request = self.context.get('request')
+        if request is not None and not file_url.startswith(('http://', 'https://')):
+            return request.build_absolute_uri(file_url)
+        return file_url
+
+    def get_thumbnail_image(self, obj):
+        return self._build_media_url(obj.thumbnail_image)
+
+    def get_hover_image(self, obj):
+        return self._build_media_url(obj.hover_image)
+
+    def get_details(self, obj):
+        details = list(obj.product_details.all())
+        if not details:
+            return []
+
+        primary_detail = min(
+            details,
+            key=lambda detail: (
+                detail.selling_price if detail.selling_price is not None else float('inf'),
+                detail.id,
+            ),
+        )
+        return CollectionProductDetailsSerializer([primary_detail], many=True).data
+
+    def get_product_types(self, obj):
+        product_type_name = getattr(getattr(obj, 'product_type', None), 'product_type', None)
+        return [product_type_name] if product_type_name else []
+
+    def get_avg_rating(self, obj):
+        avg_rating = getattr(obj, 'avg_rating_value', None)
+        return round(avg_rating, 1) if avg_rating else 0.0
+
+    def get_rating_count(self, obj):
+        return getattr(obj, 'total_reviews', 0) or 0
+
+
 class ProductSerializer(serializers.ModelSerializer):
     details = ProductDetailsSerializer(source='product_details', many=True, read_only=True)
     images = ProductImageSerializer(many=True, read_only=True)
