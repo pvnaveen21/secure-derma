@@ -528,7 +528,7 @@
                     <div class="orders-empty" *ngIf="!isOrdersLoading && !ordersError && !orders.length">
                         <p class="orders-empty__title m-0">No paid orders yet</p>
                         <p class="orders-empty__text m-0">Finish a purchase and your completed paid orders will appear here with product, savings, and delivery details.</p>
-                        <button type="button" class="secure-btn account-action-btn" (click)="startShopping()">Start Shopping</button>
+                        <button type="button" class="secure-btn account-action-btn" (click)="startShoppingFromEmptyState()">Start Shopping</button>
                     </div>
                 </ng-template>
             </section>

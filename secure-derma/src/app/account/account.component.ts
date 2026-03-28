@@ -758,6 +758,10 @@ export class AccountComponent implements OnInit, OnDestroy {
     });
   }
 
+  startShoppingFromEmptyState(): void {
+    void this.router.navigate(['/collections/all']);
+  }
+
   async startShopping(order: AccountOrder | null = this.selectedOrder): Promise<void> {
     const orderItems = (order?.items || []).filter((item) => item.product_id && item.product_detail_id);
     if (!orderItems.length || this.isReordering) {
