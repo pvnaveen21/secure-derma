@@ -9,8 +9,11 @@ def unique_slugify(instance, value, slug_field_name='slug'):
     ModelClass = instance.__class__
     unique_slug = slug
     num = 1
+    queryset = ModelClass.objects.all()
+    if instance.pk:
+        queryset = queryset.exclude(pk=instance.pk)
 
-    while ModelClass.objects.filter(**{slug_field_name: unique_slug}).exists():
+    while queryset.filter(**{slug_field_name: unique_slug}).exists():
         unique_slug = f"{slug}-{num}"
         num += 1
 
@@ -27,7 +30,15 @@ class ProductType(models.Model):
     slug = models.SlugField(unique=True, null=True, blank=True)
 
     def save(self, *args, **kwargs):
-        if not self.slug:
+        should_update_slug = not self.slug
+
+        if self.pk:
+            original = ProductType.objects.filter(pk=self.pk).only('product_type').first()
+            should_update_slug = should_update_slug or (
+                original is not None and original.product_type != self.product_type
+            )
+
+        if should_update_slug:
             self.slug = unique_slugify(self, self.product_type)
         super().save(*args, **kwargs)
 
