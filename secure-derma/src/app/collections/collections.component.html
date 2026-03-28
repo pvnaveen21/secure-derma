@@ -187,7 +187,7 @@
                         <div class="rate-height">
                             @if (product.avg_rating) {
                             <nz-rate [ngModel]="product.avg_rating" nzDisabled nzAllowHalf [nzCount]="5"></nz-rate>
-                            <span class="mt-1 rating_count">{{ product.avg_rating }}</span>
+                            <span class="rating_count">{{ product.avg_rating }}</span>
                             }
                         </div>
                         @if(product?.product_description){
