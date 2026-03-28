@@ -4,7 +4,7 @@
       <p class="visitors-hero__eyebrow m-0">Visitor Analytics</p>
       <h2 class="visitors-hero__title m-0">Visitors</h2>
       <p class="visitors-hero__text m-0">
-        Track total visits, unique visitors, logged-in traffic, guest traffic, and which device people use to visit the site.
+        Track total visits, unique browser visitors, logged-in users, guest sessions, and which device people use to visit the site.
       </p>
     </div>
     <div class="visitors-hero__actions">
@@ -31,19 +31,19 @@
         <p class="visitors-metric__meta m-0">Visits recorded today</p>
       </nz-card>
       <nz-card class="visitors-metric">
-        <p class="visitors-metric__label m-0">Unique Visitors</p>
-        <h3 class="visitors-metric__value m-0">{{ summary.today_unique_visitors }}</h3>
-        <p class="visitors-metric__meta m-0">Distinct tracked visitor IDs today</p>
+        <p class="visitors-metric__label m-0">Unique Users</p>
+        <h3 class="visitors-metric__value m-0">{{ summary.today_unique_users }}</h3>
+        <p class="visitors-metric__meta m-0">Deduped people across guest-to-login transitions today</p>
       </nz-card>
       <nz-card class="visitors-metric">
         <p class="visitors-metric__label m-0">Logged-In Visits</p>
         <h3 class="visitors-metric__value m-0">{{ summary.today_logged_in_visits }}</h3>
-        <p class="visitors-metric__meta m-0">Signed-in visits recorded today</p>
+        <p class="visitors-metric__meta m-0">Distinct signed-in users recorded today</p>
       </nz-card>
       <nz-card class="visitors-metric">
-        <p class="visitors-metric__label m-0">Guest Visitors</p>
+        <p class="visitors-metric__label m-0">Guest Sessions</p>
         <h3 class="visitors-metric__value m-0">{{ summary.today_guest_visits }}</h3>
-        <p class="visitors-metric__meta m-0">Distinct guest visitors recorded today</p>
+        <p class="visitors-metric__meta m-0">Distinct anonymous browser sessions recorded today</p>
       </nz-card>
       <nz-card class="visitors-metric">
         <p class="visitors-metric__label m-0">Mobile Visitors</p>

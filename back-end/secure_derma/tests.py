@@ -722,6 +722,7 @@ class AdminVisitApiTests(TestCase):
         response = self.client.get("/api/admin/visits/summary/")
 
         self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["summary"]["today_unique_users"], 5)
         self.assertEqual(response.data["summary"]["today_unique_visitors"], 5)
         self.assertEqual(response.data["summary"]["today_logged_in_visits"], 1)
         self.assertEqual(response.data["summary"]["today_guest_visits"], 4)
@@ -762,6 +763,7 @@ class AdminVisitApiTests(TestCase):
         response = self.client.get("/api/admin/visits/summary/")
 
         self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["summary"]["today_unique_users"], 2)
         self.assertEqual(response.data["summary"]["today_unique_visitors"], 2)
         self.assertEqual(response.data["summary"]["today_logged_in_visits"], 1)
         self.assertEqual(response.data["summary"]["today_guest_visits"], 1)
@@ -800,6 +802,7 @@ class AdminVisitApiTests(TestCase):
         response = self.client.get("/api/admin/visits/summary/")
 
         self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["summary"]["today_unique_users"], 1)
         self.assertEqual(response.data["summary"]["today_logged_in_visits"], 1)
         self.assertEqual(response.data["summary"]["logged_in_visits"], 1)
         self.assertEqual(response.data["summary"]["today_unique_visitors"], 2)

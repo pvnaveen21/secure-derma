@@ -105,6 +105,25 @@ def _build_visit_series(range_queryset, bucket_keys, label_builder, short_label_
     ]
 
 
+def _count_unique_users(queryset) -> int:
+    logged_in_user_ids = set()
+    guest_visitor_keys = set()
+    logged_in_visitor_keys = set()
+
+    for row in queryset.values('visitor_key', 'user_id'):
+        visitor_key = row.get('visitor_key')
+        user_id = row.get('user_id')
+
+        if user_id:
+            logged_in_user_ids.add(user_id)
+            if visitor_key:
+                logged_in_visitor_keys.add(visitor_key)
+        elif visitor_key:
+            guest_visitor_keys.add(visitor_key)
+
+    return len(logged_in_user_ids) + len(guest_visitor_keys - logged_in_visitor_keys)
+
+
 def _serialize_visit(visit: SecureDermaVisit):
     is_logged_in = bool(visit.user_id)
     return {
@@ -178,6 +197,8 @@ class AdminVisitSummaryAPIView(APIView):
                 'summary': {
                     'total_visits': visits.count(),
                     'today_visits': today_visits.count(),
+                    'unique_users': _count_unique_users(visits),
+                    'today_unique_users': _count_unique_users(today_visits),
                     'unique_visitors': visits.values('visitor_key').distinct().count(),
                     'today_unique_visitors': today_visits.values('visitor_key').distinct().count(),
                     'tracked_pages': visits.values('path').distinct().count(),
