@@ -23,13 +23,12 @@ from api import admin_router, user_router
 from .views import cached_media_serve
 
 
-def healthcheck(_request):
+def health_check(_request):
     return JsonResponse({"status": "ok"})
 
 
 urlpatterns = [
-    path('', healthcheck),
-    path('health/', healthcheck),
+    path('health/', health_check),
     path('dbadmin/', admin.site.urls),
     path('api/admin/', include(admin_router)),
     path('api/', include(user_router)),
