@@ -7,6 +7,7 @@ import uuid
 import requests
 from config.env import env_str
 from django.conf import settings
+from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.core.files.storage import default_storage
 from django.core.validators import validate_email
@@ -39,6 +40,15 @@ from .pincode_service import (
 )
 from .order_email import get_order_recipient, send_order_confirmation_email
 from .serializers import NewsletterSubscriberSerializer
+
+
+FILTER_OPTION_NAME_FIELDS = {
+    Brand: "brand_name",
+    ProductType: "product_type",
+    Ingredients: "ingredient",
+    HairConcerns: "hair_concern",
+    SkinConcerns: "skin_concern",
+}
 
 
 def _build_media_url(request, stored_file):
@@ -2150,6 +2160,10 @@ class ProductListWithFiltersAPIView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request):
+        cache_key = f"product_list_filters:{request.GET.urlencode()}"
+        cached_response = cache.get(cache_key)
+        if cached_response is not None:
+            return Response(cached_response)
 
         # =========================
         # HELPERS
@@ -2318,45 +2332,36 @@ class ProductListWithFiltersAPIView(APIView):
                     qs = qs.filter(**{f"{param}__slug__in": values})
 
             # Get set of applicable related object IDs after applying other filters
-            applicable_ids = (
-                set(
-                    qs.values_list(f"{filter_field}__id", flat=True).distinct()
-                )
-                if qs.exists()
-                else set()
+            applicable_ids = set(
+                qs.exclude(**{f"{filter_field}__isnull": True})
+                .values_list(f"{filter_field}__id", flat=True)
+                .distinct()
             )
 
             # Fetch all objects from the model
             all_objects = model_class.objects.filter(
                 is_deleted=False
             ).order_by("id")
+            name_field = FILTER_OPTION_NAME_FIELDS.get(model_class)
+            no_filters_applied = not (
+                slug
+                or search_text
+                or current_hair
+                or current_skin
+                or current_ingredient
+                or current_product_type
+                or current_brand
+                or request.GET.get("min_price")
+                or request.GET.get("max_price")
+            )
 
             options = []
 
             for obj in all_objects:
-
-                # Get display name properly
-                if hasattr(obj, "name"):
-                    name = obj.name
-                elif hasattr(obj, "brand_name"):
-                    name = obj.brand_name
-                elif hasattr(obj, "product_type"):
-                    name = obj.product_type
-                elif hasattr(obj, "ingredient"):
-                    name = obj.ingredient
-                elif hasattr(obj, "hair_concern"):
-                    name = obj.hair_concern
-                elif hasattr(obj, "skin_concern"):
-                    name = obj.skin_concern
-                else:
-                    name = str(obj)
+                name = getattr(obj, name_field) if name_field else str(obj)
 
                 # Determine if this option is applicable
-                is_applicable = obj.id in applicable_ids
-
-                # If no filters are applied at all → everything is applicable
-                if not request.GET:
-                    is_applicable = True
+                is_applicable = True if no_filters_applied else obj.id in applicable_ids
 
                 options.append({
                     "id": obj.id,
@@ -2435,7 +2440,7 @@ class ProductListWithFiltersAPIView(APIView):
             context={"request": request}
         )
 
-        return Response({
+        response_data = {
             "success": True,
             "filters": filters,
             "products": {
@@ -2444,7 +2449,9 @@ class ProductListWithFiltersAPIView(APIView):
                 "offset": offset,
                 "results": serializer.data
             }
-        })
+        }
+        cache.set(cache_key, response_data, timeout=300)
+        return Response(response_data)
 
         
 class FilterProductsAPIView(APIView):
