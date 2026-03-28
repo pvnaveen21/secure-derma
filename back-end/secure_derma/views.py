@@ -17,7 +17,7 @@ from categorie.models import Categories
 from hair_concern.models import HairConcerns
 from ingredient.models import Ingredients
 from product.models import Product, ProductDetails, ProductImage, ProductReview, ProductReviewImage
-from product.serializers import ProductListSerializer
+from product.serializers import CollectionProductListSerializer, ProductListSerializer
 from product_type.models import ProductType
 from django.db.models import Prefetch, Avg, Count, Min, Q, F, Sum, OuterRef, Subquery, IntegerField
 from django.db.models.functions import TruncDate, TruncMonth
@@ -2411,7 +2411,7 @@ class ProductListWithFiltersAPIView(APIView):
         # =====================================================
         # RESPONSE
         # =====================================================
-        serializer = ProductListSerializer(
+        serializer = CollectionProductListSerializer(
             paginated_products,
             many=True,
             context={"request": request}
