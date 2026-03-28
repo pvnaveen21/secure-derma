@@ -16,6 +16,8 @@ import { NzToolTipModule } from 'ng-zorro-antd/tooltip';
 interface VisitSummary {
   total_visits: number;
   today_visits: number;
+  unique_users: number;
+  today_unique_users: number;
   unique_visitors: number;
   today_unique_visitors: number;
   tracked_pages: number;
@@ -121,6 +123,8 @@ export class VisitorsComponent {
   summary: VisitSummary = {
     total_visits: 0,
     today_visits: 0,
+    unique_users: 0,
+    today_unique_users: 0,
     unique_visitors: 0,
     today_unique_visitors: 0,
     tracked_pages: 0,
@@ -192,7 +196,7 @@ export class VisitorsComponent {
       ? { day: 'numeric', month: 'short', year: 'numeric' }
       : { month: 'short', year: 'numeric' };
 
-    const uniqueVisitors = `${this.analytics.range_unique_visitors} unique visitor${this.analytics.range_unique_visitors === 1 ? '' : 's'}`;
+    const uniqueVisitors = `${this.analytics.range_unique_visitors} unique browser visitor${this.analytics.range_unique_visitors === 1 ? '' : 's'}`;
     return `${this.formatDateLabel(this.analytics.range_start, formatOptions)} to ${this.formatDateLabel(this.analytics.range_end, formatOptions)} • ${uniqueVisitors}`;
   }
 
@@ -365,11 +369,11 @@ export class VisitorsComponent {
   }
 
   formatBarAriaLabel(point: VisitAnalyticsPoint): string {
-    return `${point.label}: ${point.today_visits} today visits, ${point.unique_visitors} unique visitors, ${point.logged_in_visits} logged-in visits, ${point.guest_visitors} guest visitors`;
+    return `${point.label}: ${point.today_visits} today visits, ${point.unique_visitors} unique browser visitors, ${point.logged_in_visits} logged-in visits, ${point.guest_visitors} guest sessions`;
   }
 
   formatBarTooltip(point: VisitAnalyticsPoint): string {
-    return `${point.label}\nToday Visits: ${point.today_visits}\nUnique Visitors: ${point.unique_visitors}\nLogged-In Visits: ${point.logged_in_visits}\nGuest Visitors: ${point.guest_visitors}`;
+    return `${point.label}\nToday Visits: ${point.today_visits}\nUnique Browser Visitors: ${point.unique_visitors}\nLogged-In Visits: ${point.logged_in_visits}\nGuest Sessions: ${point.guest_visitors}`;
   }
 
   formatPath(path: string): string {
