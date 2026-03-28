@@ -64,6 +64,7 @@ function requiresAuth(req: HttpRequest<unknown>): boolean {
       || path.startsWith('/api/orders/')
       || path.startsWith('/api/payments/')
       || path.startsWith('/api/cart/')
+      || path.startsWith('/api/visits/')
       || path.startsWith('/api/auth/logout/')
       || path.startsWith('/api/auth/enable2fa/')
       || path.startsWith('/api/auth/change-password/');

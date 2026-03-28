@@ -36,7 +36,7 @@ export class VisitTrackingService extends InterfaceService {
         referrer: this.document.referrer || '',
         visitor_key: this.getVisitorKey()
       },
-      this.getHttpOptions('json', { auth: false })
+      this.getHttpOptions('json', { auth: true })
     ).pipe(
       catchError(() => EMPTY)
     );

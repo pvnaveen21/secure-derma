@@ -105,7 +105,14 @@ class AdminVisitSummaryAPIView(APIView):
         today_visits = visits.filter(created_at__date=today)
         logged_in_visits = visits.filter(user__isnull=False)
         guest_visits = visits.filter(user__isnull=True)
-        unique_guest_visitors = guest_visits.values('visitor_key').distinct()
+        unique_logged_in_visitors = logged_in_visits.values('user_id').distinct()
+        today_unique_logged_in_visitors = today_visits.filter(user__isnull=False).values('user_id').distinct()
+        logged_in_visitor_keys = logged_in_visits.values('visitor_key')
+        today_logged_in_visitor_keys = today_visits.filter(user__isnull=False).values('visitor_key')
+        unique_guest_visitors = guest_visits.exclude(visitor_key__in=logged_in_visitor_keys).values('visitor_key').distinct()
+        today_unique_guest_visitors = today_visits.filter(user__isnull=True).exclude(
+            visitor_key__in=today_logged_in_visitor_keys
+        ).values('visitor_key').distinct()
 
         return Response(
             {
@@ -115,10 +122,10 @@ class AdminVisitSummaryAPIView(APIView):
                     'unique_visitors': visits.values('visitor_key').distinct().count(),
                     'today_unique_visitors': today_visits.values('visitor_key').distinct().count(),
                     'tracked_pages': visits.values('path').distinct().count(),
-                    'logged_in_visits': logged_in_visits.count(),
+                    'logged_in_visits': unique_logged_in_visitors.count(),
                     'guest_visits': unique_guest_visitors.count(),
-                    'today_logged_in_visits': today_visits.filter(user__isnull=False).count(),
-                    'today_guest_visits': today_visits.filter(user__isnull=True).values('visitor_key').distinct().count(),
+                    'today_logged_in_visits': today_unique_logged_in_visitors.count(),
+                    'today_guest_visits': today_unique_guest_visitors.count(),
                     'mobile_visitors': visits.filter(device_type=VisitDeviceType.MOBILE).values('visitor_key').distinct().count(),
                     'today_mobile_visitors': today_visits.filter(device_type=VisitDeviceType.MOBILE).values('visitor_key').distinct().count(),
                     'tablet_visitors': visits.filter(device_type=VisitDeviceType.TABLET).values('visitor_key').distinct().count(),
