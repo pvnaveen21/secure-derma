@@ -11,6 +11,7 @@ import { NzPaginationModule } from 'ng-zorro-antd/pagination';
 import { NzSelectModule } from 'ng-zorro-antd/select';
 import { NzSpinModule } from 'ng-zorro-antd/spin';
 import { NzTagModule } from 'ng-zorro-antd/tag';
+import { NzToolTipModule } from 'ng-zorro-antd/tooltip';
 
 interface VisitSummary {
   total_visits: number;
@@ -23,9 +24,13 @@ interface VisitSummary {
   today_logged_in_visits: number;
   today_guest_visits: number;
   mobile_visitors: number;
+  today_mobile_visitors: number;
   tablet_visitors: number;
+  today_tablet_visitors: number;
   desktop_visitors: number;
+  today_desktop_visitors: number;
   other_device_visitors: number;
+  today_other_device_visitors: number;
   latest_visit_at: string | null;
 }
 
@@ -83,7 +88,8 @@ interface AdminVisit {
     NzPaginationModule,
     NzSelectModule,
     NzSpinModule,
-    NzTagModule
+    NzTagModule,
+    NzToolTipModule
   ],
   templateUrl: './visitors.component.html',
   styleUrl: './visitors.component.scss'
@@ -120,9 +126,13 @@ export class VisitorsComponent {
     today_logged_in_visits: 0,
     today_guest_visits: 0,
     mobile_visitors: 0,
+    today_mobile_visitors: 0,
     tablet_visitors: 0,
+    today_tablet_visitors: 0,
     desktop_visitors: 0,
+    today_desktop_visitors: 0,
     other_device_visitors: 0,
+    today_other_device_visitors: 0,
     latest_visit_at: null
   };
 
@@ -353,6 +363,10 @@ export class VisitorsComponent {
 
   formatBarAriaLabel(point: VisitAnalyticsPoint): string {
     return `${point.label}: ${point.visits} visits, ${point.unique_visitors} unique visitors`;
+  }
+
+  formatBarTooltip(point: VisitAnalyticsPoint): string {
+    return `${point.label}\nVisits: ${point.visits}\nUnique Visitors: ${point.unique_visitors}`;
   }
 
   formatPath(path: string): string {

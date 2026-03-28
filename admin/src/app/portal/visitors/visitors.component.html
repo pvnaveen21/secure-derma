@@ -32,44 +32,38 @@
       </nz-card>
       <nz-card class="visitors-metric">
         <p class="visitors-metric__label m-0">Unique Visitors</p>
-        <h3 class="visitors-metric__value m-0">{{ summary.unique_visitors }}</h3>
-        <p class="visitors-metric__meta m-0">Distinct tracked visitor IDs</p>
+        <h3 class="visitors-metric__value m-0">{{ summary.today_unique_visitors }}</h3>
+        <p class="visitors-metric__meta m-0">Distinct tracked visitor IDs today</p>
       </nz-card>
       <nz-card class="visitors-metric">
         <p class="visitors-metric__label m-0">Logged-In Visits</p>
-        <h3 class="visitors-metric__value m-0">{{ summary.logged_in_visits }}</h3>
-        <p class="visitors-metric__meta m-0">Today {{ summary.today_logged_in_visits }}</p>
+        <h3 class="visitors-metric__value m-0">{{ summary.today_logged_in_visits }}</h3>
+        <p class="visitors-metric__meta m-0">Signed-in visits recorded today</p>
       </nz-card>
       <nz-card class="visitors-metric">
         <p class="visitors-metric__label m-0">Guest Visitors</p>
-        <h3 class="visitors-metric__value m-0">{{ summary.guest_visits }}</h3>
-        <p class="visitors-metric__meta m-0">Today {{ summary.today_guest_visits }}</p>
+        <h3 class="visitors-metric__value m-0">{{ summary.today_guest_visits }}</h3>
+        <p class="visitors-metric__meta m-0">Distinct guest visitors recorded today</p>
       </nz-card>
       <nz-card class="visitors-metric">
         <p class="visitors-metric__label m-0">Mobile Visitors</p>
-        <h3 class="visitors-metric__value m-0">{{ summary.mobile_visitors }}</h3>
-        <p class="visitors-metric__meta m-0">Phone browsers and mobile app webviews</p>
+        <h3 class="visitors-metric__value m-0">{{ summary.today_mobile_visitors }}</h3>
+        <p class="visitors-metric__meta m-0">Phone browsers and mobile app webviews today</p>
       </nz-card>
       <nz-card class="visitors-metric">
         <p class="visitors-metric__label m-0">Desktop Visitors</p>
-        <h3 class="visitors-metric__value m-0">{{ summary.desktop_visitors }}</h3>
-        <p class="visitors-metric__meta m-0">Laptop and desktop browsers</p>
+        <h3 class="visitors-metric__value m-0">{{ summary.today_desktop_visitors }}</h3>
+        <p class="visitors-metric__meta m-0">Laptop and desktop browsers today</p>
       </nz-card>
       <nz-card class="visitors-metric">
         <p class="visitors-metric__label m-0">Tablet Visitors</p>
-        <h3 class="visitors-metric__value m-0">{{ summary.tablet_visitors }}</h3>
-        <p class="visitors-metric__meta m-0">iPad and tablet browsers</p>
+        <h3 class="visitors-metric__value m-0">{{ summary.today_tablet_visitors }}</h3>
+        <p class="visitors-metric__meta m-0">iPad and tablet browsers today</p>
       </nz-card>
       <nz-card class="visitors-metric">
         <p class="visitors-metric__label m-0">Other Device Visitors</p>
-        <h3 class="visitors-metric__value m-0">{{ summary.other_device_visitors }}</h3>
-        <p class="visitors-metric__meta m-0">
-          @if (summary.latest_visit_at) {
-          Latest visit {{ summary.latest_visit_at | date:'dd MMM yyyy, hh:mm a' }}
-          } @else {
-          No visits yet
-          }
-        </p>
+        <h3 class="visitors-metric__value m-0">{{ summary.today_other_device_visitors }}</h3>
+        <p class="visitors-metric__meta m-0">Other device categories recorded today</p>
       </nz-card>
     </section>
 
@@ -121,9 +115,9 @@
         @for (point of chartPoints; track point.key) {
         <div class="visitors-chart__item" [attr.aria-label]="formatBarAriaLabel(point)">
           <span class="visitors-chart__count">{{ point.visits }}</span>
-          <div class="visitors-chart__bar-wrap">
+          <div class="visitors-chart__bar-wrap" [nzTooltipTitle]="formatBarTooltip(point)" nz-tooltip>
             <div class="visitors-chart__bar" [style.height]="getBarHeight(point.visits)"
-              [attr.title]="point.label + ': ' + point.visits + ' visits'"></div>
+              [attr.title]="null"></div>
           </div>
           <span class="visitors-chart__label">{{ point.short_label }}</span>
         </div>

@@ -13,7 +13,16 @@ from hair_concern.models import HairConcerns
 from product.models import Product, ProductDetails
 from product_type.models import ProductType
 from skin_concern.models import SkinConcerns
-from .models import OrderStatus, PaymentStatus, SecureDermaCartItem, SecureDermaOrder, SecureDermaOrderItem, SecureDermaPayment
+from .models import (
+    OrderStatus,
+    PaymentStatus,
+    SecureDermaCartItem,
+    SecureDermaOrder,
+    SecureDermaOrderItem,
+    SecureDermaPayment,
+    SecureDermaVisit,
+    VisitDeviceType,
+)
 from user.models import User
 
 
@@ -636,6 +645,91 @@ class AdminOrderApiTests(TestCase):
         self.assertEqual(response.data["customer_address"], self.order.customer_address)
         self.assertEqual(len(response.data["items"]), 1)
         self.assertEqual(len(response.data["payments"]), 1)
+
+
+class AdminVisitApiTests(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.admin_user = User.objects.create_user(
+            email="admin-visits@example.com",
+            password="adminpass123",
+            is_staff=True,
+            is_superuser=True,
+        )
+        self.logged_in_user = User.objects.create_user(
+            email="member@example.com",
+            password="memberpass123",
+        )
+        self.client.force_authenticate(user=self.admin_user)
+
+    def test_admin_visit_summary_returns_today_only_device_metrics(self):
+        today = timezone.localdate()
+        yesterday = today - timedelta(days=1)
+
+        today_logged_in_mobile = SecureDermaVisit.objects.create(
+            user=self.logged_in_user,
+            visitor_key="today-mobile-logged-in",
+            path="/collections",
+            device_type=VisitDeviceType.MOBILE,
+            user_agent="mobile",
+        )
+        today_guest_mobile = SecureDermaVisit.objects.create(
+            visitor_key="today-mobile-guest",
+            path="/products/item",
+            device_type=VisitDeviceType.MOBILE,
+            user_agent="mobile",
+        )
+        today_guest_desktop = SecureDermaVisit.objects.create(
+            visitor_key="today-desktop-guest",
+            path="/",
+            device_type=VisitDeviceType.DESKTOP,
+            user_agent="desktop",
+        )
+        today_guest_tablet = SecureDermaVisit.objects.create(
+            visitor_key="today-tablet-guest",
+            path="/about",
+            device_type=VisitDeviceType.TABLET,
+            user_agent="tablet",
+        )
+        today_guest_other = SecureDermaVisit.objects.create(
+            visitor_key="today-other-guest",
+            path="/contact",
+            device_type=VisitDeviceType.OTHER,
+            user_agent="other",
+        )
+        old_mobile_visit = SecureDermaVisit.objects.create(
+            visitor_key="old-mobile-guest",
+            path="/old",
+            device_type=VisitDeviceType.MOBILE,
+            user_agent="mobile",
+        )
+
+        for visit in [
+            today_logged_in_mobile,
+            today_guest_mobile,
+            today_guest_desktop,
+            today_guest_tablet,
+            today_guest_other,
+        ]:
+            SecureDermaVisit.objects.filter(pk=visit.pk).update(
+                created_at=timezone.make_aware(datetime.combine(today, time(hour=10))),
+            )
+
+        SecureDermaVisit.objects.filter(pk=old_mobile_visit.pk).update(
+            created_at=timezone.make_aware(datetime.combine(yesterday, time(hour=10))),
+        )
+
+        response = self.client.get("/api/admin/visits/summary/")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["summary"]["today_unique_visitors"], 5)
+        self.assertEqual(response.data["summary"]["today_logged_in_visits"], 1)
+        self.assertEqual(response.data["summary"]["today_guest_visits"], 4)
+        self.assertEqual(response.data["summary"]["today_mobile_visitors"], 2)
+        self.assertEqual(response.data["summary"]["today_desktop_visitors"], 1)
+        self.assertEqual(response.data["summary"]["today_tablet_visitors"], 1)
+        self.assertEqual(response.data["summary"]["today_other_device_visitors"], 1)
+        self.assertEqual(response.data["summary"]["mobile_visitors"], 3)
 
 
 class UserOrderApiTests(TestCase):
