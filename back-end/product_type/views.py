@@ -53,7 +53,7 @@ class ProductTypeDetailAPIView(APIView):
 
     def put(self, request, pk):
         product_type = self.get_object(pk)
-        serializer = ProductTypeSerializer(product_type, data=request.data)
+        serializer = ProductTypeSerializer(product_type, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response({"message": "Product Type updated successfully."})

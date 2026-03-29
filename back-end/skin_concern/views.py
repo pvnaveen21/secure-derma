@@ -55,7 +55,7 @@ class SkinConcernsDetailAPIView(APIView):
 
     def put(self, request, pk):
         item = self.get_object(pk)
-        serializer = SkinConcernsSerializer(item, data=request.data)
+        serializer = SkinConcernsSerializer(item, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response({"message": "Skin Concern updated successfully."})

@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, TemplateRef, ViewChild } from '@angular/core';
-import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormArray, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CustomDataTableColumn, CustomDataTableConfig } from '@app/interfaces/custom-data-table.interface';
 import { CommonService } from '@app/services/common/common.service';
@@ -44,6 +44,7 @@ import { NzToolTipModule } from 'ng-zorro-antd/tooltip';
     NzIconModule,
     NzDividerModule,
     NzSelectModule,
+    FormsModule,
     ReactiveFormsModule,
     NzInputModule,
     ThumbnailUploadComponent,
@@ -98,6 +99,7 @@ export class ProductsComponent {
   categoriesList: any = []
   trendingStatus: any = false
   bestSellerStatus: any = false
+  productFlagLoading = new Set<string>();
   constructor(
     private router: Router,
     private route: ActivatedRoute,
@@ -826,8 +828,36 @@ if (this.imagesDeleteIds.length > 0) {
     this.custumtable.refreshTable();
   }
 
+  isProductFlagLoading(productId: number, flag: 'trending_product' | 'best_seller') {
+    return this.productFlagLoading.has(`${productId}-${flag}`);
+  }
+
+  onProductFlagToggle(row: any, flag: 'trending_product' | 'best_seller', value: boolean) {
+    const loadingKey = `${row.id}-${flag}`;
+    if (this.productFlagLoading.has(loadingKey)) {
+      return;
+    }
+
+    const previousValue = row[flag];
+    row[flag] = value;
+    this.productFlagLoading.add(loadingKey);
+
+    this.productService.updateProductFlags(row.id, {
+      trending_product: flag === 'trending_product' ? value : !!row.trending_product,
+      best_seller: flag === 'best_seller' ? value : !!row.best_seller
+    }).subscribe({
+      next: () => {
+        this.productFlagLoading.delete(loadingKey);
+        this.message.success(`${flag === 'trending_product' ? 'Trending Product' : 'Best Seller'} updated`);
+      },
+      error: () => {
+        row[flag] = previousValue;
+        this.productFlagLoading.delete(loadingKey);
+      }
+    });
+  }
+
 
 
 
 }
-

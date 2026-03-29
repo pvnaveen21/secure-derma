@@ -208,13 +208,11 @@ export class IngredientComponent {
     row.showFilterLoading = true;
 
     this.ingredientService.updateIngredient(row.id, {
-      ...row,
       show_filter: checked
     }).subscribe({
       next: (response: any) => {
         row.showFilterLoading = false;
         this.message.success(response.message);
-        this.custumtable.refreshTable();
       },
       error: (err: any) => {
         row.show_filter = previousValue;

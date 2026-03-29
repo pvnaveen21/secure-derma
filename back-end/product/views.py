@@ -89,8 +89,13 @@ class ProductDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
         product.product_name = data.get("product_name", product.product_name)
         product.product_description = data.get("product_description", product.product_description)
         key_benefits_str = data.get("key_benefits")
-        product.trending_product = json.loads(data.get("trending_product"))
-        product.best_seller = json.loads(data.get("best_seller"))
+        trending_product = data.get("trending_product")
+        best_seller = data.get("best_seller")
+
+        if trending_product is not None:
+            product.trending_product = json.loads(trending_product)
+        if best_seller is not None:
+            product.best_seller = json.loads(best_seller)
 
         
         if key_benefits_str:
@@ -126,25 +131,17 @@ class ProductDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
         product.save()
 
   
-        skin_ids = data.getlist("skin_concern")
-        hair_ids = data.getlist("hair_concern")
-        ingredient_ids = data.getlist("ingredient")
-        
-
-        if skin_ids:
+        if "skin_concern" in data:
+            skin_ids = data.getlist("skin_concern")
             product.skin_concern.set(skin_ids)
-        else :
-            product.skin_concern.set('')
 
-        if hair_ids:
+        if "hair_concern" in data:
+            hair_ids = data.getlist("hair_concern")
             product.hair_concern.set(hair_ids)
-        else :
-            product.hair_concern.set('')
-            
-        if ingredient_ids:
+
+        if "ingredient" in data:
+            ingredient_ids = data.getlist("ingredient")
             product.ingredient.set(ingredient_ids)
-        else :
-            product.ingredient.set('')
         
 
 

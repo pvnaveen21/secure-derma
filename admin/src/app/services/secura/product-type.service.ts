@@ -31,6 +31,13 @@ export class ProductTypeService extends InterfaceService {
     return this.saveProductType('PUT', payload, id);
   }
 
+  updateProductTypeFlags(
+    id: any,
+    payload: { show_banner?: boolean; show_home?: boolean; show_filter?: boolean }
+  ) {
+    return this.saveProductType('PUT', payload, id);
+  }
+
   private saveProductType(
     method: 'POST' | 'PUT',
     payload: any,
