@@ -25,6 +25,7 @@ export class ThumbnailUploadComponent {
   @Input() showDeleteIcon: any = true
   @Input() showErrorMesage: any = true
   @Input() download: any = false
+  @Input() isLoading: boolean = false
   @Input() allowedTypes: string[] = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp']; // default types
   @Input() allowedSize: { width: number; height: number } | null = null; // optional size check
   @ViewChild('deleteModel') deleteModel!: DeleteModelComponent;
@@ -78,6 +79,11 @@ export class ThumbnailUploadComponent {
   icons = Icons
   currentValueData: any = ''
   isPasteTargetActive = false;
+  isProcessing = false;
+
+  get isBusy(): boolean {
+    return this.isLoading || this.isProcessing;
+  }
 
   onFileChange(event: Event) {
     const input = event.target as HTMLInputElement;
@@ -87,6 +93,10 @@ export class ThumbnailUploadComponent {
   }
 
   onPaste(event: ClipboardEvent) {
+    if (this.isBusy) {
+      return;
+    }
+
     this.handlePasteEvent(event, true);
   }
 
@@ -108,7 +118,7 @@ export class ThumbnailUploadComponent {
   }
 
   handlePasteEvent(event: ClipboardEvent, forceHandle: boolean) {
-    if (!this.enablePaste || (!forceHandle && !this.isPasteTargetActive)) {
+    if (this.isBusy || !this.enablePaste || (!forceHandle && !this.isPasteTargetActive)) {
       return;
     }
 
@@ -133,28 +143,34 @@ export class ThumbnailUploadComponent {
   }
 
   async processSelectedFile(file: File, input?: HTMLInputElement) {
-    if (!this.allowedTypes.includes(file.type)) {
-      this.errorMessage = `Invalid file type. Allowed: ${this.allowedTypes.join(', ')}`;
-      if (input) {
-        input.value = '';
-      }
-      this.thumbnailSelected.emit(null);
-      return;
-    }
+    this.isProcessing = true;
 
-    if (this.allowedSize) {
-      const isValidSize = await this.validateImageSize(file);
-      if (!isValidSize) {
+    try {
+      if (!this.allowedTypes.includes(file.type)) {
+        this.errorMessage = `Invalid file type. Allowed: ${this.allowedTypes.join(', ')}`;
         if (input) {
           input.value = '';
         }
         this.thumbnailSelected.emit(null);
         return;
       }
-    }
 
-    this.errorMessage = '';
-    this.thumbnailSelected.emit(file);
+      if (this.allowedSize) {
+        const isValidSize = await this.validateImageSize(file);
+        if (!isValidSize) {
+          if (input) {
+            input.value = '';
+          }
+          this.thumbnailSelected.emit(null);
+          return;
+        }
+      }
+
+      this.errorMessage = '';
+      this.thumbnailSelected.emit(file);
+    } finally {
+      this.isProcessing = false;
+    }
   }
 
   async validateImageSize(file: File): Promise<boolean> {
@@ -183,6 +199,10 @@ export class ThumbnailUploadComponent {
   }
 
   triggerUpload(input: HTMLInputElement) {
+    if (this.isBusy) {
+      return;
+    }
+
     input.click();
   }
   deleteImg() {
