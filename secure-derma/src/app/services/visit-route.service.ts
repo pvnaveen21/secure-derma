@@ -33,11 +33,17 @@ export class VisitRouteService {
   }
 
   private trackCurrentPath(path: string): void {
-    if (!path || path === this.lastTrackedPath) {
+    const normalizedPath = this.normalizePath(path);
+
+    if (!normalizedPath || normalizedPath === this.lastTrackedPath) {
       return;
     }
 
-    this.lastTrackedPath = path;
-    this.visitTrackingService.trackPageView(path).subscribe();
+    this.lastTrackedPath = normalizedPath;
+    this.visitTrackingService.trackPageView(normalizedPath).subscribe();
+  }
+
+  private normalizePath(path: string): string {
+    return path.split('?')[0].split('#')[0];
   }
 }

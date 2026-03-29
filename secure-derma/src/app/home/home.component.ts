@@ -192,6 +192,7 @@ export class HomeComponent {
   concernProductsLoading = false
   concernTotalCount = 0
   recentlyAddedProductId: number | null = null
+  addingToCartProductId: number | null = null;
   newsletterEmail = ''
   newsletterSubmitting = false
   private addToCartFeedbackTimeout?: ReturnType<typeof setTimeout>
@@ -525,6 +526,12 @@ export class HomeComponent {
   }
 
   async addToCart(product: any) {
+    if (this.addingToCartProductId === product.id) {
+      return;
+    }
+
+    this.addingToCartProductId = product.id;
+
     try {
       const result = await this.cartService.addToCart(this.normalizeProductForCart(product));
 
@@ -555,6 +562,10 @@ export class HomeComponent {
       }
     } catch {
       this.message.error(`Unable to add ${product.product_name} right now`);
+    } finally {
+      if (this.addingToCartProductId === product.id) {
+        this.addingToCartProductId = null;
+      }
     }
   }
 

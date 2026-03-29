@@ -13,10 +13,10 @@ import { NzTagModule } from 'ng-zorro-antd/tag';
 import { NzSelectModule } from 'ng-zorro-antd/select';
 import { NzDrawerModule } from 'ng-zorro-antd/drawer';
 import { NzMessageService } from 'ng-zorro-antd/message';
-import { combineLatest, distinctUntilChanged, map } from 'rxjs';
+import { distinctUntilChanged, map } from 'rxjs';
 import { Icons } from '../shared/icons';
 import { CollectionsService } from '../services/collections.service';
-import { CommonModule, DOCUMENT, isPlatformBrowser } from '@angular/common';
+import { CommonModule, DOCUMENT, isPlatformBrowser, Location } from '@angular/common';
 import { CartItem, CartService } from '../services/cart.service';
 import { Subscription } from 'rxjs';
 import { SeoService } from '../services/seo.service';
@@ -89,6 +89,7 @@ export class CollectionsComponent implements OnInit {
     private route: ActivatedRoute,
     private collectionsService: CollectionsService,
     private router: Router,
+    private location: Location,
     @Inject(PLATFORM_ID) private platformId: Object,
     @Inject(DOCUMENT) private document: Document,
     private cdr: ChangeDetectorRef,
@@ -121,12 +122,16 @@ export class CollectionsComponent implements OnInit {
   isFilterDrawerVisible = false;
   isSortDrawerVisible = false;
   private readonly mobileBreakpoint = 1024;
+  private currentBannerDevice: 'web' | 'mobile' | null = null;
+  private resizeBannerTimeout?: ReturnType<typeof setTimeout>;
+  private lastLoadedCollectionState = '';
   private shouldScrollToProductsTop = false;
   @ViewChild('productsTopAnchor') productsTopAnchor?: ElementRef<HTMLElement>;
   cartItemsCount = 0;
   cartSubtotal = 0;
   cartSavings = 0;
   recentlyAddedProductId: number | null = null;
+  addingToCartProductId: number | null = null;
   private addToCartFeedbackTimeout?: ReturnType<typeof setTimeout>;
   private productRevealTimeout?: ReturnType<typeof setTimeout>;
   private cartSubscription?: Subscription;
@@ -158,40 +163,49 @@ export class CollectionsComponent implements OnInit {
       }, 0);
     });
 
-    combineLatest([this.route.paramMap, this.route.queryParamMap]).subscribe(([params, queryParams]) => {
-      const slug = params.get('slug');
-      if (!slug) {
-        return;
-      }
-
-      this.filterProduectValue = this.slugChangesValues[slug] ?? slug;
-      this.bannerType = slug;
-
-      if (isPlatformBrowser(this.platformId)) {
-        const shouldScrollToTop = Boolean(history.state?.scrollToTop);
-        const isCollectionRouteChange = this.previousCollectionSlug !== null && this.previousCollectionSlug !== slug;
-
-        if (shouldScrollToTop || isCollectionRouteChange) {
-          requestAnimationFrame(() => {
-            window.scrollTo({
-              top: 0,
-              behavior: 'auto'
-            });
-          });
+    this.route.paramMap
+      .pipe(
+        map((params) => params.get('slug')),
+        distinctUntilChanged()
+      )
+      .subscribe((slug) => {
+        if (!slug) {
+          return;
         }
-      }
 
-      this.selectedFilters = this.readFiltersFromQueryParams();
-      this.draftSelectedFilters = this.cloneFiltersMap(this.selectedFilters);
-      this.isFilterDrawerVisible = false;
-      this.isSortDrawerVisible = false;
-      this.syncSelectedBrandDetails(slug);
-      this.updatePaginationSeoTags();
-      this.getBanner();
-      this.loadProductsForCurrentRoute();
-      this.getProductSideMenu();
-      this.previousCollectionSlug = slug;
-    });
+        this.filterProduectValue = this.slugChangesValues[slug] ?? slug;
+        this.bannerType = slug;
+
+        if (isPlatformBrowser(this.platformId)) {
+          const shouldScrollToTop = Boolean(history.state?.scrollToTop);
+          const isCollectionRouteChange = this.previousCollectionSlug !== null && this.previousCollectionSlug !== slug;
+
+          if (shouldScrollToTop || isCollectionRouteChange) {
+            requestAnimationFrame(() => {
+              window.scrollTo({
+                top: 0,
+                behavior: 'auto'
+              });
+            });
+          }
+        }
+
+        this.syncSelectedBrandDetails(slug);
+        this.updatePaginationSeoTags();
+        this.getBanner();
+        this.getProductSideMenu();
+        this.refreshCollectionState();
+        this.previousCollectionSlug = slug;
+      });
+
+    this.route.queryParamMap
+      .pipe(
+        map(() => this.getSerializedFilterState()),
+        distinctUntilChanged()
+      )
+      .subscribe(() => {
+        this.refreshCollectionState();
+      });
   }
 
   ngOnDestroy() {
@@ -202,14 +216,28 @@ export class CollectionsComponent implements OnInit {
     if (this.productRevealTimeout) {
       clearTimeout(this.productRevealTimeout);
     }
+    if (this.resizeBannerTimeout) {
+      clearTimeout(this.resizeBannerTimeout);
+    }
   }
 
   @HostListener('window:resize')
   onWindowResize() {
     this.syncViewportState();
-    if (this.bannerType) {
-      this.getBanner();
+    if (!this.bannerType) {
+      return;
     }
+
+    if (this.resizeBannerTimeout) {
+      clearTimeout(this.resizeBannerTimeout);
+    }
+
+    this.resizeBannerTimeout = setTimeout(() => {
+      const nextBannerDevice = this.getBannerDevice();
+      if (nextBannerDevice !== this.currentBannerDevice) {
+        this.getBanner();
+      }
+    }, 120);
   }
 
   getDisplayProductName(name: string | null | undefined, maxLength: number = 50): string {
@@ -230,7 +258,8 @@ export class CollectionsComponent implements OnInit {
 
   getBanner() {
     this.bannerImages = [];
-    const device: 'web' | 'mobile' = this.isDesktopViewport() ? 'web' : 'mobile';
+    const device = this.getBannerDevice();
+    this.currentBannerDevice = device;
     this.collectionsService.getBanner(this.bannerType, device).subscribe({
       next: (response: any) => {
         this.bannerImages = response.data;
@@ -658,6 +687,12 @@ export class CollectionsComponent implements OnInit {
 
   // product.component.ts
   async addToCart(product: any) {
+    if (this.addingToCartProductId === product.id) {
+      return;
+    }
+
+    this.addingToCartProductId = product.id;
+
     try {
       const result = await this.cartService.addToCart(product);
 
@@ -688,6 +723,10 @@ export class CollectionsComponent implements OnInit {
       }
     } catch {
       this.message.error(`Unable to add ${product.product_name} right now`);
+    } finally {
+      if (this.addingToCartProductId === product.id) {
+        this.addingToCartProductId = null;
+      }
     }
   }
 
@@ -700,13 +739,17 @@ export class CollectionsComponent implements OnInit {
 
   private updatePageQueryParam() {
     const filterParams = this.buildFilterQueryParams();
-    this.router.navigate([], {
+    const urlTree = this.router.createUrlTree([], {
       relativeTo: this.route,
       queryParams: {
         ...filterParams,
       },
-      replaceUrl: true
     });
+
+    this.location.replaceState(this.router.serializeUrl(urlTree));
+    this.shouldScrollToProductsTop = false;
+    this.draftSelectedFilters = this.cloneFiltersMap(this.selectedFilters);
+    this.loadProductsForCurrentRoute();
     this.updatePaginationSeoTags();
   }
 
@@ -972,6 +1015,10 @@ export class CollectionsComponent implements OnInit {
   }
 
   private loadProductsForCurrentRoute() {
+    if (!this.bannerType) {
+      return;
+    }
+
     if (this.selectedFilterCount > 0) {
       this.fetchProductsWithFilters();
       return;
@@ -1032,5 +1079,33 @@ export class CollectionsComponent implements OnInit {
 
   private isDesktopViewport(): boolean {
     return isPlatformBrowser(this.platformId) && window.innerWidth > this.mobileBreakpoint;
+  }
+
+  private getBannerDevice(): 'web' | 'mobile' {
+    return this.isDesktopViewport() ? 'web' : 'mobile';
+  }
+
+  private getSerializedFilterState(): string {
+    const slug = this.route.snapshot.paramMap.get('slug') || '';
+    const filters = this.filterPanelConfig
+      .map((panel) => `${panel.apiParam}:${this.route.snapshot.queryParamMap.get(panel.apiParam) || ''}`)
+      .join('|');
+
+    return `${slug}|${filters}`;
+  }
+
+  private refreshCollectionState(): void {
+    const nextState = this.getSerializedFilterState();
+    if (!this.bannerType || nextState === this.lastLoadedCollectionState) {
+      return;
+    }
+
+    this.lastLoadedCollectionState = nextState;
+    this.selectedFilters = this.readFiltersFromQueryParams();
+    this.draftSelectedFilters = this.cloneFiltersMap(this.selectedFilters);
+    this.isFilterDrawerVisible = false;
+    this.isSortDrawerVisible = false;
+    this.updatePaginationSeoTags();
+    this.loadProductsForCurrentRoute();
   }
 }

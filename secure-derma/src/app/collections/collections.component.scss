@@ -411,15 +411,19 @@
     ::ng-deep .ant-checkbox-inner {
         width: 1rem;
         height: 1rem;
-        border-radius: 0.25rem;
+        border-radius: 0.3rem;
         border-width: 0.0625rem;
+        border-color: color-mix(in srgb, var(--filter-border) 88%, transparent);
+        background: color-mix(in srgb, #ffffff 96%, var(--card-bg) 4%);
+        transition: background-color 0.18s ease, border-color 0.18s ease;
     }
 
     ::ng-deep .ant-checkbox-inner::after {
-        inset-inline-start: 0.3125rem;
-        top: 0.125rem;
-        width: 0.25rem;
-        height: 0.5rem;
+        inset-inline-start: 0.28rem;
+        top: 0.25rem;
+        width: 0.30rem;
+        height: 1rem;
+        border-width: 0 0.1rem 0.11rem 0;
     }
 
     ::ng-deep .ant-checkbox + span {
@@ -429,6 +433,20 @@
         padding-right: 0.2rem;
         display: flex;
         align-items: center;
+    }
+
+    ::ng-deep .ant-checkbox-checked .ant-checkbox-inner {
+        background: color-mix(in srgb, var(--brand-primary) 92%, #0f3d31 8%);
+        border-color: color-mix(in srgb, var(--brand-primary) 92%, #0f3d31 8%);
+    }
+
+    ::ng-deep .ant-checkbox-checked::after {
+        border-color: transparent;
+    }
+
+    ::ng-deep .ant-checkbox-wrapper:hover .ant-checkbox-inner,
+    ::ng-deep .ant-checkbox:hover .ant-checkbox-inner {
+        border-color: color-mix(in srgb, var(--brand-primary) 72%, var(--filter-border) 28%);
     }
 }
 
@@ -508,12 +526,6 @@
     border-radius: 0.7rem;
     padding: 0.7rem 0.75rem;
     background: color-mix(in srgb, var(--card-bg) 95%, #ffffff 5%);
-}
-
-@media only screen and (min-width: 64.0625rem) {
-    .filter-tags-row {
-        display: none;
-    }
 }
 
 .filter-tags-header {
@@ -1000,10 +1012,10 @@
 
 .product-footer {
     display: grid;
-    grid-template-rows: minmax(2.75rem, auto) 1.3rem minmax(4.8rem, auto) auto minmax(2.75rem, auto);
+    grid-template-rows: minmax(2.75rem, auto) 1.3rem minmax(3.8rem, auto) auto minmax(2.75rem, auto);
     align-content: start;
     flex: 1;
-    row-gap: 0.6rem;
+    row-gap: 0.1rem;
 
     .rate-height {
         min-height: 1.6rem;
@@ -1068,7 +1080,7 @@
     font-size: 0.8rem;
     word-break: break-all;
     color: var(--text-muted);
-    min-height: 4.8rem;
+    // min-height: 4.8rem;
     margin: 0;
 }
 
