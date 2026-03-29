@@ -169,6 +169,7 @@
                             </div>
                             <app-thumbnail-upload [label]="['Upload Image Size 1270x240','File Type: PNG, JPEG']"
                                 [showLabel]="false" [allowedTypes]="['image/png','image/jpeg','image/webp']"
+                                [enablePaste]="true"
                                 [fileUrl]="productForm.get('thumbnail_image')?.value"
                                 (thumbnailSelected)="onThumbnailSelected($event)"
                                 (deleteImgValue)="deleteImgValue($event)" [download]="true">
@@ -186,6 +187,7 @@
                             <app-thumbnail-upload [label]="['Upload Image Size 1270x240','File Type: PNG, JPEG']"
                                 [showLabel]="false" [allowedTypes]="['image/png','image/jpeg','image/webp']"
                                 [fileUrl]="productForm.get('hover_image')?.value"
+                                [enablePaste]="true"
                                 (thumbnailSelected)="selectedHoverImage($event)"
                                 (deleteImgValue)="deleteImgValue($event)" [download]="true">
                             </app-thumbnail-upload>
@@ -209,6 +211,7 @@
                         @for(img of imagesArray.controls ;track img;let i=$index){
                         <app-thumbnail-upload [label]="['Upload Image Size 1270x240','File Type: PNG, JPEG']"
                             [showLabel]="false" [allowedTypes]="['image/png','image/jpeg','image/webp']"
+                            [enablePaste]="true"
                             [fileUrl]="img.value" (thumbnailSelected)="selectedMoreImages($event,i)"
                             (deleteImgValue)="deleteAddedimagesValue($event,i)" [download]="true">
                         </app-thumbnail-upload>
