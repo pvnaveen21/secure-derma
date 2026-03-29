@@ -42,6 +42,23 @@ export class ProductService extends InterfaceService {
     );
   }
 
+  updateProductFlags(id: any, flags: { trending_product: boolean; best_seller: boolean }) {
+    const formData = new FormData();
+    formData.append('trending_product', JSON.stringify(flags.trending_product));
+    formData.append('best_seller', JSON.stringify(flags.best_seller));
+
+    const headers = {
+      'X-Requested-With': 'XMLHttpRequest',
+      'Authorization': `Bearer ${getToken(ACCESS_TOKEN)}`
+    };
+
+    return this.http.put(
+      this.getApiUrl(`/products/${id}/`),
+      formData,
+      { headers }
+    );
+  }
+
 
 
   convertToFormData(payload: any): FormData {

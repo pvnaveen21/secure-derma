@@ -258,13 +258,13 @@ export class SkinConcernComponent {
     row[loadingKey] = true;
 
     this.skinConcernsService.updateSkinConcerns(row.id, {
-      ...row,
-      ...nextValues
+      show_banner: nextValues.show_banner,
+      show_home: nextValues.show_home,
+      show_filter: nextValues.show_filter
     }).subscribe({
       next: (response: any) => {
         row[loadingKey] = false;
         this.message.success(response.message);
-        this.custumtable.refreshTable();
       },
       error: (err: any) => {
         row.show_banner = previousValues.show_banner;

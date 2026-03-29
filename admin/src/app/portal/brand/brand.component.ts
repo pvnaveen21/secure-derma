@@ -84,6 +84,7 @@ export class BrandComponent {
     status: false
   };
   topBrandStatus: any = false
+  brandToggleLoading = new Set<number>();
 
   // Delete Model Text
   headerText: string = 'Confirm Delete Brand';
@@ -300,5 +301,30 @@ export class BrandComponent {
     };
 
     this.custumtable.refreshTable();
+  }
+
+  isTopBrandLoading(brandId: number) {
+    return this.brandToggleLoading.has(brandId);
+  }
+
+  onTopBrandToggle(row: any, value: boolean) {
+    if (this.brandToggleLoading.has(row.id)) {
+      return;
+    }
+
+    const previousValue = row.is_top_brand;
+    row.is_top_brand = value;
+    this.brandToggleLoading.add(row.id);
+
+    this.brandsService.updateTopBrand(row.id, value).subscribe({
+      next: () => {
+        this.brandToggleLoading.delete(row.id);
+        this.message.success('Top Brand updated');
+      },
+      error: () => {
+        row.is_top_brand = previousValue;
+        this.brandToggleLoading.delete(row.id);
+      }
+    });
   }
 }

@@ -499,23 +499,21 @@
 </ng-template>
 
 <ng-template #trendingProductTemplate let-data>
-    <span>
-        @if(data.trending_product) {
-        <lucide-angular [img]="icons.product.star" [size]="20" style="color: green;"></lucide-angular>
-        }
-        @else{
-        ---
-        }</span>
+    <nz-switch [ngModel]="data.trending_product"
+        [ngModelOptions]="{ standalone: true }"
+        [nzLoading]="isProductFlagLoading(data.id, 'trending_product')"
+        [nzDisabled]="isProductFlagLoading(data.id, 'trending_product')"
+        (ngModelChange)="onProductFlagToggle(data, 'trending_product', $event)">
+    </nz-switch>
 </ng-template>
 
 <ng-template #bestSellerTemplate let-data>
-    <span>
-        @if(data.best_seller) {
-        <lucide-angular [img]="icons.product.star" [size]="20" style="color: green;"></lucide-angular>
-        }
-        @else{
-        ---
-        }</span>
+    <nz-switch [ngModel]="data.best_seller"
+        [ngModelOptions]="{ standalone: true }"
+        [nzLoading]="isProductFlagLoading(data.id, 'best_seller')"
+        [nzDisabled]="isProductFlagLoading(data.id, 'best_seller')"
+        (ngModelChange)="onProductFlagToggle(data, 'best_seller', $event)">
+    </nz-switch>
 </ng-template>
 
 <app-delete-model #deleteModel [headerText]="headerText" [subText]="subText"

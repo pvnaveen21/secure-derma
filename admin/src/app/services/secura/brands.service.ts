@@ -86,6 +86,26 @@ export class BrandsService extends InterfaceService {
     );
 
   }
+
+  updateTopBrand(id: any, isTopBrand: boolean) {
+    const formData = new FormData();
+    formData.append('is_top_brand', isTopBrand ? 'true' : 'false');
+
+    const headers = {
+      'X-Requested-With': 'XMLHttpRequest',
+      'Authorization': `Bearer ${getToken(ACCESS_TOKEN)}`
+    };
+
+    return this.http.put(
+      this.getApiUrl(`/brands/${id}/`),
+      formData,
+      { headers }
+    ).pipe(
+      map(res => res),
+      catchError(this.handleError)
+    );
+  }
+
   deleteBrand(id: any) {
     return this.http.delete(
       this.getApiUrl(`/brands/${id}/`),

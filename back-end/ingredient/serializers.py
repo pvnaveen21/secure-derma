@@ -7,7 +7,7 @@ class IngredientSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
     def validate(self, attrs):
-        ingredient = attrs.get("ingredient")
+        ingredient = attrs.get("ingredient", getattr(self.instance, "ingredient", None))
 
         # On update — exclude itself
         if self.instance:

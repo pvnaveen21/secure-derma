@@ -112,13 +112,12 @@
 </ng-template>
 
 <ng-template #topBrandTemplate let-data>
-    <span>
-        @if(data.is_top_brand) {
-        <lucide-angular [img]="icons.product.star" [size]="20" style="color: green;"></lucide-angular>
-        }
-        @else{
-        ---
-        }</span>
+    <nz-switch [ngModel]="data.is_top_brand"
+        [ngModelOptions]="{ standalone: true }"
+        [nzLoading]="isTopBrandLoading(data.id)"
+        [nzDisabled]="isTopBrandLoading(data.id)"
+        (ngModelChange)="onTopBrandToggle(data, $event)">
+    </nz-switch>
 </ng-template>
 
 <!--  -->

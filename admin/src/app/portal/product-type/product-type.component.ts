@@ -274,14 +274,14 @@ export class ProductTypeComponent {
     row.show_filter = nextValues.show_filter;
     row[loadingKey] = true;
 
-    this.productTypeService.updateProductType(row.id, {
-      ...row,
-      ...nextValues
+    this.productTypeService.updateProductTypeFlags(row.id, {
+      show_banner: nextValues.show_banner,
+      show_home: nextValues.show_home,
+      show_filter: nextValues.show_filter
     }).subscribe({
       next: (response: any) => {
         row[loadingKey] = false;
         this.message.success(response.message);
-        this.custumtable.refreshTable();
       },
       error: (err: any) => {
         row.show_banner = previousValues.show_banner;
