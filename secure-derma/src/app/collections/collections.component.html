@@ -196,15 +196,16 @@
                             : product.product_description }}</p>
                         }
                         @if (product.details) {
-                        <div class="product-price-row">
+                        <div class="product-price-row my-1">
                             <p class="product-org-price">₹ {{ product.details[0].original_price }}</p>
                             <p class="product-sell-price">₹ {{ product.details[0].selling_price }}</p>
                         </div>
 
                         <div class="add-to-cart-btn">
                             <button (click)="addToCart(product)" class="secure-btn btn-primary btn-lg signin-btn"
+                                [disabled]="addingToCartProductId === product.id"
                                 [class.added]="recentlyAddedProductId === product.id">
-                                {{ recentlyAddedProductId === product.id ? 'Added to cart' : 'Add to cart' }}
+                                {{ addingToCartProductId === product.id ? 'Adding to cart...' : (recentlyAddedProductId === product.id ? 'Added to cart' : 'Add to cart') }}
                             </button>
                         </div>
                         }

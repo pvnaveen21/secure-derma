@@ -18,6 +18,7 @@ export class PortalComponent {
   isScrolled = false;
   isNavigating = false;
   contentMinHeight = 0;
+  private previousRoutePath = '';
   private navigationSubscription?: Subscription;
   @ViewChild('pageContent') private pageContent?: ElementRef<HTMLElement>;
 
@@ -39,7 +40,11 @@ export class PortalComponent {
         this.releaseContentHeight();
 
         if (event instanceof NavigationEnd) {
-          this.scrollToTop();
+          const currentRoutePath = this.getRoutePath(event.urlAfterRedirects);
+          if (currentRoutePath !== this.previousRoutePath) {
+            this.scrollToTop();
+          }
+          this.previousRoutePath = currentRoutePath;
         }
       }
     });
@@ -98,5 +103,9 @@ export class PortalComponent {
         this.contentMinHeight = 0;
       });
     });
+  }
+
+  private getRoutePath(url: string): string {
+    return url.split('?')[0].split('#')[0];
   }
 }
