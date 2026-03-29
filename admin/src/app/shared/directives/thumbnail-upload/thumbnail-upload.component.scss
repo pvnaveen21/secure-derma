@@ -15,6 +15,15 @@
     &:hover {
         border-color: #e74c3c;
     }
+
+    &:focus-visible {
+        outline: 2px solid #c0392b;
+        outline-offset: 2px;
+    }
+}
+
+.thumbnail-upload-box--paste-enabled {
+    border-style: solid;
 }
 
 .upload-content {
@@ -33,6 +42,19 @@
 
 .img-preview-main {
     position: relative;
+}
+
+.thumbnail-preview-wrapper {
+    border-radius: 6px;
+
+    &:focus-visible {
+        outline: 2px solid #c0392b;
+        outline-offset: 2px;
+    }
+}
+
+.thumbnail-preview-wrapper--paste-enabled {
+    cursor: paste;
 }
 
 .img-remover {
@@ -66,4 +88,9 @@
 .error {
     margin-top: 5px;
     font-size: 12px;
+}
+
+.paste-hint {
+    font-size: 12px;
+    margin-top: 8px;
 }

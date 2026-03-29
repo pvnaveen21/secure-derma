@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
+import { Component, EventEmitter, HostListener, Input, Output, ViewChild } from '@angular/core';
 import { Icons } from '@app/shared/icons';
 import { LucideAngularModule } from 'lucide-angular';
 import { DeleteModelComponent } from '../delete-model/delete-model.component';
@@ -19,6 +19,7 @@ export class ThumbnailUploadComponent {
   @Input() label: any = ['Upload Thumbnail'];
   @Input() accept: string = 'image/*';
   @Input() showLabel: any = true
+  @Input() enablePaste: boolean = false;
   @Output() thumbnailSelected = new EventEmitter<File | null>();
   @Output() deleteImgValue = new EventEmitter<File | null>();
   @Input() showDeleteIcon: any = true
@@ -76,49 +77,110 @@ export class ThumbnailUploadComponent {
   previewUrl: string | null = null;
   icons = Icons
   currentValueData: any = ''
+  isPasteTargetActive = false;
 
   onFileChange(event: Event) {
     const input = event.target as HTMLInputElement;
     if (input.files && input.files.length > 0) {
-      const file = input.files[0];
-
-      if (!this.allowedTypes.includes(file.type)) {
-        this.errorMessage = `Invalid file type. Allowed: ${this.allowedTypes.join(', ')}`;
-        input.value = '';
-        this.thumbnailSelected.emit(null);
-        return;
-      }
-
-      if (this.allowedSize) {
-        const img = new Image();
-        img.src = URL.createObjectURL(file);
-
-        img.onload = async () => {
-          try {
-            await img.decode();
-            if (
-              img.width != this.allowedSize!.width ||
-              img.height != this.allowedSize!.height
-            ) {
-              this.errorMessage = `Invalid image size. Required ${this.allowedSize!.width}x${this.allowedSize!.height}px`;
-              input.value = '';
-              this.thumbnailSelected.emit(null);
-            } else {
-              this.errorMessage = '';
-              this.thumbnailSelected.emit(file);
-            }
-          } catch (e) {
-            this.errorMessage = 'Failed to read image dimensions.';
-            this.thumbnailSelected.emit(null);
-          }
-        };
-      } else {
-        this.errorMessage = '';
-        this.thumbnailSelected.emit(file);
-      }
+      void this.processSelectedFile(input.files[0], input);
     }
   }
 
+  onPaste(event: ClipboardEvent) {
+    this.handlePasteEvent(event, true);
+  }
+
+  @HostListener('document:paste', ['$event'])
+  onDocumentPaste(event: ClipboardEvent) {
+    if (!this.isPasteTargetActive) {
+      return;
+    }
+
+    this.handlePasteEvent(event, false);
+  }
+
+  onPasteTargetEnter() {
+    this.isPasteTargetActive = true;
+  }
+
+  onPasteTargetLeave() {
+    this.isPasteTargetActive = false;
+  }
+
+  handlePasteEvent(event: ClipboardEvent, forceHandle: boolean) {
+    if (!this.enablePaste || (!forceHandle && !this.isPasteTargetActive)) {
+      return;
+    }
+
+    const clipboardItems = event.clipboardData?.items;
+    if (!clipboardItems?.length) {
+      return;
+    }
+
+    const imageItem = Array.from(clipboardItems).find((item) => item.type.startsWith('image/'));
+    if (!imageItem) {
+      return;
+    }
+
+    const file = imageItem.getAsFile();
+    if (!file) {
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+    void this.processSelectedFile(file);
+  }
+
+  async processSelectedFile(file: File, input?: HTMLInputElement) {
+    if (!this.allowedTypes.includes(file.type)) {
+      this.errorMessage = `Invalid file type. Allowed: ${this.allowedTypes.join(', ')}`;
+      if (input) {
+        input.value = '';
+      }
+      this.thumbnailSelected.emit(null);
+      return;
+    }
+
+    if (this.allowedSize) {
+      const isValidSize = await this.validateImageSize(file);
+      if (!isValidSize) {
+        if (input) {
+          input.value = '';
+        }
+        this.thumbnailSelected.emit(null);
+        return;
+      }
+    }
+
+    this.errorMessage = '';
+    this.thumbnailSelected.emit(file);
+  }
+
+  async validateImageSize(file: File): Promise<boolean> {
+    const imageUrl = URL.createObjectURL(file);
+
+    try {
+      const img = new Image();
+      img.src = imageUrl;
+      await img.decode();
+
+      if (
+        img.width != this.allowedSize!.width ||
+        img.height != this.allowedSize!.height
+      ) {
+        this.errorMessage = `Invalid image size. Required ${this.allowedSize!.width}x${this.allowedSize!.height}px`;
+        return false;
+      }
+
+      return true;
+    } catch {
+      this.errorMessage = 'Failed to read image dimensions.';
+      return false;
+    } finally {
+      URL.revokeObjectURL(imageUrl);
+    }
+  }
 
   triggerUpload(input: HTMLInputElement) {
     input.click();
