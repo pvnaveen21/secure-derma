@@ -27,6 +27,11 @@
                         <control-messages [control]="executiveForm.controls['ingredient']"></control-messages>
                     </div>
 
+                    <div class="flex-box switch-main rounded-xl p-3 mb-3 mt-4">
+                        <div class="b1">Show Filter</div>
+                        <nz-switch formControlName="show_filter"></nz-switch>
+                    </div>
+
                 </div>
 
 
@@ -47,6 +52,11 @@
 </nz-modal>
 
 <!--  -->
+
+<ng-template #showFilterTemplate let-row>
+    <nz-switch [ngModel]="row.show_filter" [ngModelOptions]="{ standalone: true }"
+        [nzLoading]="row.showFilterLoading" (ngModelChange)="toggleShowFilter(row, $event)"></nz-switch>
+</ng-template>
 
 
 <ng-template #actionTemplate let-row>

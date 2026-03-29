@@ -7,7 +7,9 @@ class SkinConcernsSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
     def validate(self, attrs):
-        skin_concern = attrs.get("skin_concern")
+        skin_concern = attrs.get("skin_concern", getattr(self.instance, "skin_concern", None))
+        show_banner = attrs.get("show_banner", getattr(self.instance, "show_banner", False))
+        show_home = attrs.get("show_home", getattr(self.instance, "show_home", False))
 
         # On update — exclude itself
         if self.instance:
@@ -27,5 +29,8 @@ class SkinConcernsSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError({
                     "error": "Skin concern already exists."
                 })
+
+        if show_banner or show_home:
+            attrs["show_filter"] = True
 
         return attrs

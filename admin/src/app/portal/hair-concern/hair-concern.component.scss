@@ -57,6 +57,26 @@
     background-color: var(--secure-derma-bg-primary);
 }
 
+.locked-switch-row {
+    border: 1px solid rgba(34, 94, 67, 0.14);
+    background: linear-gradient(180deg, rgba(34, 94, 67, 0.08), rgba(34, 94, 67, 0.03));
+}
+
+.switch-note {
+    color: #48635a;
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+::ng-deep .locked-switch.ant-switch-disabled.ant-switch-checked {
+    background: #2f7d5b;
+    opacity: 0.85;
+}
+
+::ng-deep .locked-switch.ant-switch-disabled.ant-switch-checked .ant-switch-handle::before {
+    background: #ffffff;
+}
+
 .metal-chip {
     border-radius: 7px;
     min-width: 100%;

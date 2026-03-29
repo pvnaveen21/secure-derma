@@ -7,6 +7,7 @@ import {
   FormsModule,
   ReactiveFormsModule
 } from '@angular/forms';
+import { merge } from 'rxjs';
 import {
   CustomDataTableColumn,
   CustomDataTableConfig
@@ -58,6 +59,9 @@ export class ProductTypeComponent {
 
   /* ------------------------- ViewChild Templates ------------------------- */
   @ViewChild('actionTemplate', { static: true }) actionTemplate!: TemplateRef<any>;
+  @ViewChild('showBannerTemplate', { static: true }) showBannerTemplate!: TemplateRef<any>;
+  @ViewChild('showHomeTemplate', { static: true }) showHomeTemplate!: TemplateRef<any>;
+  @ViewChild('showFilterTemplate', { static: true }) showFilterTemplate!: TemplateRef<any>;
   @ViewChild('custumtable') custumtable!: CommonDataTableComponent;
   @ViewChild('deleteModel') deleteModel!: DeleteModelComponent;
 
@@ -121,6 +125,21 @@ export class ProductTypeComponent {
         sortKey: 'product_type'
       },
       {
+        title: 'Show Banner',
+        property: 'show_banner',
+        cellTemplate: this.showBannerTemplate
+      },
+      {
+        title: 'Show in Shop by Concern',
+        property: 'show_home',
+        cellTemplate: this.showHomeTemplate
+      },
+      {
+        title: 'Show Filter',
+        property: 'show_filter',
+        cellTemplate: this.showFilterTemplate
+      },
+      {
         title: '',
         property: 'actions',
         cellTemplate: this.actionTemplate
@@ -154,7 +173,9 @@ export class ProductTypeComponent {
       product_type: [data?.product_type || '', [Validators.required, Validators.maxLength(45)]],
       show_banner: [data ? data?.show_banner : false],
       show_home: [data ? data?.show_home : false],
+      show_filter: [data ? data?.show_filter : false],
     });
+    this.registerShowFilterDependency();
   }
 
   /* ------------------------- Submit ------------------------- */
@@ -211,6 +232,81 @@ export class ProductTypeComponent {
   editAction(data: any) {
     this.editUser = true;
     this.showModal(data);
+  }
+
+  toggleShowBanner(row: any, checked: boolean) {
+    this.updateRowFlags(row, { show_banner: checked }, 'showBannerLoading');
+  }
+
+  toggleShowHome(row: any, checked: boolean) {
+    this.updateRowFlags(row, { show_home: checked }, 'showHomeLoading');
+  }
+
+  toggleShowFilter(row: any, checked: boolean) {
+    if (row.show_banner || row.show_home) {
+      row.show_filter = true;
+      return;
+    }
+    this.updateRowFlags(row, { show_filter: checked }, 'showFilterLoading');
+  }
+
+  private updateRowFlags(
+    row: any,
+    changes: { show_banner?: boolean; show_home?: boolean; show_filter?: boolean },
+    loadingKey: string
+  ) {
+    const previousValues = {
+      show_banner: row.show_banner,
+      show_home: row.show_home,
+      show_filter: row.show_filter
+    };
+    const nextValues = {
+      ...previousValues,
+      ...changes
+    };
+
+    if (nextValues.show_banner || nextValues.show_home) {
+      nextValues.show_filter = true;
+    }
+
+    row.show_banner = nextValues.show_banner;
+    row.show_home = nextValues.show_home;
+    row.show_filter = nextValues.show_filter;
+    row[loadingKey] = true;
+
+    this.productTypeService.updateProductType(row.id, {
+      ...row,
+      ...nextValues
+    }).subscribe({
+      next: (response: any) => {
+        row[loadingKey] = false;
+        this.message.success(response.message);
+        this.custumtable.refreshTable();
+      },
+      error: (err: any) => {
+        row.show_banner = previousValues.show_banner;
+        row.show_home = previousValues.show_home;
+        row.show_filter = previousValues.show_filter;
+        row[loadingKey] = false;
+        this.message.error(err?.message || 'Something went wrong!');
+      }
+    });
+  }
+
+  private registerShowFilterDependency() {
+    const showBannerControl = this.executiveForm.get('show_banner');
+    const showHomeControl = this.executiveForm.get('show_home');
+    const showFilterControl = this.executiveForm.get('show_filter');
+
+    if (!showBannerControl || !showHomeControl || !showFilterControl) {
+      return;
+    }
+
+    merge(showBannerControl.valueChanges, showHomeControl.valueChanges).subscribe(() => {
+      if (showBannerControl.value || showHomeControl.value) {
+        showFilterControl.setValue(true, { emitEvent: false });
+      }
+    });
   }
 
   /* ------------------------- Delete ------------------------- */
