@@ -137,6 +137,8 @@ export class BannersComponent {
   onThumbnailSelected(file: File | null, index: number, type: string) {
     if (!file) return;
 
+    this.groupedBanners[type][index].uploading = true;
+
     this.bannerService.addNewBanner(file, type).subscribe({
       next: (res: any) => {
         const bannerConfig = this.getBannerConfig(type);
@@ -145,11 +147,15 @@ export class BannersComponent {
         // update UI instantly
         this.groupedBanners[type][index].id = res?.id;
         this.groupedBanners[type][index].image = URL.createObjectURL(file);
+        this.groupedBanners[type][index].uploading = false;
 
         // add new blank placeholder        
         if (bannerConfig?.type == 'multiple') {
           this.addBanner(type);
         }
+      },
+      error: () => {
+        this.groupedBanners[type][index].uploading = false;
       }
     });
   }

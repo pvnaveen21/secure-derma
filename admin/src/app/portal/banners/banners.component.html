@@ -20,7 +20,7 @@
                 @for (data of groupedBanners[item.key]; track data.id; let i = $index) {
                 <app-thumbnail-upload [label]="item.uploadLabel" [showLabel]="false"
                     [allowedTypes]="['image/png', 'image/jpeg' ,'image/webp']" [enablePaste]="true"
-                    [fileUrl]="data?.image ? data : null"
+                    [fileUrl]="data?.image ? data : null" [isLoading]="!!data?.uploading"
                     (thumbnailSelected)="onThumbnailSelected($event, i, item.key)"
                     (deleteImgValue)="deleteImgValue($event, item.key)" [download]="'true'">
                 </app-thumbnail-upload>

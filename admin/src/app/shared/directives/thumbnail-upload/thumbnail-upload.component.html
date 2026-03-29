@@ -3,6 +3,13 @@
     (click)="triggerUpload(fileInput)" (paste)="onPaste($event)" (mouseenter)="onPasteTargetEnter()"
     (mouseleave)="onPasteTargetLeave()" (focus)="onPasteTargetEnter()" (blur)="onPasteTargetLeave()">
     <input type="file" #fileInput [accept]="accept" hidden (change)="onFileChange($event)" />
+    @if(isBusy){
+    <div class="upload-loading-state">
+        <div class="upload-loading-spinner"></div>
+        <p class="mb-0">{{ isLoading ? 'Uploading image...' : 'Processing image...' }}</p>
+    </div>
+    }
+    @else{
     <div class="upload-content">
         @if(showLabel){
         <lucide-angular [img]="icons.common.fileUp" class=" text-primary mb-2"></lucide-angular>
@@ -14,6 +21,7 @@
         <p class="paste-hint mb-0">Click here and press Ctrl + V to paste an image</p>
         }
     </div>
+    }
 
 </div>
 @if(showErrorMesage){
@@ -27,6 +35,12 @@
             tabindex="0" (paste)="onPaste($event)" (mouseenter)="onPasteTargetEnter()"
             (mouseleave)="onPasteTargetLeave()" (focus)="onPasteTargetEnter()" (blur)="onPasteTargetLeave()">
             <img [src]="previewUrl" class="thumbnail-preview" />
+            @if(isBusy){
+            <div class="preview-loading-overlay">
+                <div class="upload-loading-spinner"></div>
+                <p class="mb-0">{{ isLoading ? 'Uploading image...' : 'Processing image...' }}</p>
+            </div>
+            }
         </div>
         @if(showDeleteIcon){
         @if(download){
