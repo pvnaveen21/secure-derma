@@ -25,6 +25,7 @@ class ProductType(models.Model):
     image = models.ImageField(upload_to='producttype/', null=True, blank=True)
     show_banner = models.BooleanField(default=False)
     show_home = models.BooleanField(default=False)
+    show_filter = models.BooleanField(default=False)
     product_type = models.CharField(max_length=255)
     is_deleted = models.BooleanField(default=False)
     slug = models.SlugField(unique=True, null=True, blank=True)

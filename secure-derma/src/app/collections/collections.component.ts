@@ -125,6 +125,7 @@ export class CollectionsComponent implements OnInit {
   private currentBannerDevice: 'web' | 'mobile' | null = null;
   private resizeBannerTimeout?: ReturnType<typeof setTimeout>;
   private lastLoadedCollectionState = '';
+  private latestProductsRequestId = 0;
   private shouldScrollToProductsTop = false;
   @ViewChild('productsTopAnchor') productsTopAnchor?: ElementRef<HTMLElement>;
   cartItemsCount = 0;
@@ -137,6 +138,7 @@ export class CollectionsComponent implements OnInit {
   private cartSubscription?: Subscription;
   private readonly defaultVisibleFilterItems = 6;
   private brandCatalog: CollectionBrandMeta[] = [];
+  private sideMenuFilters: Record<string, FilterItem[]> | null = null;
   private previousCollectionSlug: string | null = null;
   expandedFilterPanels = new Set<string>();
   selectedBrandName = '';
@@ -173,7 +175,7 @@ export class CollectionsComponent implements OnInit {
           return;
         }
 
-        this.filterProduectValue = this.slugChangesValues[slug] ?? slug;
+        this.filterProduectValue = this.getApiFilterValueForSlug(slug);
         this.bannerType = slug;
 
         if (isPlatformBrowser(this.platformId)) {
@@ -250,8 +252,15 @@ export class CollectionsComponent implements OnInit {
   }
 
   getProductSideMenu() {
+    if (this.sideMenuFilters) {
+      return;
+    }
+
     this.collectionsService.getProducetSideMenu().subscribe({
       next: (response: any) => {
+        this.sideMenuFilters = response;
+        this.filterProduectValue = this.getApiFilterValueForSlug(this.route.snapshot.paramMap.get('slug') || '');
+        this.refreshCollectionState(true);
       }
     });
   }
@@ -287,6 +296,7 @@ export class CollectionsComponent implements OnInit {
   private fetchProducts(append: boolean) {
     const filterParams = this.buildFilterQueryParams();
     const pagination = this.getPagination(append);
+    const requestId = ++this.latestProductsRequestId;
 
     if (append) {
       this.isLoadingMore = true;
@@ -300,6 +310,10 @@ export class CollectionsComponent implements OnInit {
       pagination
     ).subscribe({
       next: (response: any) => {
+        if (requestId !== this.latestProductsRequestId) {
+          return;
+        }
+
         const incomingProducts = response.products?.results || [];
         const mergedProducts = append
           ? [...(this.productsData?.products?.results || []), ...incomingProducts]
@@ -335,6 +349,10 @@ export class CollectionsComponent implements OnInit {
         this.isLoadingMore = false;
       },
       error: () => {
+        if (requestId !== this.latestProductsRequestId) {
+          return;
+        }
+
         this.isProductsLoading = false;
         this.isLoadingMore = false;
       }
@@ -994,17 +1012,24 @@ export class CollectionsComponent implements OnInit {
   private readFiltersFromQueryParams(): Map<string, Set<string>> {
     const result = new Map<string, Set<string>>();
     const queryParams = this.route.snapshot.queryParamMap;
+    const routeSeed = this.getRouteSeedFilter(this.route.snapshot.paramMap.get('slug') || '');
 
     this.filterPanelConfig.forEach((panel) => {
       const rawValue = queryParams.get(panel.apiParam);
-      if (!rawValue) {
+      if (!rawValue && routeSeed?.panelKey !== panel.key) {
         return;
       }
 
       const slugs = rawValue
-        .split(',')
-        .map((item) => item.trim())
-        .filter(Boolean);
+        ? rawValue
+            .split(',')
+            .map((item) => item.trim())
+            .filter(Boolean)
+        : [];
+
+      if (routeSeed?.panelKey === panel.key) {
+        slugs.unshift(routeSeed.itemSlug);
+      }
 
       if (slugs.length) {
         result.set(panel.key, new Set(slugs));
@@ -1016,6 +1041,11 @@ export class CollectionsComponent implements OnInit {
 
   private loadProductsForCurrentRoute() {
     if (!this.bannerType) {
+      return;
+    }
+
+    const slug = this.route.snapshot.paramMap.get('slug') || '';
+    if (!this.sideMenuFilters && this.requiresSideMenuResolution(slug)) {
       return;
     }
 
@@ -1091,12 +1121,13 @@ export class CollectionsComponent implements OnInit {
       .map((panel) => `${panel.apiParam}:${this.route.snapshot.queryParamMap.get(panel.apiParam) || ''}`)
       .join('|');
 
-    return `${slug}|${filters}`;
+    const routeSeed = this.getRouteSeedFilter(slug);
+    return `${slug}|${filters}|seed:${routeSeed?.panelKey || ''}:${routeSeed?.itemSlug || ''}`;
   }
 
-  private refreshCollectionState(): void {
+  private refreshCollectionState(force = false): void {
     const nextState = this.getSerializedFilterState();
-    if (!this.bannerType || nextState === this.lastLoadedCollectionState) {
+    if (!this.bannerType || (!force && nextState === this.lastLoadedCollectionState)) {
       return;
     }
 
@@ -1107,5 +1138,60 @@ export class CollectionsComponent implements OnInit {
     this.isSortDrawerVisible = false;
     this.updatePaginationSeoTags();
     this.loadProductsForCurrentRoute();
+  }
+
+  private getApiFilterValueForSlug(slug: string): string {
+    if (!slug) {
+      return '';
+    }
+
+    if (this.getRouteSeedFilter(slug)) {
+      return 'all';
+    }
+
+    return this.slugChangesValues[slug] ?? slug;
+  }
+
+  private getRouteSeedFilter(slug: string): { panelKey: string; itemSlug: string } | null {
+    if (!slug || !this.sideMenuFilters) {
+      return null;
+    }
+
+    const routeSeedConfig = [
+      { panelKey: 'product_types', sourceKey: 'product_types' },
+      { panelKey: 'hair_concerns', sourceKey: 'hair_concerns' },
+      { panelKey: 'skin_concerns', sourceKey: 'skin_concerns' },
+      { panelKey: 'ingredients', sourceKey: 'ingredients' },
+    ];
+
+    for (const config of routeSeedConfig) {
+      const items = this.sideMenuFilters[config.sourceKey] || [];
+      if (items.some((item) => item?.slug === slug)) {
+        return {
+          panelKey: config.panelKey,
+          itemSlug: slug,
+        };
+      }
+    }
+
+    return null;
+  }
+
+  private requiresSideMenuResolution(slug: string): boolean {
+    if (!slug) {
+      return false;
+    }
+
+    const baseCollectionSlugs = new Set([
+      'all',
+      'skin-care',
+      'hair-care',
+      'skin',
+      'hair',
+      'supplements',
+      'pediatric'
+    ]);
+
+    return !baseCollectionSlugs.has(slug);
   }
 }

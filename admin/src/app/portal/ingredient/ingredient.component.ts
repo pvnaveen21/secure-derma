@@ -25,6 +25,7 @@ import { NzIconModule } from 'ng-zorro-antd/icon';
 import { NzInputModule } from 'ng-zorro-antd/input';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzModalModule } from 'ng-zorro-antd/modal';
+import { NzSwitchModule } from 'ng-zorro-antd/switch';
 import { LucideAngularModule } from 'lucide-angular';
 import { IngredientService } from '@app/services/secura/ingredient.service';
 
@@ -40,6 +41,7 @@ import { IngredientService } from '@app/services/secura/ingredient.service';
     NzInputModule,
     NzIconModule,
     NzDropDownModule,
+    NzSwitchModule,
     InputSanitizeDirective,
     ControlMessagesComponent,
     DeleteModelComponent
@@ -50,6 +52,7 @@ export class IngredientComponent {
 
   /* ------------------------- ViewChild Templates ------------------------- */
   @ViewChild('actionTemplate', { static: true }) actionTemplate!: TemplateRef<any>;
+  @ViewChild('showFilterTemplate', { static: true }) showFilterTemplate!: TemplateRef<any>;
   @ViewChild('custumtable') custumtable!: CommonDataTableComponent;
   @ViewChild('deleteModel') deleteModel!: DeleteModelComponent;
 
@@ -102,6 +105,11 @@ export class IngredientComponent {
         sortKey: 'ingredient'
       },
       {
+        title: 'Show Filter',
+        property: 'show_filter',
+        cellTemplate: this.showFilterTemplate
+      },
+      {
         title: '',
         property: 'actions',
         cellTemplate: this.actionTemplate
@@ -134,6 +142,7 @@ export class IngredientComponent {
         data?.ingredient || '',
         [Validators.required, Validators.maxLength(45)]
       ],
+      show_filter: [data ? data?.show_filter : false]
     });
   }
 
@@ -191,6 +200,28 @@ export class IngredientComponent {
   editAction(data: any) {
     this.editUser = true;
     this.showModal(data);
+  }
+
+  toggleShowFilter(row: any, checked: boolean) {
+    const previousValue = row.show_filter;
+    row.show_filter = checked;
+    row.showFilterLoading = true;
+
+    this.ingredientService.updateIngredient(row.id, {
+      ...row,
+      show_filter: checked
+    }).subscribe({
+      next: (response: any) => {
+        row.showFilterLoading = false;
+        this.message.success(response.message);
+        this.custumtable.refreshTable();
+      },
+      error: (err: any) => {
+        row.show_filter = previousValue;
+        row.showFilterLoading = false;
+        this.message.error(err?.message || 'Something went wrong!');
+      }
+    });
   }
 
   /* ------------------------- Delete ------------------------- */

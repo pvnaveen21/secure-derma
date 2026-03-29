@@ -78,6 +78,18 @@
                         <nz-switch formControlName="show_home"></nz-switch>
                     </div>
 
+                    <div class="switch-main rounded-xl p-3 mb-3 mt-3"
+                        [class.locked-switch-row]="executiveForm.get('show_banner')?.value || executiveForm.get('show_home')?.value">
+                        <div class="flex-box">
+                            <div class="b1">Show Filter</div>
+                            <nz-switch class="locked-switch" formControlName="show_filter"
+                            [nzDisabled]="executiveForm.get('show_banner')?.value || executiveForm.get('show_home')?.value"></nz-switch>
+                        </div>
+                        @if (executiveForm.get('show_banner')?.value || executiveForm.get('show_home')?.value) {
+                        <div class="switch-note mt-2">Auto-enabled because banner or shop-by-concern is active.</div>
+                        }
+                    </div>
+
                 </div>
 
 
@@ -98,6 +110,22 @@
 </nz-modal>
 
 <!--  -->
+
+<ng-template #showBannerTemplate let-row>
+    <nz-switch [ngModel]="row.show_banner" [ngModelOptions]="{ standalone: true }"
+        [nzLoading]="row.showBannerLoading" (ngModelChange)="toggleShowBanner(row, $event)"></nz-switch>
+</ng-template>
+
+<ng-template #showHomeTemplate let-row>
+    <nz-switch [ngModel]="row.show_home" [ngModelOptions]="{ standalone: true }"
+        [nzLoading]="row.showHomeLoading" (ngModelChange)="toggleShowHome(row, $event)"></nz-switch>
+</ng-template>
+
+<ng-template #showFilterTemplate let-row>
+    <nz-switch class="locked-switch" [ngModel]="row.show_filter" [ngModelOptions]="{ standalone: true }"
+        [nzDisabled]="row.show_banner || row.show_home" [nzLoading]="row.showFilterLoading"
+        (ngModelChange)="toggleShowFilter(row, $event)"></nz-switch>
+</ng-template>
 
 
 <ng-template #actionTemplate let-row>

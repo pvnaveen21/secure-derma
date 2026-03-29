@@ -17,6 +17,7 @@ def unique_slugify(instance, value, slug_field_name='slug'):
 
 class Ingredients(models.Model):
     ingredient = models.CharField(max_length=255)
+    show_filter = models.BooleanField(default=False)
     is_deleted = models.BooleanField(default=False)
     slug = models.SlugField(unique=True, null=True, blank=True)
 

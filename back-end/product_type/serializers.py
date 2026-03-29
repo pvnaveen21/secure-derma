@@ -17,7 +17,9 @@ class ProductTypeSerializer(serializers.ModelSerializer):
         return None
     
     def validate(self, attrs):
-        product_type = attrs.get("product_type")
+        product_type = attrs.get("product_type", getattr(self.instance, "product_type", None))
+        show_banner = attrs.get("show_banner", getattr(self.instance, "show_banner", False))
+        show_home = attrs.get("show_home", getattr(self.instance, "show_home", False))
         # When updating — exclude itself
         if self.instance:
             if ProductType.objects.filter(
@@ -36,4 +38,6 @@ class ProductTypeSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError({
                     "error": "Product type already exists."
                 })
+        if show_banner or show_home:
+            attrs["show_filter"] = True
         return attrs

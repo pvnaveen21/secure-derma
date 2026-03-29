@@ -2339,9 +2339,11 @@ class ProductListWithFiltersAPIView(APIView):
             )
 
             # Fetch all objects from the model
-            all_objects = model_class.objects.filter(
-                is_deleted=False
-            ).order_by("id")
+            filter_kwargs = {"is_deleted": False}
+            if hasattr(model_class, "show_filter"):
+                filter_kwargs["show_filter"] = True
+
+            all_objects = model_class.objects.filter(**filter_kwargs).order_by("id")
             name_field = FILTER_OPTION_NAME_FIELDS.get(model_class)
             no_filters_applied = not (
                 slug
@@ -2764,7 +2766,7 @@ class ProductSideMenuAPIView(APIView):
                 'name': item['hair_concern'],
                 'slug': item['slug'],
             }
-            for item in HairConcerns.objects.filter(is_deleted=False)
+            for item in HairConcerns.objects.filter(is_deleted=False, show_filter=True)
             .values('id', 'hair_concern', 'slug')
             .order_by('id')
         ]
@@ -2774,7 +2776,7 @@ class ProductSideMenuAPIView(APIView):
                 'name': item['skin_concern'],
                 'slug': item['slug'],
             }
-            for item in SkinConcerns.objects.filter(is_deleted=False)
+            for item in SkinConcerns.objects.filter(is_deleted=False, show_filter=True)
             .values('id', 'skin_concern', 'slug')
             .order_by('id')
         ]
@@ -2784,7 +2786,7 @@ class ProductSideMenuAPIView(APIView):
                 'name': item['ingredient'],
                 'slug': item['slug'],
             }
-            for item in Ingredients.objects.filter(is_deleted=False)
+            for item in Ingredients.objects.filter(is_deleted=False, show_filter=True)
             .values('id', 'ingredient', 'slug')
             .order_by('id')
         ]
@@ -2794,7 +2796,7 @@ class ProductSideMenuAPIView(APIView):
                 'name': item['product_type'],
                 'slug': item['slug'],
             }
-            for item in ProductType.objects.filter(is_deleted=False)
+            for item in ProductType.objects.filter(is_deleted=False, show_filter=True)
             .values('id', 'product_type', 'slug')
             .order_by('id')
         ]

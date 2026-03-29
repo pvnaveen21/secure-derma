@@ -20,6 +20,7 @@ class SkinConcerns(models.Model):
     is_deleted = models.BooleanField(default=False)
     show_banner = models.BooleanField(default=False)
     show_home = models.BooleanField(default=False)
+    show_filter = models.BooleanField(default=False)
     slug = models.SlugField(unique=True, null=True, blank=True)
 
     def save(self, *args, **kwargs):
