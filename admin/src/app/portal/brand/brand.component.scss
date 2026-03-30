@@ -93,49 +93,6 @@
     gap: 7px;
 }
 
-// image upload
-
-.brand-image-upload {
-    display: flex;
-    flex-direction: column;
-    align-items: start;
-}
-
-.upload-preview {
-    width: 150px;
-    height: 150px;
-    border: 1px dashed #d9d9d9;
-    border-radius: 8px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    cursor: pointer;
-    overflow: hidden;
-    margin-bottom: 8px;
-}
-
-.upload-preview img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-.upload-placeholder {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    color: #999;
-}
-
-.btn-remove {
-    background-color: #ff4d4f;
-    color: white;
-    border: none;
-    padding: 2px 8px;
-    border-radius: 4px;
-    cursor: pointer;
-}
-
 .table-pro-image {
     width: 70px;
     height: 70px;
