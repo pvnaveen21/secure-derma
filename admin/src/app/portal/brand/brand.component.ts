@@ -18,6 +18,7 @@ import { DeleteModelComponent } from '@app/shared/directives/delete-model/delete
 import { ControlMessagesComponent } from '@app/shared/directives/form-validation/control-messages.component';
 import { InputSanitizeDirective } from '@app/shared/directives/Input-vaildation/input-sanitize.directive';
 import { Icons } from '@app/shared/icons';
+import { ThumbnailUploadComponent } from '@app/shared/directives/thumbnail-upload/thumbnail-upload.component';
 
 // NG-ZORRO
 import { NzButtonModule } from 'ng-zorro-antd/button';
@@ -46,7 +47,8 @@ import { LucideAngularModule } from 'lucide-angular';
     NzDropDownModule,
     InputSanitizeDirective,
     ControlMessagesComponent,
-    DeleteModelComponent
+    DeleteModelComponent,
+    ThumbnailUploadComponent
   ],
   templateUrl: './brand.component.html',
   styleUrl: './brand.component.scss'
@@ -69,6 +71,7 @@ export class BrandComponent {
 
   deleteId: any = '';
   brandId: any;
+  fileData: string | File | null = null;
 
   executiveForm!: FormGroup;
 
@@ -162,46 +165,30 @@ export class BrandComponent {
 
   /* ------------------------- Form ------------------------- */
   initForm(data?: any) {
-    this.previewImage = null
+    this.fileData = data?.brand_image || null;
     this.executiveForm = this.fb.group({
       brand_name: [data?.brand_name || '', [Validators.required, Validators.maxLength(45)]],
       brand_description: [data?.brand_description || '', [Validators.required, Validators.minLength(25)]],
       show_brand: [data?.show_brand ?? true],
       is_top_brand: [data?.is_top_brand ?? false],
-      brand_image: [data?.brand_image || null, [Validators.required]]  // <-- new field
+      brand_image: [data?.brand_image || null, [Validators.required]]
     });
-    if (data?.brand_image) {
-      this.previewImage = data.brand_image
+  }
+
+  onBrandImageSelected(file: File | null) {
+    this.fileData = file;
+    this.executiveForm.patchValue({ brand_image: file });
+    this.executiveForm.get('brand_image')?.markAsTouched();
+
+    if (!file) {
+      this.message.error('Only JPG/PNG/WEBP images are allowed.');
     }
   }
 
-  previewImage: string | ArrayBuffer | null = null;
-
-  onFileChange(event: any) {
-    const file = event.target.files[0];
-    if (file) {
-      const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg'];
-      if (!allowedTypes.includes(file.type)) {
-        this.message.error('Only JPG/PNG images are allowed!');
-        return;
-      }
-      if (file.size / 1024 / 1024 > 2) {
-        this.message.error('Image must be smaller than 2MB!');
-        return;
-      }
-
-      this.executiveForm.patchValue({ brand_image: file });
-
-      const reader = new FileReader();
-      reader.onload = () => {
-        this.previewImage = reader.result;
-      };
-      reader.readAsDataURL(file);
-    }
-  }
-  removeImage() {
-    this.previewImage = null;
+  onBrandImageRemoved() {
+    this.fileData = null;
     this.executiveForm.patchValue({ brand_image: null });
+    this.executiveForm.get('brand_image')?.markAsTouched();
   }
 
 
@@ -218,6 +205,7 @@ export class BrandComponent {
   /* ------------------------- Add Brand ------------------------- */
   addNewBrands() {
     const payload = this.executiveForm.getRawValue();
+    payload.brand_image = this.fileData;
     if (this.executiveForm.valid) {
       this.submitAPILoading = true;
       this.brandsService.addBrands(payload).subscribe({
@@ -238,6 +226,7 @@ export class BrandComponent {
   /* ------------------------- Update Brand ------------------------- */
   updateBrand() {
     const payload = this.executiveForm.getRawValue();
+    payload.brand_image = this.fileData;
     if (this.executiveForm.valid) {
       this.submitAPILoading = true;
       this.brandsService.updateBrands(this.brandId, payload).subscribe({

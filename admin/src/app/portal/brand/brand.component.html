@@ -30,23 +30,16 @@
                             <label class="label-text">Brand Image</label>
                         </div>
 
-                        <div class="brand-image-upload">
-                            <input type="file" (change)="onFileChange($event)" accept="image/*" hidden #fileInput>
-                            <div class="upload-preview" (click)="fileInput.click()">
-                                @if(previewImage){
-                                <img [src]="previewImage" alt="Brand Image" />
-                                }
-                                @else{
-                                <div class="upload-placeholder">
-                                    <i nz-icon nzType="upload" nzTheme="outline"></i>
-                                    <div>Click to Upload</div>
-                                </div>
-                                }
-                            </div>
-                            @if(previewImage){
-                            <button type="button" class="btn-remove" (click)="removeImage()">Remove</button>
-                            }
-                        </div>
+                        <app-thumbnail-upload
+                            [label]="['Upload Brand Image', 'File Type: PNG, JPEG, WEBP']"
+                            [showLabel]="false"
+                            [enablePaste]="true"
+                            [showDeleteIcon]="true"
+                            [fileUrl]="fileData"
+                            [allowedTypes]="['image/jpeg', 'image/png', 'image/jpg', 'image/webp']"
+                            (thumbnailSelected)="onBrandImageSelected($event)"
+                            (deleteImgValue)="onBrandImageRemoved()">
+                        </app-thumbnail-upload>
 
                         <control-messages [control]="executiveForm.controls['brand_image']"></control-messages>
                     </div>

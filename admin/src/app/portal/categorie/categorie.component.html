@@ -32,7 +32,8 @@
                             <label for="nameId" class="label-text">Categorie Banner image</label>
                         </div>
                         <app-thumbnail-upload [label]="['Upload Image Size 1270x240','File Type: PNG, JPEG']"
-                            [showLabel]="false" [allowedTypes]="['image/png', 'image/jpeg' ,'image/webp']"
+                            [showLabel]="false" [enablePaste]="true"
+                            [allowedTypes]="['image/png', 'image/jpeg' ,'image/webp']"
                             [fileUrl]="fileData" (thumbnailSelected)="onThumbnailSelected($event)"
                             (deleteImgValue)="deleteImgValue($event)" [download]="'true'">
                         </app-thumbnail-upload>
