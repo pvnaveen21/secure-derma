@@ -6,6 +6,7 @@ import uuid
 
 import requests
 from config.env import env_str
+from config.cache_utils import get_catalog_cache_version
 from django.conf import settings
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
@@ -1469,7 +1470,8 @@ class TrendingProductsFastAPIView(ListAPIView):
 
         queryset = Product.objects.filter(
             is_deleted=False,
-            trending_product=True
+            trending_product=True,
+            brand__show_brand=True,
         ).select_related(
             'brand',
             'product_type',
@@ -1979,7 +1981,7 @@ class ConcernProductsAPIView(APIView):
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        product_q = Product.objects.filter(is_deleted=False)
+        product_q = Product.objects.filter(is_deleted=False, brand__show_brand=True)
         concern_type = "skin"
         concern_label = ""
 
@@ -2074,7 +2076,10 @@ class RoutineBuilderAPIView(APIView):
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        products = Product.objects.filter(is_deleted=False).select_related("brand", "product_type").prefetch_related("product_details")
+        products = Product.objects.filter(
+            is_deleted=False,
+            brand__show_brand=True,
+        ).select_related("brand", "product_type").prefetch_related("product_details")
         is_hair = False
         if skin_match:
             products = products.filter(skin_concern=skin_match)
@@ -2159,7 +2164,8 @@ class ProductListWithFiltersAPIView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request):
-        cache_key = f"product_list_filters:{request.GET.urlencode()}"
+        cache_version = get_catalog_cache_version()
+        cache_key = f"product_list_filters:v{cache_version}:{request.GET.urlencode()}"
         cached_response = cache.get(cache_key)
         if cached_response is not None:
             return Response(cached_response)

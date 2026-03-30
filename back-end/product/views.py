@@ -8,6 +8,7 @@ from django.db.models import Q
 from rest_framework import generics, status
 from rest_framework.response import Response
 import json
+from config.cache_utils import bump_catalog_cache_version
 
 
 
@@ -69,6 +70,10 @@ class ProductListCreateAPIView(generics.ListCreateAPIView):
 
         return queryset
 
+    def perform_create(self, serializer):
+        serializer.save()
+        bump_catalog_cache_version()
+
 
 
 class ProductDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
@@ -129,6 +134,7 @@ class ProductDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
             product.hover_image = request.FILES["hover_image"]
 
         product.save()
+        bump_catalog_cache_version()
 
   
         if "skin_concern" in data:
@@ -211,6 +217,7 @@ class ProductDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
             instance.save()
             instance.product_details.update(is_deleted=True)
             instance.images.update(is_deleted=True)
+            bump_catalog_cache_version()
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -230,10 +237,18 @@ class ProductImageDeleteAPIView(generics.DestroyAPIView):
     queryset = ProductImage.objects.all()
     serializer_class = ProductImageSerializer
 
+    def perform_destroy(self, instance):
+        super().perform_destroy(instance)
+        bump_catalog_cache_version()
+
 
 class ProductDetailDeleteAPIView(generics.DestroyAPIView):
     queryset = ProductDetails.objects.all()
     serializer_class = ProductDetailsSerializer
+
+    def perform_destroy(self, instance):
+        super().perform_destroy(instance)
+        bump_catalog_cache_version()
 
 
 class ProductReviewListCreateAPIView(generics.ListCreateAPIView):

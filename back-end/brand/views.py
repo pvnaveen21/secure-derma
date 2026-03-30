@@ -6,6 +6,7 @@ from .models import Brand
 from .serializers import BrandSerializer
 from rest_framework.pagination import LimitOffsetPagination
 from django.db.models import Q
+from config.cache_utils import bump_catalog_cache_version
 
 
 class BrandApiPagination(LimitOffsetPagination):
@@ -54,6 +55,7 @@ class BrandListCreateAPIView(APIView):
         serializer = BrandSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
+        bump_catalog_cache_version()
         return Response(
             {"message": "New Brand created successfully."},
             status=status.HTTP_201_CREATED
@@ -86,12 +88,14 @@ class BrandDetailAPIView(APIView):
         serializer = BrandSerializer(brand, data=data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
+        bump_catalog_cache_version()
         return Response({"message": "Brand updated successfully."})
 
     def delete(self, request, pk):
         brand = self.get_object(pk)
         brand.is_deleted = True
         brand.save()
+        bump_catalog_cache_version()
         return Response({"message": "Brand deleted successfully."})
     
     
@@ -113,6 +117,7 @@ class AddTopBrandAPIView(APIView):
 
         brand.is_top_brand = True
         brand.save(update_fields=['is_top_brand'])
+        bump_catalog_cache_version()
 
         return Response(
             {"message": "Brand marked as top brand"},
@@ -126,6 +131,7 @@ class RemoveTopBrandAPIView(APIView):
 
         brand.is_top_brand = False
         brand.save(update_fields=['is_top_brand'])
+        bump_catalog_cache_version()
 
         return Response(
             {"message": "Brand removed from top brand"},
