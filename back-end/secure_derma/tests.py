@@ -2,6 +2,7 @@ import hashlib
 import hmac
 from unittest.mock import Mock, patch
 
+from django.core.cache import cache
 from django.test import TestCase
 from django.utils import timezone
 from datetime import date, datetime, time, timedelta
@@ -28,6 +29,7 @@ from user.models import User
 
 class ProductListWithFiltersAPIViewTests(TestCase):
     def setUp(self):
+        cache.clear()
         self.client = APIClient()
 
         self.brand = Brand.objects.create(brand_name="Acme")
@@ -67,6 +69,39 @@ class ProductListWithFiltersAPIViewTests(TestCase):
             response.data["products"]["results"][0]["product_name"],
             "Skin Product",
         )
+
+    def test_disabling_brand_invalidates_cached_collection_results(self):
+        initial_response = self.client.get(
+            "/api/filter-products/",
+            {"filter": "all", "limit": 10, "offset": 0},
+        )
+
+        self.assertEqual(initial_response.status_code, 200)
+        self.assertEqual(initial_response.data["products"]["count"], 2)
+
+        admin_client = APIClient()
+        admin_user = User.objects.create_superuser(
+            email="admin@example.com",
+            password="adminpass123",
+        )
+        admin_client.force_authenticate(user=admin_user)
+
+        update_response = admin_client.put(
+            f"/api/admin/brands/{self.brand.id}/",
+            {"show_brand": False},
+            format="multipart",
+        )
+
+        self.assertEqual(update_response.status_code, 200)
+
+        refreshed_response = self.client.get(
+            "/api/filter-products/",
+            {"filter": "all", "limit": 10, "offset": 0},
+        )
+
+        self.assertEqual(refreshed_response.status_code, 200)
+        self.assertEqual(refreshed_response.data["products"]["count"], 0)
+        self.assertEqual(refreshed_response.data["products"]["results"], [])
 
 
 class ShopByConcernAPIViewTests(TestCase):
