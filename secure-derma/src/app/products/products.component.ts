@@ -351,6 +351,16 @@ export class ProductsComponent {
 
           this.selectGram(this.selectedGramId);
         });
+      },
+      error: (error: any) => {
+        const apiErrorMessage = String(error?.error || error?.message || '').trim().toLowerCase();
+        const shouldRedirectToCollections = error?.status === 404
+          || apiErrorMessage.includes('product not found')
+          || apiErrorMessage.includes('has been removed');
+
+        if (shouldRedirectToCollections) {
+          void this.router.navigate(['/collections', 'all'], { replaceUrl: true });
+        }
       }
     });
   }

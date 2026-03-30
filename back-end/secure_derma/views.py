@@ -85,7 +85,7 @@ def _build_quality_label(detail):
 
 def _resolve_filter_slug_type(slug: str):
     slug_queries = [
-        Brand.objects.filter(slug=slug, is_deleted=False).annotate(
+        Brand.objects.filter(slug=slug, is_deleted=False, show_brand=True).annotate(
             match_type=Value("brand", output_field=CharField())
         ).values_list("match_type", flat=True),
         Categories.objects.filter(slug=slug, is_deleted=False).annotate(
@@ -407,7 +407,7 @@ class BrandListAPIView(ListAPIView):
     def list(self, request, *args, **kwargs):
         search_text = request.query_params.get("searchText", "").strip()
 
-        queryset = Brand.objects.filter(is_deleted=False)
+        queryset = Brand.objects.filter(is_deleted=False, show_brand=True)
 
         # 🔍 Apply search filter
         if search_text:
@@ -438,7 +438,6 @@ class BrandListAPIView(ListAPIView):
 
         return Response(grouped_data)
     
-@method_decorator(cache_page(60 * 15), name='dispatch')
 class TopBrandsAPIView(ListAPIView):
     """Fast API to get top brands only"""
     permission_classes = [AllowAny]
@@ -2182,7 +2181,7 @@ class ProductListWithFiltersAPIView(APIView):
         # =====================================================
         # BASE PRODUCT QUERYSET
         # =====================================================
-        products = Product.objects.filter(is_deleted=False)
+        products = Product.objects.filter(is_deleted=False, brand__show_brand=True)
 
         # =====================================================
         # APPLY SINGLE FILTER (SAME AS FilterProductsAPIView)
@@ -2468,7 +2467,7 @@ class FilterProductsAPIView(APIView):
             )
         
         # Start with base queryset - exclude deleted products
-        products = Product.objects.filter(is_deleted=False)
+        products = Product.objects.filter(is_deleted=False, brand__show_brand=True)
         
         # Build filter query
         filter_query = Q()
@@ -2618,7 +2617,8 @@ class ProductDetailAPIView(APIView):
                 ),
             ).get(
                 slug=slug,
-                is_deleted=False
+                is_deleted=False,
+                brand__show_brand=True
             )
         except Product.DoesNotExist:
             return Response(
