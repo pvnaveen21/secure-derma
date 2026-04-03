@@ -1,7 +1,9 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { SECURE_DERMA_BUSINESS_INFO } from '../core/business-info';
 import { SeoConfig, SeoService } from '../services/seo.service';
+import { environment } from '../../environments/environment';
 
 interface PublicPageSection {
   title: string;
@@ -27,6 +29,7 @@ interface PublicPageData {
   sections: PublicPageSection[];
   faqs?: PublicPageFaq[];
   actions?: PublicPageAction[];
+  showBusinessInfo?: boolean;
   seo: SeoConfig;
 }
 
@@ -39,8 +42,10 @@ interface PublicPageData {
 export class PublicPageComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly seoService = inject(SeoService);
+  private readonly siteUrl = environment.SITE_URL.replace(/\/$/, '');
 
   readonly page = this.route.snapshot.data['page'] as PublicPageData;
+  readonly businessInfo = SECURE_DERMA_BUSINESS_INFO;
 
   ngOnInit(): void {
     this.seoService.updateSeo({
@@ -59,13 +64,13 @@ export class PublicPageComponent {
             '@type': 'ListItem',
             position: 1,
             name: 'Home',
-            item: 'https://securederma.in/'
+            item: `${this.siteUrl}/`
           },
           {
             '@type': 'ListItem',
             position: 2,
             name: this.page.title,
-            item: `https://securederma.in${this.page.seo.canonicalPath || ''}`
+            item: `${this.siteUrl}${this.page.seo.canonicalPath || ''}`
           }
         ]
       }

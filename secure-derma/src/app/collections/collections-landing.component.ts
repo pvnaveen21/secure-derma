@@ -3,6 +3,7 @@ import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { CollectionsService } from '../services/collections.service';
 import { SeoService } from '../services/seo.service';
+import { environment } from '../../environments/environment';
 
 interface CollectionBrand {
   id?: number;
@@ -20,6 +21,7 @@ export class CollectionsLandingComponent implements OnInit {
   brands: CollectionBrand[] = [];
   visibleBrandCount = 10;
   private readonly brandsPageSize = 10;
+  private readonly siteUrl = environment.SITE_URL.replace(/\/$/, '');
 
   constructor(
     private collectionsService: CollectionsService,
@@ -39,15 +41,15 @@ export class CollectionsLandingComponent implements OnInit {
           '@context': 'https://schema.org',
           '@type': 'BreadcrumbList',
           itemListElement: [
-            { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://securederma.in/' },
-            { '@type': 'ListItem', position: 2, name: 'Collections', item: 'https://securederma.in/collections' }
+            { '@type': 'ListItem', position: 1, name: 'Home', item: `${this.siteUrl}/` },
+            { '@type': 'ListItem', position: 2, name: 'Collections', item: `${this.siteUrl}/collections` }
           ]
         },
         {
           '@context': 'https://schema.org',
           '@type': 'CollectionPage',
           name: 'Secure Derma Collections',
-          url: 'https://securederma.in/collections'
+          url: `${this.siteUrl}/collections`
         }
       ]
     });

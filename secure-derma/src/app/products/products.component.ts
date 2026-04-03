@@ -21,6 +21,7 @@ import { PaymentService } from '../services/payment.service';
 import { AuthService } from '../services/auth/auth.service';
 import { PincodeService, PincodeServiceabilityResponse } from '../services/pincode.service';
 import { SeoService } from '../services/seo.service';
+import { environment } from '../../environments/environment';
 @Component({
   selector: 'app-products',
   imports: [
@@ -41,6 +42,7 @@ import { SeoService } from '../services/seo.service';
   styleUrl: './products.component.scss'
 })
 export class ProductsComponent {
+  private readonly siteUrl = environment.SITE_URL.replace(/\/$/, '');
   private readonly savedPincodeStorageKey = 'secure_derma_last_checked_pincode';
   readonly minPurchaseQuantity = 1;
   readonly maxPurchaseQuantity = 10;
@@ -989,10 +991,10 @@ export class ProductsComponent {
           '@context': 'https://schema.org',
           '@type': 'BreadcrumbList',
           itemListElement: [
-            { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://securederma.in/' },
-            { '@type': 'ListItem', position: 2, name: 'Collections', item: 'https://securederma.in/collections' },
-            ...(this.breadcrumbCollectionSlug ? [{ '@type': 'ListItem', position: 3, name: this.breadcrumbCollectionLabel || categoryName, item: `https://securederma.in/collections/${this.breadcrumbCollectionSlug}` }] : []),
-            { '@type': 'ListItem', position: this.breadcrumbCollectionSlug ? 4 : 3, name: productName, item: `https://securederma.in/products/${this.selectedProduectValue}` }
+            { '@type': 'ListItem', position: 1, name: 'Home', item: `${this.siteUrl}/` },
+            { '@type': 'ListItem', position: 2, name: 'Collections', item: `${this.siteUrl}/collections` },
+            ...(this.breadcrumbCollectionSlug ? [{ '@type': 'ListItem', position: 3, name: this.breadcrumbCollectionLabel || categoryName, item: `${this.siteUrl}/collections/${this.breadcrumbCollectionSlug}` }] : []),
+            { '@type': 'ListItem', position: this.breadcrumbCollectionSlug ? 4 : 3, name: productName, item: `${this.siteUrl}/products/${this.selectedProduectValue}` }
           ]
         },
         {
@@ -1011,7 +1013,7 @@ export class ProductsComponent {
             priceCurrency: 'INR',
             price: String(currentOffer.selling_price),
             availability: 'https://schema.org/InStock',
-            url: `https://securederma.in/products/${this.selectedProduectValue}`
+            url: `${this.siteUrl}/products/${this.selectedProduectValue}`
           } : undefined,
           aggregateRating: this.productData?.avg_rating ? {
             '@type': 'AggregateRating',

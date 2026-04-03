@@ -1758,6 +1758,24 @@
     color: var(--text-heading);
 }
 
+.home-business-note {
+    margin: 1rem 0 0;
+    padding: 0 1rem 1.5rem;
+}
+
+.home-business-note__text {
+    width: min(100%, var(--app-max-width));
+    margin: 0 auto;
+    padding: 0.9rem 1rem;
+    border: 0.1rem solid color-mix(in srgb, var(--brand-primary) 14%, var(--border-color));
+    border-radius: 1rem;
+    background: color-mix(in srgb, var(--section-bg) 78%, #ffffff 22%);
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    line-height: 1.65;
+    text-align: center;
+}
+
 /* Disable image hover zoom for Shop by Concern cards */
 .concern-strip .product-image img {
     transform: none;
@@ -1803,5 +1821,15 @@
 @media (max-width: 99.1rem) {
     .routine-builder-mini__form {
         grid-template-columns: 1fr 1fr;
+    }
+}
+
+@media (max-width: 48rem) {
+    .home-business-note {
+        padding-inline: 0.8rem;
+    }
+
+    .home-business-note__text {
+        text-align: left;
     }
 }

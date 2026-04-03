@@ -20,6 +20,7 @@ import { CommonModule, DOCUMENT, isPlatformBrowser, Location } from '@angular/co
 import { CartItem, CartService } from '../services/cart.service';
 import { Subscription } from 'rxjs';
 import { SeoService } from '../services/seo.service';
+import { environment } from '../../environments/environment';
 
 interface Product {
   id: number;
@@ -85,6 +86,7 @@ interface CollectionBrandMeta {
   styleUrl: './collections.component.scss'
 })
 export class CollectionsComponent implements OnInit {
+  private readonly siteUrl = environment.SITE_URL.replace(/\/$/, '');
   constructor(
     private route: ActivatedRoute,
     private collectionsService: CollectionsService,
@@ -793,16 +795,16 @@ export class CollectionsComponent implements OnInit {
           '@context': 'https://schema.org',
           '@type': 'BreadcrumbList',
           itemListElement: [
-            { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://securederma.in/' },
-            { '@type': 'ListItem', position: 2, name: 'Collections', item: 'https://securederma.in/collections' },
-            { '@type': 'ListItem', position: 3, name: collectionName, item: `https://securederma.in/collections/${slug}` }
+            { '@type': 'ListItem', position: 1, name: 'Home', item: `${this.siteUrl}/` },
+            { '@type': 'ListItem', position: 2, name: 'Collections', item: `${this.siteUrl}/collections` },
+            { '@type': 'ListItem', position: 3, name: collectionName, item: `${this.siteUrl}/collections/${slug}` }
           ]
         },
         {
           '@context': 'https://schema.org',
           '@type': 'CollectionPage',
           name: `${collectionName} Collection`,
-          url: `https://securederma.in/collections/${slug}`,
+          url: `${this.siteUrl}/collections/${slug}`,
           description: filterSummary
             ? `Browse ${collectionName} products on Secure Derma. Active filters: ${filterSummary}.`
             : `Browse ${collectionName} products on Secure Derma by type, concern, and ingredients.`
