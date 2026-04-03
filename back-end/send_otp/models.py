@@ -1,11 +1,13 @@
 from django.db import models
 from django.utils import timezone
+from config.env import env_int
 import datetime
 import secrets
 import os
 
 
 OTP_EXPIRY_SECONDS = int(os.getenv("OTP_EXPIRY_SECONDS", "600"))
+OTP_MAX_RESEND = env_int("OTP_MAX_RESEND", 3)
 
 
 class OTPRecord(models.Model):
@@ -21,6 +23,10 @@ class OTPRecord(models.Model):
     email        = models.EmailField(blank=True, null=True)
     otp          = models.CharField(max_length=6)
     request_id   = models.CharField(max_length=64, blank=True, null=True)
+    delivery_status = models.CharField(max_length=32, default="pending")
+    delivery_message = models.TextField(blank=True, default="")
+    delivery_payload = models.JSONField(blank=True, null=True)
+    delivery_updated_at = models.DateTimeField(null=True, blank=True)
     created_at   = models.DateTimeField(auto_now_add=True)
     is_used      = models.BooleanField(default=False)
     attempts     = models.IntegerField(default=0)
@@ -49,7 +55,7 @@ class OTPRecord(models.Model):
         return self.attempts >= 3
 
     def is_max_resend_reached(self):
-        return self.resend_count >= 3
+        return self.resend_count >= OTP_MAX_RESEND
 
     def lock_remaining_seconds(self):
         if self.lock_until:

@@ -406,7 +406,7 @@ export class LoginComponent implements AfterViewInit {
       this.showOtp = true;
       this.timer = Number(response?.resend_in) || 3;
       this.startTimer();
-      const destinationLabel = this.authMode === 'email' ? 'email address' : 'mobile number';
+      const destinationLabel = this.authMode === 'email' ? 'email address' : 'WhatsApp number';
       this.message.success(isResend ? `OTP resent to your ${destinationLabel}.` : `OTP sent to your ${destinationLabel}.`);
 
       const inputs = document.querySelectorAll('.ant-otp-input');
