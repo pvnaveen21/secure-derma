@@ -778,9 +778,9 @@
     justify-content: center;
     width: 3rem;
     height: 3rem;
-    margin-bottom: 1rem;
     border-radius: 1rem;
     background: rgba(16, 185, 129, 0.12);
+    flex-shrink: 0;
 }
 
 .otp-icon {
@@ -802,14 +802,76 @@
     margin-top: 1rem;
 }
 
+.otp-input-wrap {
+    width: 100%;
+}
+
 .otp-actions {
     margin-top: 1.2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.9rem;
+}
+
+.otp-actions .submit-btn {
+    width: 100%;
+}
+
+.otp-actions .resend-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+    text-align: center;
+}
+
+.phone-label-with-logo {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    min-height: 1.1rem;
+    line-height: 1;
+}
+
+.email-label-with-logo {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    min-height: 1.1rem;
+    line-height: 1;
+}
+
+.email-logo {
+    width: 1rem;
+    height: 1rem;
+    object-fit: contain;
+    flex-shrink: 0;
+    display: block;
+}
+
+.whatsapp-logo {
+    width: 1rem;
+    height: 1rem;
+    color: #16a34a;
+    flex-shrink: 0;
+    display: block;
 }
 
 ::ng-deep .ant-otp {
     width: 100%;
+    display: flex;
     justify-content: space-between;
-    gap: 0.5rem;
+    align-items: center;
+    flex-wrap: nowrap;
+}
+
+::ng-deep .ant-otp > * {
+    flex: 0 0 auto;
+}
+
+::ng-deep .ant-otp > *:not(:last-child) {
+    margin-right: 0.7rem;
 }
 
 ::ng-deep .ant-otp-input {
@@ -822,11 +884,27 @@
     box-shadow: none !important;
     font-size: 1rem !important;
     font-weight: 700;
+    text-align: center;
 }
 
 ::ng-deep .ant-otp-input:focus {
     border-color: rgba(5, 150, 105, 0.4) !important;
     box-shadow: 0 0 0 0.22rem rgba(16, 185, 129, 0.08) !important;
+}
+
+@media (max-width: 575px) {
+    ::ng-deep .ant-otp {
+        justify-content: space-between;
+    }
+
+    ::ng-deep .ant-otp > *:not(:last-child) {
+        margin-right: 0.45rem;
+    }
+
+    ::ng-deep .ant-otp-input {
+        width: 2.55rem !important;
+        height: 3rem !important;
+    }
 }
 
 ::ng-deep .back-button:hover,

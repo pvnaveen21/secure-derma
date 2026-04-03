@@ -15,6 +15,7 @@ User = get_user_model()
 class OTPApiTests(APITestCase):
     send_url = "/api/auth/sendotp/"
     verify_url = "/api/auth/otp-verify/"
+    delivery_webhook_url = "/api/auth/otp-delivery-webhook/"
 
     @patch.dict(
         "os.environ",
@@ -23,6 +24,7 @@ class OTPApiTests(APITestCase):
             "MSG91_TEMPLATE_ID": "test-template-id",
             "MSG91_OTP_EXPIRY_SECONDS": "60",
             "MSG91_TIMEOUT_SECONDS": "5",
+            "OTP_RESEND_COOLDOWN_SECONDS": "60",
         },
         clear=False,
     )
@@ -39,10 +41,181 @@ class OTPApiTests(APITestCase):
         record = OTPRecord.objects.get(phone="9876543210")
         self.assertEqual(record.request_id, "msg91-request-123")
         self.assertEqual(response.data["request_id"], "msg91-request-123")
+        self.assertEqual(response.data["resend_in"], 60)
         mock_post.assert_called_once()
         _, kwargs = mock_post.call_args
         self.assertEqual(kwargs["json"]["mobile"], "919876543210")
         self.assertEqual(kwargs["json"]["otp_expiry"], 60)
+
+    @patch.dict(
+        "os.environ",
+        {
+            "MSG91_AUTH_KEY": "test-auth-key",
+            "MSG91_DELIVERY_CHANNEL": "whatsapp",
+            "MSG91_OTP_EXPIRY_SECONDS": "600",
+            "MSG91_WHATSAPP_INTEGRATED_NUMBER": "919363789390",
+            "MSG91_WHATSAPP_TEMPLATE_NAME": "secure_derma_authentication",
+            "MSG91_WHATSAPP_TEMPLATE_LANGUAGE_CODE": "en",
+            "MSG91_WHATSAPP_TEMPLATE_LANGUAGE_POLICY": "deterministic",
+            "MSG91_WHATSAPP_TEMPLATE_NAMESPACE": "3497ade6_48e5_4660_9d2e_ebf6aab7ab6b",
+            "MSG91_WHATSAPP_BODY_1_TYPE": "text",
+            "MSG91_WHATSAPP_BODY_1_VALUE": "otp",
+        },
+        clear=False,
+    )
+    @patch("send_otp.msg91.requests.post")
+    def test_send_otp_calls_msg91_whatsapp_template_api(self, mock_post):
+        mock_response = Mock()
+        mock_response.ok = True
+        mock_response.json.return_value = {"status": "success", "request_id": "wa-request-123"}
+        mock_post.return_value = mock_response
+
+        response = self.client.post(self.send_url, {"phone": "9876543210"}, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        record = OTPRecord.objects.get(phone="9876543210")
+        self.assertEqual(record.request_id, "wa-request-123")
+        _, kwargs = mock_post.call_args
+        template = kwargs["json"]["payload"]["template"]
+        components = template["to_and_components"][0]["components"]
+        self.assertEqual(kwargs["headers"]["authkey"], "test-auth-key")
+        self.assertEqual(kwargs["json"]["integrated_number"], "919363789390")
+        self.assertEqual(template["to_and_components"][0]["to"], ["919876543210"])
+        self.assertEqual(template["namespace"], "3497ade6_48e5_4660_9d2e_ebf6aab7ab6b")
+        self.assertEqual(components["body_1"]["value"], record.otp)
+        self.assertEqual(components["body_1"]["type"], "text")
+        self.assertEqual(response.data["delivery_status"], "pending")
+
+    @patch.dict(
+        "os.environ",
+        {
+            "MSG91_AUTH_KEY": "test-auth-key",
+            "MSG91_TEMPLATE_ID": "test-template-id",
+        },
+        clear=False,
+    )
+    @patch("send_otp.msg91.requests.post")
+    def test_send_otp_rejects_msg91_error_payload_even_when_http_status_is_200(self, mock_post):
+        mock_response = Mock()
+        mock_response.ok = True
+        mock_response.json.return_value = {"type": "error", "message": "Template not found"}
+        mock_response.text = '{"type":"error","message":"Template not found"}'
+        mock_post.return_value = mock_response
+
+        response = self.client.post(self.send_url, {"phone": "9876543210"}, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_502_BAD_GATEWAY)
+        self.assertEqual(response.data["error"], "Template not found")
+        self.assertFalse(OTPRecord.objects.filter(phone="9876543210").exists())
+
+    @patch.dict(
+        "os.environ",
+        {
+            "MSG91_AUTH_KEY": "test-auth-key",
+            "MSG91_DELIVERY_CHANNEL": "whatsapp",
+            "MSG91_OTP_EXPIRY_SECONDS": "600",
+            "MSG91_WHATSAPP_INTEGRATED_NUMBER": "919363789390",
+            "MSG91_WHATSAPP_TEMPLATE_NAME": "securederma_otp_login",
+        },
+        clear=False,
+    )
+    @patch("send_otp.msg91.requests.post")
+    def test_send_otp_rejects_nested_whatsapp_failure_payload(self, mock_post):
+        mock_response = Mock()
+        mock_response.ok = True
+        mock_response.json.return_value = {
+            "status": "success",
+            "data": {
+                "messages": [
+                    {
+                        "status": "failed",
+                        "reason": "WhatsApp template is not approved for this number",
+                    }
+                ]
+            },
+        }
+        mock_response.text = '{"status":"success"}'
+        mock_post.return_value = mock_response
+
+        response = self.client.post(self.send_url, {"phone": "9876543210"}, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_502_BAD_GATEWAY)
+        self.assertEqual(response.data["error"], "WhatsApp template is not approved for this number")
+        self.assertFalse(OTPRecord.objects.filter(phone="9876543210").exists())
+
+    def test_delivery_webhook_updates_matching_otp_record(self):
+        record = OTPRecord.objects.create(
+            phone="9876543210",
+            otp="123456",
+            request_id="req-123",
+        )
+
+        response = self.client.post(
+            self.delivery_webhook_url,
+            {
+                "data": {
+                    "request_id": "req-123",
+                    "messages": [
+                        {
+                            "status": "failed",
+                            "reason": "Recipient is not opted in",
+                        }
+                    ],
+                }
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        record.refresh_from_db()
+        self.assertEqual(record.delivery_status, "failed")
+        self.assertEqual(record.delivery_message, "Recipient is not opted in")
+        self.assertIsNotNone(record.delivery_payload)
+        self.assertIsNotNone(record.delivery_updated_at)
+
+    def test_delivery_webhook_returns_accepted_when_request_id_does_not_match(self):
+        response = self.client.post(
+            self.delivery_webhook_url,
+            {"request_id": "missing-req", "status": "failed"},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
+        self.assertTrue(response.data["received"])
+        self.assertFalse(response.data["matched"])
+
+    def test_delivery_webhook_requires_request_id(self):
+        response = self.client.post(
+            self.delivery_webhook_url,
+            {"status": "failed"},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertFalse(response.data["received"])
+
+    @patch.dict(
+        "os.environ",
+        {
+            "MSG91_AUTH_KEY": "test-auth-key",
+            "MSG91_TEMPLATE_ID": "test-template-id",
+            "OTP_RESEND_COOLDOWN_SECONDS": "60",
+        },
+        clear=False,
+    )
+    @patch("send_otp.msg91.requests.post")
+    def test_send_otp_enforces_sixty_second_resend_cooldown(self, mock_post):
+        mock_response = Mock()
+        mock_response.ok = True
+        mock_response.json.return_value = {"type": "success", "request_id": "msg91-request-123"}
+        mock_post.return_value = mock_response
+
+        first_response = self.client.post(self.send_url, {"phone": "9876543210"}, format="json")
+        second_response = self.client.post(self.send_url, {"phone": "9876543210"}, format="json")
+
+        self.assertEqual(first_response.status_code, status.HTTP_200_OK)
+        self.assertEqual(second_response.status_code, status.HTTP_429_TOO_MANY_REQUESTS)
+        self.assertIn("Please wait", second_response.data["error"])
 
     @patch("send_otp.email_otp.SendGridAPIClient")
     def test_send_otp_sends_email_otp(self, mock_sendgrid_client):

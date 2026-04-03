@@ -6,6 +6,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import AllowAny
+from config.env import env_int
 from .models import OTPRecord, OTP_EXPIRY_SECONDS
 from .email_otp import EmailOTPError, normalize_email, send_email_otp
 from .msg91 import MSG91OTPError, normalize_indian_phone, send_otp
@@ -13,8 +14,48 @@ from .msg91 import MSG91OTPError, normalize_indian_phone, send_otp
 User = get_user_model()
 
 MAX_ATTEMPTS = 3
-MAX_RESEND = 3
-RESEND_COOLDOWN = 3
+MAX_RESEND = env_int("OTP_MAX_RESEND", 3)
+RESEND_COOLDOWN = env_int("OTP_RESEND_COOLDOWN_SECONDS", 60)
+
+
+def _iter_payload_nodes(value):
+    if isinstance(value, dict):
+        yield value
+        for nested_value in value.values():
+            yield from _iter_payload_nodes(nested_value)
+        return
+
+    if isinstance(value, list):
+        for item in value:
+            yield from _iter_payload_nodes(item)
+
+
+def _extract_request_id_from_payload(payload):
+    for node in _iter_payload_nodes(payload):
+        request_id = node.get('request_id') or node.get('requestId')
+        if request_id:
+            return str(request_id).strip()
+    return ''
+
+
+def _extract_delivery_status(payload):
+    for node in _iter_payload_nodes(payload):
+        status_value = node.get('delivery_status') or node.get('status') or node.get('type')
+        if status_value:
+            return str(status_value).strip().lower()
+    return 'unknown'
+
+
+def _extract_delivery_message(payload):
+    for node in _iter_payload_nodes(payload):
+        message = node.get('message') or node.get('error') or node.get('errors') or node.get('reason')
+        if isinstance(message, list):
+            flattened = ', '.join(str(item) for item in message if item)
+            if flattened:
+                return flattened
+        if message:
+            return str(message)
+    return ''
 
 
 def _resolve_destination(payload):
@@ -129,14 +170,46 @@ class SendOTPView(APIView):
             record.save(update_fields=['request_id'])
 
         return Response({
-            'message': 'OTP sent successfully',
+            'message': 'OTP request accepted',
             'is_existing_user': is_existing_user,
             'expires_in': OTP_EXPIRY_SECONDS,
             'resend_in': RESEND_COOLDOWN,
             'resend_left': MAX_RESEND - record.resend_count,
             'request_id': request_id,
             'channel': channel,
+            'delivery_status': record.delivery_status,
         }, status=status.HTTP_200_OK)
+
+
+class OTPDeliveryWebhookView(APIView):
+    permission_classes = [AllowAny]
+    authentication_classes = []
+
+    def post(self, request):
+        payload = request.data if isinstance(request.data, dict) else {}
+        request_id = _extract_request_id_from_payload(payload)
+        if not request_id:
+            return Response({'received': False, 'error': 'request_id missing'}, status=status.HTTP_400_BAD_REQUEST)
+
+        record = OTPRecord.objects.filter(request_id=request_id).order_by('-created_at').first()
+        if not record:
+            return Response({'received': True, 'matched': False, 'request_id': request_id}, status=status.HTTP_202_ACCEPTED)
+
+        record.delivery_status = _extract_delivery_status(payload)
+        record.delivery_message = _extract_delivery_message(payload)
+        record.delivery_payload = payload
+        record.delivery_updated_at = timezone.now()
+        record.save(update_fields=['delivery_status', 'delivery_message', 'delivery_payload', 'delivery_updated_at'])
+
+        return Response(
+            {
+                'received': True,
+                'matched': True,
+                'request_id': request_id,
+                'delivery_status': record.delivery_status,
+            },
+            status=status.HTTP_200_OK,
+        )
 
 
 class VerifyOTPView(APIView):
