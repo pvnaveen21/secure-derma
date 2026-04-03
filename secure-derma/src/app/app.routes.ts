@@ -55,7 +55,7 @@ export const routes: Routes = [
           page: {
             title: 'About Secure Derma',
             eyebrow: 'Who We Are',
-            summary: SECURE_DERMA_BUSINESS_INFO.aboutBrandStatement,
+            summary: 'Secure Derma is a skincare brand owned and operated by RAMYA MURUGESAN. The brand operates from Kumarapalayam, Tamil Nadu, India and provides skincare products through securederma.com.',
             actions: [
               { label: 'Shop Collections', route: '/collections' },
               { label: 'Contact Support', route: '/contact' }
@@ -63,7 +63,7 @@ export const routes: Routes = [
             sections: [
               {
                 title: 'Brand and verified business relationship',
-                body: `${SECURE_DERMA_BUSINESS_INFO.brandName} is the customer-facing skincare brand operated by ${SECURE_DERMA_BUSINESS_INFO.operatingEntityName}.`
+                body: 'Secure Derma is a skincare brand owned and operated by RAMYA MURUGESAN. The brand operates from Kumarapalayam, Tamil Nadu, India and provides skincare products through securederma.com.'
               },
               {
                 title: 'Curated with clinical intent',
