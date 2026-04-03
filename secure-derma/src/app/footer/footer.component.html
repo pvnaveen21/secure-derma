@@ -9,7 +9,9 @@
                 <p class="footer__business-relation">{{ businessInfo.verifiedBusinessRelation }}</p>
                 <address class="footer__business-address">
                     <span>{{ businessInfo.addressLine }}</span>
+                    @if (businessInfo.regionLine) {
                     <span>{{ businessInfo.regionLine }}</span>
+                    }
                 </address>
                 <p class="footer__tagline">A professional skincare destination designed around clarity, trust, and better daily outcomes.</p>
                 <div class="footer__contact-list">
