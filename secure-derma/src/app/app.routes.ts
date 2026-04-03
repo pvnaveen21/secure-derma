@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { SECURE_DERMA_BUSINESS_INFO } from './core/business-info';
 import { PortalComponent } from './portal/portal.component';
 
 export const routes: Routes = [
@@ -54,12 +55,16 @@ export const routes: Routes = [
           page: {
             title: 'About Secure Derma',
             eyebrow: 'Who We Are',
-            summary: 'Secure Derma is built to make dermatologist-recommended skin, hair, wellness, and pediatric shopping easier to understand, easier to trust, and easier to repeat.',
+            summary: SECURE_DERMA_BUSINESS_INFO.aboutBrandStatement,
             actions: [
               { label: 'Shop Collections', route: '/collections' },
               { label: 'Contact Support', route: '/contact' }
             ],
             sections: [
+              {
+                title: 'Brand and verified business relationship',
+                body: `${SECURE_DERMA_BUSINESS_INFO.brandName} is the customer-facing skincare brand operated by ${SECURE_DERMA_BUSINESS_INFO.operatingEntityName}.`
+              },
               {
                 title: 'Curated with clinical intent',
                 body: 'We focus on practical, dermatologist-aligned product discovery instead of overwhelming catalog browsing. The goal is to help shoppers move from concern to routine with less friction.'
@@ -86,7 +91,8 @@ export const routes: Routes = [
                   'Internal linking that helps both customers and search engines understand the site structure'
                 ]
               }
-            ]
+            ],
+            showBusinessInfo: true
           }
         }
       },
@@ -104,15 +110,19 @@ export const routes: Routes = [
           page: {
             title: 'Contact Secure Derma',
             eyebrow: 'Support',
-            summary: 'Need help with an order, delivery, returns, or product selection? Reach the Secure Derma support team through the channels below.',
+            summary: `Need help with an order, delivery, returns, or product selection? Reach the ${SECURE_DERMA_BUSINESS_INFO.brandName} support team through the channels below.`,
             actions: [
-              { label: 'Email Support', href: 'mailto:support@securederma.in' },
+              { label: 'Email Support', href: `mailto:${SECURE_DERMA_BUSINESS_INFO.supportEmail}` },
               { label: 'Read FAQs', route: '/faqs' }
             ],
             sections: [
               {
+                title: 'Verified business relationship',
+                body: `${SECURE_DERMA_BUSINESS_INFO.brandName} is operated by ${SECURE_DERMA_BUSINESS_INFO.operatingEntityName} and serves customers through ${SECURE_DERMA_BUSINESS_INFO.websiteLabel}.`
+              },
+              {
                 title: 'Support email',
-                body: 'Email support@securederma.in for order updates, delivery questions, returns guidance, and general support queries.'
+                body: `Email ${SECURE_DERMA_BUSINESS_INFO.supportEmail} for order updates, delivery questions, returns guidance, and general support queries.`
               },
               {
                 title: 'Support hours',
@@ -135,7 +145,8 @@ export const routes: Routes = [
                   'Check the FAQ and shipping information pages for quicker answers'
                 ]
               }
-            ]
+            ],
+            showBusinessInfo: true
           }
         }
       },

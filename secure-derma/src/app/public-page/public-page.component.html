@@ -35,6 +35,31 @@
     }
   </div>
 
+  @if (page.showBusinessInfo) {
+  <section class="public-page__business" aria-labelledby="public-page-business-title">
+    <div class="public-page__business-head">
+      <p class="public-page__eyebrow m-0">Business Information</p>
+      <h2 id="public-page-business-title" class="public-page__faq-title m-0">Brand and verified business relationship</h2>
+    </div>
+
+    <article class="public-page__business-card">
+      <p class="public-page__business-row m-0">
+        <strong>Brand:</strong> {{ businessInfo.brandName }}
+      </p>
+      <p class="public-page__business-row m-0">
+        <strong>Website:</strong>
+        <a [href]="businessInfo.websiteUrl">{{ businessInfo.websiteLabel }}</a>
+      </p>
+      <p class="public-page__business-row m-0">
+        <strong>Status:</strong> {{ businessInfo.verifiedBusinessRelation }}
+      </p>
+      <address class="public-page__business-address m-0">
+        <strong>Address:</strong> {{ businessInfo.addressLine }}
+      </address>
+    </article>
+  </section>
+  }
+
   @if (page.faqs?.length) {
   <section class="public-page__faq">
     <div class="public-page__faq-head">

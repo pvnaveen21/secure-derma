@@ -34,7 +34,7 @@ const config = readRuntimeConfig();
 export const runtimeConfig = {
     BASEURL_API: normalizeValue(config.BASEURL_API, '/api'),
     GOOGLE_CLIENT_ID: normalizeValue(config.GOOGLE_CLIENT_ID, ''),
-    SITE_URL: normalizeValue(config.SITE_URL, 'https://securederma.com'),
+    SITE_URL: normalizeValue(config.SITE_URL, 'http://localhost:4200'),
     DEFAULT_OG_IMAGE: normalizeValue(config.DEFAULT_OG_IMAGE, '/assets/secure-derma/SecureDerma_LightMode.png'),
     GOOGLE_SITE_VERIFICATION: normalizeValue(config.GOOGLE_SITE_VERIFICATION, '')
 } as const;
