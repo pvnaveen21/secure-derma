@@ -2,12 +2,13 @@ from django.urls import path
 
 from secure_derma.views import BrandListAPIView, CollectionBannerAPIView, ConcernProductsAPIView, CurrentLocationPincodeAPIView, HairBannerAPIView, HomeProductTypeAPIView, ImagesAPIView, LandingPageImagesAPIView, NewsletterSubscriptionAPIView, PincodeServiceabilityAPIView, ProductDetailAPIView, ProductListWithFiltersAPIView, ProductSideMenuAPIView, RazorpayCreateOrderAPIView, RazorpayVerifyPaymentAPIView, RoutineBuilderAPIView, SecureDermaCartAPIView, SecureDermaCartItemAPIView, SecureDermaCartSyncAPIView, ShopByConcernAPIView, SkinBannerAPIView, SupplementBannerAPIView, TopBrandsAPIView, TrendingProductsFastAPIView, UserOrderDetailAPIView, UserOrderListAPIView
 from secure_derma.visitor_views import SiteVisitCreateAPIView
-from send_otp.views import SendOTPView, VerifyOTPView
+from send_otp.views import OTPDeliveryWebhookView, SendOTPView, VerifyOTPView
 from user.views import UserDetailApiView, UserTokenRefreshView, google_login
 
 urlpatterns = [
     path("auth/sendotp/", SendOTPView.as_view()),
     path("auth/otp-verify/", VerifyOTPView.as_view()),
+    path("auth/otp-delivery-webhook/", OTPDeliveryWebhookView.as_view()),
     path("auth/token/refresh/", UserTokenRefreshView.as_view()),
     path("auth/google/", google_login),
     path("users/user/me/", UserDetailApiView.as_view()),
