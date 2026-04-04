@@ -204,7 +204,6 @@ export class LoginComponent implements AfterViewInit {
     this.authService.verifyOtp(this.buildVerifyPayload()).then(() => {
       this.isVerifyingOtp = false;
       this.message.success(`${this.authMode === 'email' ? 'Email' : 'Mobile'} login successful.`);
-      this.authService.redirectToHome();
     }).catch((error) => {
       this.isVerifyingOtp = false;
       this.message.error(error?.error || error?.message || 'OTP verification failed.');
@@ -385,7 +384,6 @@ export class LoginComponent implements AfterViewInit {
     this.googleLoading = true;
     this.authService.googleLogin({ token: idToken }).then(() => {
       this.googleLoading = false;
-      this.authService.redirectToHome();
     }).catch((err) => {
       this.googleLoading = false;
       this.message.error(err?.message || err?.error || 'Google login failed.');

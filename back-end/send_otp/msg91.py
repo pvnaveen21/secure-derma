@@ -1,3 +1,5 @@
+import logging
+
 import requests
 
 from config.env import env_int, env_str
@@ -5,6 +7,9 @@ from config.env import env_int, env_str
 
 class MSG91OTPError(Exception):
     pass
+
+
+logger = logging.getLogger(__name__)
 
 
 def _as_dict(value) -> dict:
@@ -119,15 +124,27 @@ def _render_whatsapp_template_value(template_value: str, otp: str, phone: str, o
 
 def _build_whatsapp_components(otp: str, phone: str, otp_expiry: int) -> dict:
     body_1_value = env_str("MSG91_WHATSAPP_BODY_1_VALUE", default="", allow_blank=True)
-    if not body_1_value:
-        raise MSG91OTPError("MSG91 WhatsApp OTP template components are not configured on the server.")
+    button_1_value = env_str("MSG91_WHATSAPP_BUTTON_1_VALUE", default="", allow_blank=True)
 
-    return {
-        "body_1": {
+    components = {}
+
+    if body_1_value:
+        components["body_1"] = {
             "type": env_str("MSG91_WHATSAPP_BODY_1_TYPE", default="text"),
             "value": _render_whatsapp_template_value(body_1_value, otp, phone, otp_expiry),
         }
-    }
+
+    if button_1_value:
+        components["button_1"] = {
+            "subtype": env_str("MSG91_WHATSAPP_BUTTON_1_SUBTYPE", default="url"),
+            "type": env_str("MSG91_WHATSAPP_BUTTON_1_TYPE", default="text"),
+            "value": _render_whatsapp_template_value(button_1_value, otp, phone, otp_expiry),
+        }
+
+    if not components:
+        raise MSG91OTPError("MSG91 WhatsApp OTP template components are not configured on the server.")
+
+    return components
 
 
 def _send_whatsapp_otp(phone: str, otp: str, auth_key: str, otp_expiry: int, timeout: int) -> dict:
@@ -135,7 +152,6 @@ def _send_whatsapp_otp(phone: str, otp: str, auth_key: str, otp_expiry: int, tim
     template_name = env_str("MSG91_WHATSAPP_TEMPLATE_NAME", default="")
     language_code = env_str("MSG91_WHATSAPP_TEMPLATE_LANGUAGE_CODE", default="en")
     language_policy = env_str("MSG91_WHATSAPP_TEMPLATE_LANGUAGE_POLICY", default="deterministic")
-    namespace = env_str("MSG91_WHATSAPP_TEMPLATE_NAMESPACE", default="", allow_blank=True)
     whatsapp_url = env_str(
         "MSG91_WHATSAPP_URL",
         default="https://api.msg91.com/api/v5/whatsapp/whatsapp-outbound-message/bulk/",
@@ -159,8 +175,6 @@ def _send_whatsapp_otp(phone: str, otp: str, auth_key: str, otp_expiry: int, tim
             }
         ],
     }
-    if namespace:
-        template_payload["namespace"] = namespace
 
     payload = {
         "integrated_number": integrated_number,
@@ -171,6 +185,11 @@ def _send_whatsapp_otp(phone: str, otp: str, auth_key: str, otp_expiry: int, tim
             "template": template_payload,
         },
     }
+    logger.warning(
+        "MSG91 WhatsApp payload prepared for %s: %s",
+        full_phone,
+        payload,
+    )
     headers = {
         "Content-Type": "application/json",
         "authkey": auth_key,

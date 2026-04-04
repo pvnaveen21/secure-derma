@@ -57,9 +57,11 @@ class OTPApiTests(APITestCase):
             "MSG91_WHATSAPP_TEMPLATE_NAME": "secure_derma_authentication",
             "MSG91_WHATSAPP_TEMPLATE_LANGUAGE_CODE": "en",
             "MSG91_WHATSAPP_TEMPLATE_LANGUAGE_POLICY": "deterministic",
-            "MSG91_WHATSAPP_TEMPLATE_NAMESPACE": "3497ade6_48e5_4660_9d2e_ebf6aab7ab6b",
             "MSG91_WHATSAPP_BODY_1_TYPE": "text",
             "MSG91_WHATSAPP_BODY_1_VALUE": "otp",
+            "MSG91_WHATSAPP_BUTTON_1_SUBTYPE": "url",
+            "MSG91_WHATSAPP_BUTTON_1_TYPE": "text",
+            "MSG91_WHATSAPP_BUTTON_1_VALUE": "otp",
         },
         clear=False,
     )
@@ -81,9 +83,12 @@ class OTPApiTests(APITestCase):
         self.assertEqual(kwargs["headers"]["authkey"], "test-auth-key")
         self.assertEqual(kwargs["json"]["integrated_number"], "919363789390")
         self.assertEqual(template["to_and_components"][0]["to"], ["919876543210"])
-        self.assertEqual(template["namespace"], "3497ade6_48e5_4660_9d2e_ebf6aab7ab6b")
+        self.assertNotIn("namespace", template)
         self.assertEqual(components["body_1"]["value"], record.otp)
         self.assertEqual(components["body_1"]["type"], "text")
+        self.assertEqual(components["button_1"]["subtype"], "url")
+        self.assertEqual(components["button_1"]["value"], record.otp)
+        self.assertEqual(components["button_1"]["type"], "text")
         self.assertEqual(response.data["delivery_status"], "pending")
 
     @patch.dict(

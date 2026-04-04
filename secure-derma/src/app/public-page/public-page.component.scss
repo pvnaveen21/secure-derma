@@ -94,42 +94,6 @@
   gap: 1rem;
 }
 
-.public-page__business {
-  padding-top: 2rem;
-  display: grid;
-  gap: 1rem;
-}
-
-.public-page__business-head {
-  display: grid;
-  gap: 0.55rem;
-}
-
-.public-page__business-card {
-  border: 0.1rem solid rgba(31, 29, 26, 0.08);
-  border-radius: 1.5rem;
-  background: linear-gradient(180deg, #fffdf9 0%, #f7f1e8 100%);
-  padding: 1.4rem;
-  display: grid;
-  gap: 0.8rem;
-}
-
-.public-page__business-row,
-.public-page__business-address {
-  color: #5f564d;
-  line-height: 1.75;
-}
-
-.public-page__business-address {
-  font-style: normal;
-}
-
-.public-page__business-card a {
-  color: #1f1d1a;
-  text-decoration: underline;
-  text-underline-offset: 0.15rem;
-}
-
 .public-page__faq-head {
   display: grid;
   gap: 0.55rem;

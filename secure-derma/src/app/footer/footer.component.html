@@ -1,43 +1,34 @@
 <div class="footer-shell">
     <footer class="footer">
         <section class="footer__row footer__row--primary">
-            <section class="footer__brand" aria-labelledby="footer-brand-title">
+            <div class="footer__brand">
                 <button type="button" class="secure-btn footer__logo-button" (click)="navigateToHome()" aria-label="Secure Derma home">
                     <img class="footer__logo-image" [src]="footerLogoSrc" alt="Secure Derma" decoding="async" />
                 </button>
-                <p id="footer-brand-title" class="footer__brand-name">{{ businessInfo.brandName }}</p>
-                <p class="footer__business-relation">{{ businessInfo.verifiedBusinessRelation }}</p>
-                <address class="footer__business-address">
-                    <span>{{ businessInfo.addressLine }}</span>
-                    @if (businessInfo.regionLine) {
-                    <span>{{ businessInfo.regionLine }}</span>
-                    }
-                </address>
                 <p class="footer__tagline">A professional skincare destination designed around clarity, trust, and better daily outcomes.</p>
                 <div class="footer__contact-list">
-                    <p><strong>Website:</strong> <a [href]="businessInfo.websiteUrl">{{ businessInfo.websiteLabel }}</a></p>
-                    <p><strong>Care Team:</strong> <a [href]="'mailto:' + businessInfo.supportEmail">{{ businessInfo.supportEmail }}</a></p>
+                    <p><strong>Care Team:</strong> support&#64;securederma.in</p>
                     <p><strong>Support Hours:</strong> Mon-Sat, 9:00 AM - 8:00 PM</p>
                 </div>
-            </section>
+            </div>
 
-            <nav class="footer__links" aria-label="Shop">
+            <div class="footer__links">
                 <h4>Shop</h4>
                 <a routerLink="/collections/skin-care">Skin Care</a>
                 <a routerLink="/collections/hair-care">Hair Care</a>
                 <a routerLink="/collections/supplements">Supplements</a>
                 <a routerLink="/collections/pediatric">Pediatric Care</a>
                 <a routerLink="/collections">All Brands</a>
-            </nav>
+            </div>
 
-            <nav class="footer__links" aria-label="Resources">
+            <div class="footer__links">
                 <h4>Resources</h4>
                 <a routerLink="/about">About Secure Derma</a>
                 <a routerLink="/faqs">FAQs</a>
                 <a routerLink="/contact">Contact Support</a>
                 <a routerLink="/shipping-returns">Shipping &amp; Returns</a>
                 <a routerLink="/collections">Shop Collections</a>
-            </nav>
+            </div>
 
         </section>
 
@@ -57,7 +48,7 @@
         </section>
 
         <section class="footer__row footer__row--bottom footer__bottom">
-            <span>©2026 Secure Derma | RAMYA MURUGESAN</span>
+            <span>© 2026 Secure Derma. All rights reserved.</span>
             <div class="footer__bottom-links">
                 <a routerLink="/about">About</a>
                 <a routerLink="/contact">Contact</a>

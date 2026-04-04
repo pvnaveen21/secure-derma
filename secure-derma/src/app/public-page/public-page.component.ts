@@ -1,7 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { SECURE_DERMA_BUSINESS_INFO } from '../core/business-info';
 import { SeoConfig, SeoService } from '../services/seo.service';
 import { environment } from '../../environments/environment';
 
@@ -29,7 +28,6 @@ interface PublicPageData {
   sections: PublicPageSection[];
   faqs?: PublicPageFaq[];
   actions?: PublicPageAction[];
-  showBusinessInfo?: boolean;
   seo: SeoConfig;
 }
 
@@ -45,7 +43,6 @@ export class PublicPageComponent {
   private readonly siteUrl = environment.SITE_URL.replace(/\/$/, '');
 
   readonly page = this.route.snapshot.data['page'] as PublicPageData;
-  readonly businessInfo = SECURE_DERMA_BUSINESS_INFO;
 
   ngOnInit(): void {
     this.seoService.updateSeo({

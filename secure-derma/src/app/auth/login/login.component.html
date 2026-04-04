@@ -111,13 +111,13 @@
                     </div>
 
                     <div class="auth-mode-switch" [class.auth-mode-switch--phone]="authMode === 'phone'">
-                        <button type="button" class="secure-btn auth-mode-switch__btn" [class.auth-mode-switch__btn--active]="authMode === 'email'"
-                            (click)="switchAuthMode('email')">
-                            Email
-                        </button>
                         <button type="button" class="secure-btn auth-mode-switch__btn" [class.auth-mode-switch__btn--active]="authMode === 'phone'"
                             (click)="switchAuthMode('phone')">
                             Phone
+                        </button>
+                        <button type="button" class="secure-btn auth-mode-switch__btn" [class.auth-mode-switch__btn--active]="authMode === 'email'"
+                            (click)="switchAuthMode('email')">
+                            Email
                         </button>
                     </div>
 

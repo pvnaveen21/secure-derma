@@ -7,7 +7,6 @@ import { FormsModule } from '@angular/forms';
 import { NzRateModule } from 'ng-zorro-antd/rate';
 import { Router } from '@angular/router';
 import { NzMessageService } from 'ng-zorro-antd/message';
-import { SECURE_DERMA_BUSINESS_INFO } from '../core/business-info';
 import { Assets } from '../shared/assets';
 import { Icons } from '../shared/icons';
 import { HomeService } from '../services/home.service';
@@ -33,7 +32,6 @@ import { SeoService } from '../services/seo.service';
 export class HomeComponent {
   assets = Assets
   icons = Icons
-  readonly businessInfo = SECURE_DERMA_BUSINESS_INFO
   isBrowser:any = false
   main_image_url:any=''
   mainImageWebUrl = ''

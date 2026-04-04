@@ -1,6 +1,5 @@
 import { Component, inject } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
-import { SECURE_DERMA_BUSINESS_INFO } from '../core/business-info';
 import { ThemeType } from '../interfaces/theme';
 import { SettingsService } from '../services/settings/settings.service';
 
@@ -13,7 +12,6 @@ import { SettingsService } from '../services/settings/settings.service';
 export class FooterComponent {
   private readonly router = inject(Router);
   private readonly settingsService = inject(SettingsService);
-  readonly businessInfo = SECURE_DERMA_BUSINESS_INFO;
 
   get footerLogoSrc(): string {
     const theme = this.settingsService.currentTheme;
