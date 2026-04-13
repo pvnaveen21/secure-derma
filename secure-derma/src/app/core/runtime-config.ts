@@ -29,12 +29,26 @@ const readRuntimeConfig = (): RuntimeConfig => {
     return window.__SECURE_DERMA_CONFIG__ ?? {};
 };
 
+const isLocalHost = (): boolean => {
+    if (typeof window === 'undefined') {
+        return false;
+    }
+
+    return ['localhost', '127.0.0.1'].includes(window.location.hostname);
+};
+
 const config = readRuntimeConfig();
 
 export const runtimeConfig = {
-    BASEURL_API: normalizeValue(config.BASEURL_API, '/api'),
+    BASEURL_API: normalizeValue(
+        config.BASEURL_API,
+        isLocalHost() ? 'http://127.0.0.1:8000/api' : 'https://secure-derma-backend.onrender.com/api'
+    ),
     GOOGLE_CLIENT_ID: normalizeValue(config.GOOGLE_CLIENT_ID, ''),
-    SITE_URL: normalizeValue(config.SITE_URL, 'http://localhost:4200'),
+    SITE_URL: normalizeValue(
+        config.SITE_URL,
+        isLocalHost() ? 'http://localhost:4200' : 'https://www.securederma.com'
+    ),
     DEFAULT_OG_IMAGE: normalizeValue(config.DEFAULT_OG_IMAGE, '/assets/secure-derma/SecureDerma_LightMode.png'),
     GOOGLE_SITE_VERIFICATION: normalizeValue(config.GOOGLE_SITE_VERIFICATION, '')
 } as const;

@@ -62,6 +62,8 @@ local_cors_origins = [
     'http://localhost:4201',
     'http://localhost:4200',
     'http://127.0.0.1:4200',
+    'https://www.securederma.com',
+    'https://securederma.com',
     'https://secure-derma-admin.vercel.app',
 ]
 CORS_ALLOWED_ORIGINS = [*local_cors_origins, *env_list('CORS_ALLOWED_ORIGINS')]

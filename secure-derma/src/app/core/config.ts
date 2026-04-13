@@ -8,17 +8,23 @@ function getOrigin(): string {
     return 'http://localhost';
 }
 
+function getDefaultBaseUrl(): string {
+    if (typeof window !== 'undefined' && ['localhost', '127.0.0.1'].includes(window.location.hostname)) {
+        return 'http://127.0.0.1:8000/api';
+    }
+
+    return 'https://secure-derma-backend.onrender.com/api';
+}
+
 function resolveBaseUrl(): string {
-    const configuredBaseUrl = environment.BASEURL_API?.trim() || '/api';
+    const defaultBaseUrl = getDefaultBaseUrl();
+    const configuredBaseUrl = environment.BASEURL_API?.trim() || defaultBaseUrl;
 
     try {
         const configuredUrl = new URL(configuredBaseUrl, getOrigin());
-        if (typeof window !== 'undefined' && (configuredUrl.hostname === '127.0.0.1' || configuredUrl.hostname === 'localhost')) {
-            configuredUrl.hostname = window.location.hostname;
-        }
         return configuredUrl.toString().replace(/\/$/, '');
     } catch {
-        return new URL('/api', getOrigin()).toString().replace(/\/$/, '');
+        return defaultBaseUrl;
     }
 }
 

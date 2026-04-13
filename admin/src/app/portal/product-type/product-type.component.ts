@@ -130,7 +130,7 @@ export class ProductTypeComponent {
         cellTemplate: this.showBannerTemplate
       },
       {
-        title: 'Show in Shop by Concern',
+        title: 'Show in Shop by Category',
         property: 'show_home',
         cellTemplate: this.showHomeTemplate
       },

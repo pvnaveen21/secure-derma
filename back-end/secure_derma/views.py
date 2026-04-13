@@ -24,8 +24,6 @@ from product_type.models import ProductType
 from django.db.models import Prefetch, Avg, Count, Min, Q, F, Sum, OuterRef, Subquery, IntegerField, Value, CharField
 from django.db.models.functions import TruncDate, TruncMonth
 from django.utils import timezone
-from django.utils.decorators import method_decorator
-from django.views.decorators.cache import cache_page
 
 from skin_concern.models import SkinConcerns
 from rest_framework import status
@@ -1456,12 +1454,11 @@ class UserOrderDetailAPIView(APIView):
             }
         )
         
-@method_decorator(cache_page(60 * 10), name='dispatch')
 class TrendingProductsFastAPIView(ListAPIView):
-    """Cached API for trending products with compact related data."""
+    """API for trending products with compact related data."""
     permission_classes = [AllowAny]
     pagination_class = None
-    
+
     def get(self, request, *args, **kwargs):
         review_count_subquery = ProductReview.objects.filter(
             product_id=OuterRef('pk'),
@@ -1471,7 +1468,6 @@ class TrendingProductsFastAPIView(ListAPIView):
         queryset = Product.objects.filter(
             is_deleted=False,
             trending_product=True,
-            brand__show_brand=True,
         ).select_related(
             'brand',
             'product_type',
@@ -1520,13 +1516,13 @@ class TrendingProductsFastAPIView(ListAPIView):
                 'product_details': product_details_list
             })
 
-        return Response({
+        response_data = {
             'trending_products': products_list,
             'count': len(products_list)
-        })
+        }
+        return Response(response_data)
 
 
-@method_decorator(cache_page(60 * 30), name='dispatch')
 class ShopByConcernAPIView(ListAPIView):
     """API to get concerns enabled for the home Shop by Concern section"""
     permission_classes = [AllowAny]
@@ -2812,4 +2808,61 @@ class ProductSideMenuAPIView(APIView):
             "skin_concerns": skin_concerns,
             "ingredients": ingredients,
             "product_types": product_types,
+        })
+
+
+class SitemapDataAPIView(APIView):
+    """
+    Public endpoint that returns all indexable URL slugs for sitemap generation.
+    No authentication required — only exposes public slug data.
+    """
+    authentication_classes = []
+    permission_classes = []
+
+    def get(self, request):
+        products = list(
+            Product.objects.filter(is_deleted=False, slug__isnull=False)
+            .exclude(slug='')
+            .values_list('slug', flat=True)
+            .order_by('id')
+        )
+
+        brands = list(
+            Brand.objects.filter(is_deleted=False, slug__isnull=False)
+            .exclude(slug='')
+            .values_list('slug', flat=True)
+        )
+        categories = list(
+            Categories.objects.filter(is_deleted=False, slug__isnull=False)
+            .exclude(slug='')
+            .values_list('slug', flat=True)
+        )
+        product_types = list(
+            ProductType.objects.filter(is_deleted=False, slug__isnull=False)
+            .exclude(slug='')
+            .values_list('slug', flat=True)
+        )
+        skin_concerns = list(
+            SkinConcerns.objects.filter(is_deleted=False, slug__isnull=False)
+            .exclude(slug='')
+            .values_list('slug', flat=True)
+        )
+        hair_concerns = list(
+            HairConcerns.objects.filter(is_deleted=False, slug__isnull=False)
+            .exclude(slug='')
+            .values_list('slug', flat=True)
+        )
+        ingredients = list(
+            Ingredients.objects.filter(is_deleted=False, slug__isnull=False)
+            .exclude(slug='')
+            .values_list('slug', flat=True)
+        )
+
+        collections = list(dict.fromkeys(
+            brands + categories + product_types + skin_concerns + hair_concerns + ingredients
+        ))
+
+        return Response({
+            "products": products,
+            "collections": collections,
         })

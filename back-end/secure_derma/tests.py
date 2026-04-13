@@ -126,6 +126,23 @@ class ShopByConcernAPIViewTests(TestCase):
             {'skin', 'hair'}
         )
 
+    def test_reflects_skin_concern_updates_immediately(self):
+        initial_response = self.client.get('/api/shop-by-concerns/')
+        self.assertEqual(initial_response.status_code, 200)
+        self.assertNotIn(
+            "Pigmentation",
+            [item["name"] for item in initial_response.data["concerns"]],
+        )
+
+        SkinConcerns.objects.filter(skin_concern="Pigmentation").update(show_home=True)
+
+        updated_response = self.client.get('/api/shop-by-concerns/')
+        self.assertEqual(updated_response.status_code, 200)
+        self.assertIn(
+            "Pigmentation",
+            [item["name"] for item in updated_response.data["concerns"]],
+        )
+
 
 class RazorpayPaymentFlowTests(TestCase):
     def setUp(self):
